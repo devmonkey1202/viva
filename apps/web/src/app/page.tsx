@@ -28,6 +28,12 @@ export default function Home() {
               교사 워크벤치 열기
             </a>
             <a
+              href="/operator"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-4 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+            >
+              운영자 대시보드 열기
+            </a>
+            <a
               href="#service-flow"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-4 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
             >

@@ -6,9 +6,14 @@
 
 - 랜딩 페이지 `/`
 - 교사 워크벤치 `/teacher`
+- 운영자 요약 `/operator`
 - 질문 생성 API `/api/questions`
 - 이해 분석 API `/api/analyze`
+- 교사 판단 저장 API `/api/teacher-decisions`
+- export API `/api/export`
+- 요약 API `/api/summary`
 - OpenAI 연결 가능 구조 + mock fallback
+- JSON 기반 로컬 저장 계층
 
 ## 실행
 
@@ -33,6 +38,9 @@ AI_MAX_RETRIES=1
 
 API 키가 없으면 앱은 자동으로 mock fallback 모드로 동작한다.
 
+질문 생성, 분석, 교사 판단 결과는 `data/verification-store.json`에 저장된다.
+이 파일은 Git에 포함되지 않는다.
+
 ## 검증
 
 ```bash
@@ -47,12 +55,10 @@ npm run build
 - `src/components`
   UI 컴포넌트
 - `src/lib`
-  스키마, 데모 데이터, AI 서비스
+  스키마, 데모 데이터, AI 서비스, 저장 계층
 
 ## 다음 작업
 
-- 실제 저장 계층 연결
-- 교사 최종 판단 저장
-- export 기능 추가
-- 운영자 요약 화면 추가
+- AI service adapter 고도화
+- 관리형 DB 어댑터 준비
 - 배포 설정 완료

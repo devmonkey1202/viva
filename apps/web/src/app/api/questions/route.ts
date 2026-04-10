@@ -2,15 +2,26 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { generateQuestionSet } from "@/lib/ai/service";
-import { GenerateQuestionSetRequestSchema } from "@/lib/schemas";
+import {
+  GenerateQuestionSetRequestSchema,
+  GenerateQuestionSetResponseSchema,
+} from "@/lib/schemas";
+import { createVerificationRecord } from "@/lib/verification-store";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = GenerateQuestionSetRequestSchema.parse(body);
     const questionSet = await generateQuestionSet(input);
+    const verification = await createVerificationRecord(input, questionSet);
+    const response = GenerateQuestionSetResponseSchema.parse({
+      verificationId: verification.verificationId,
+      questionSet: verification.questionSet,
+    });
 
-    return NextResponse.json(questionSet);
+    return NextResponse.json(response);
   } catch (error) {
     const message =
       error instanceof ZodError

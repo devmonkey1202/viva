@@ -49,22 +49,30 @@
   `직접 학습` 대신 `VIVA 전용 AI 시스템 직접 구현` 전략 문서화
   decision log에 제품명/AI 전략 결정 기록
   앱 lint/build 재검증 통과
+  질문 생성 시 검증 세션 저장 연결
+  분석 결과 저장 연결
+  교사 최종 판단 저장 API 구현
+  JSON/CSV export API 구현
+  운영자 요약 API 및 `/operator` 화면 구현
+  교사 워크벤치에 verification id, export, 운영자 이동, 교사 판단 UI 반영
+  로컬 서버 기준 실제 HTTP 흐름 검증 완료
+  질문 생성 -> 분석 -> 교사 판단 -> 요약 -> export 응답 확인
 - in_progress:
-  저장/판단/export 흐름 확장
+  AI service adapter 고도화
 - next:
-  첫 공개 커밋 생성 및 원격 푸시
-  저장 계층 연결
-  교사 최종 판단 저장
-  export 구현
-  운영자 요약 화면
+  저장 어댑터를 관리형 DB로 전환할지 판단
+  배포 설정 구체화
+  AI 리포트 초안 본문 심화
 - risks:
   원본 문서명과 제품 브랜드명이 혼재되어 혼동될 위험
+  파일 저장 어댑터가 수평 확장 배포에는 그대로 맞지 않을 위험
   구현 속도보다 문서가 앞서갈 위험
 - docs_updated:
   README
   WORKBOARD
-  reports/ai-report-draft.md
   reports/progress-summary.md
+  reports/ai-report-draft.md
+  apps/web/README.md
   docs/project-charter.md
   docs/ai-development-master-plan.md
   docs/decision-log.md

@@ -1,14 +1,20 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
+import Link from "next/link";
 
 import { StatusBadge } from "@/components/status-badge";
 import { demoAnswerDraft, demoVerificationInput } from "@/lib/demo-data";
 import type {
   AnalysisReport,
-  AnalyzeUnderstandingRequest,
+  AnalyzeUnderstandingResponse,
+  AnalyzeUnderstandingStoredRequest,
+  GenerateQuestionSetResponse,
   QuestionSet,
   QuestionType,
+  SaveTeacherDecisionResponse,
+  TeacherDecision,
+  TeacherDecisionInput,
 } from "@/lib/schemas";
 
 type TeacherWorkbenchProps = {
@@ -41,6 +47,28 @@ const classificationMeta: Record<
   },
 };
 
+const teacherDecisionMeta: Record<
+  TeacherDecision["decision"],
+  { label: string; tone: "success" | "warning" | "danger" }
+> = {
+  approved_understanding: {
+    label: "이해 승인",
+    tone: "success",
+  },
+  needs_followup: {
+    label: "후속 확인 필요",
+    tone: "warning",
+  },
+  manual_review_required: {
+    label: "수동 검토 필요",
+    tone: "danger",
+  },
+};
+
+const teacherDecisionOptions = Object.entries(teacherDecisionMeta) as Array<
+  [TeacherDecision["decision"], (typeof teacherDecisionMeta)[TeacherDecision["decision"]]]
+>;
+
 const parseMultilineInput = (value: string) =>
   value
     .split("\n")
@@ -53,6 +81,11 @@ const initialAnswerState: Record<QuestionType, string> = {
   counterexample: "",
 };
 
+const initialDecisionState: TeacherDecisionInput = {
+  decision: "approved_understanding",
+  notes: "",
+};
+
 const formatQuestionType = (type: QuestionType) => {
   switch (type) {
     case "why":
@@ -63,6 +96,12 @@ const formatQuestionType = (type: QuestionType) => {
       return "반례형";
   }
 };
+
+const formatDateTime = (value: string) =>
+  new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 
 export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
   const [assignmentTitle, setAssignmentTitle] = useState(
@@ -84,11 +123,17 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
   const [analysisReport, setAnalysisReport] = useState<AnalysisReport | null>(
     null,
   );
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [teacherDecision, setTeacherDecision] = useState<TeacherDecision | null>(
+    null,
+  );
+  const [decisionDraft, setDecisionDraft] =
+    useState<TeacherDecisionInput>(initialDecisionState);
   const [answers, setAnswers] =
     useState<Record<QuestionType, string>>(initialAnswerState);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<
-    "questions" | "analysis" | null
+    "questions" | "analysis" | "decision" | null
   >(null);
   const [isPending, startTransition] = useTransition();
 
@@ -118,6 +163,9 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
     setSubmissionText(demoVerificationInput.submissionText);
     setQuestionSet(null);
     setAnalysisReport(null);
+    setVerificationId(null);
+    setTeacherDecision(null);
+    setDecisionDraft(initialDecisionState);
     setAnswers(initialAnswerState);
     setErrorMessage(null);
   };
@@ -142,9 +190,12 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
             throw new Error(error.message ?? "질문 생성에 실패했습니다.");
           }
 
-          const nextQuestionSet = (await response.json()) as QuestionSet;
-          setQuestionSet(nextQuestionSet);
+          const payload = (await response.json()) as GenerateQuestionSetResponse;
+          setVerificationId(payload.verificationId);
+          setQuestionSet(payload.questionSet);
           setAnalysisReport(null);
+          setTeacherDecision(null);
+          setDecisionDraft(initialDecisionState);
           setAnswers(initialAnswerState);
         } catch (error) {
           setErrorMessage(
@@ -160,7 +211,7 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
   };
 
   const runAnalysis = () => {
-    if (!questionSet) {
+    if (!questionSet || !verificationId) {
       return;
     }
 
@@ -170,7 +221,8 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
     startTransition(() => {
       void (async () => {
         try {
-          const payload: AnalyzeUnderstandingRequest = {
+          const analysisRequest: AnalyzeUnderstandingStoredRequest = {
+            verificationId,
             ...verificationInput,
             questionSet,
             studentAnswers: questionSet.questions.map((question) => ({
@@ -184,7 +236,7 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(analysisRequest),
           });
 
           if (!response.ok) {
@@ -192,13 +244,65 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
             throw new Error(error.message ?? "이해 분석에 실패했습니다.");
           }
 
-          const report = (await response.json()) as AnalysisReport;
-          setAnalysisReport(report);
+          const result = (await response.json()) as AnalyzeUnderstandingResponse;
+          setVerificationId(result.verificationId);
+          setAnalysisReport(result.analysisReport);
+          setTeacherDecision(null);
+          setDecisionDraft((current) => ({
+            decision: current.decision,
+            notes:
+              current.notes.trim().length > 0
+                ? current.notes
+                : result.analysisReport.teacherSummary,
+          }));
         } catch (error) {
           setErrorMessage(
             error instanceof Error
               ? error.message
               : "이해 분석 중 오류가 발생했습니다.",
+          );
+        } finally {
+          setActiveAction(null);
+        }
+      })();
+    });
+  };
+
+  const saveTeacherDecision = () => {
+    if (!verificationId) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setActiveAction("decision");
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const response = await fetch("/api/teacher-decisions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              verificationId,
+              decision: decisionDraft,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = (await response.json()) as { message?: string };
+            throw new Error(error.message ?? "교사 판단 저장에 실패했습니다.");
+          }
+
+          const payload = (await response.json()) as SaveTeacherDecisionResponse;
+          setVerificationId(payload.verificationId);
+          setTeacherDecision(payload.teacherDecision);
+        } catch (error) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "교사 판단 저장 중 오류가 발생했습니다.",
           );
         } finally {
           setActiveAction(null);
@@ -215,6 +319,9 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
             <StatusBadge tone="accent">Teacher Console</StatusBadge>
             <StatusBadge tone={aiConfigured ? "success" : "warning"}>
               {aiConfigured ? "실제 AI 연결 가능" : "Mock fallback 모드"}
+            </StatusBadge>
+            <StatusBadge tone={verificationId ? "success" : "neutral"}>
+              {verificationId ? "세션 저장 중" : "세션 미생성"}
             </StatusBadge>
           </div>
           <div className="space-y-3">
@@ -238,6 +345,31 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
               핵심 시나리오가 끊기지 않는 배포형 교사 워크벤치를 먼저
               완성합니다.
             </p>
+            {verificationId ? (
+              <p className="text-xs leading-6 text-slate-500">
+                verification id: {verificationId}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/api/export?format=json"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
+            >
+              JSON export
+            </Link>
+            <Link
+              href="/api/export?format=csv"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
+            >
+              CSV export
+            </Link>
+            <Link
+              href="/operator"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
+            >
+              운영자 요약 보기
+            </Link>
           </div>
           <div className="grid gap-3">
             <button
@@ -549,6 +681,85 @@ export function TeacherWorkbench({ aiConfigured }: TeacherWorkbenchProps) {
                   ) : (
                     <p className="mt-3 text-sm text-slate-700">현재 두드러지는 충돌 문장은 없습니다.</p>
                   )}
+                </div>
+
+                <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        교사 최종 판단
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        AI 결과를 참고해 최종 판단을 저장합니다.
+                      </p>
+                    </div>
+                    <StatusBadge tone={teacherDecision ? "success" : "warning"}>
+                      {teacherDecision
+                        ? teacherDecisionMeta[teacherDecision.decision].label
+                        : "미저장"}
+                    </StatusBadge>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {teacherDecisionOptions.map(([decision, meta]) => (
+                      <button
+                        key={decision}
+                        type="button"
+                        onClick={() =>
+                          setDecisionDraft((current) => ({
+                            ...current,
+                            decision,
+                          }))
+                        }
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          decisionDraft.decision === decision
+                            ? "bg-slate-950 text-white"
+                            : "border border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-950"
+                        }`}
+                      >
+                        {meta.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="mt-4 grid gap-2">
+                    <span className="text-sm font-semibold text-slate-700">
+                      교사 판단 메모
+                    </span>
+                    <textarea
+                      value={decisionDraft.notes}
+                      onChange={(event) =>
+                        setDecisionDraft((current) => ({
+                          ...current,
+                          notes: event.target.value,
+                        }))
+                      }
+                      rows={4}
+                      className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white"
+                    />
+                  </label>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={saveTeacherDecision}
+                      disabled={
+                        isPending ||
+                        !verificationId ||
+                        decisionDraft.notes.trim().length === 0
+                      }
+                      className="rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    >
+                      {activeAction === "decision"
+                        ? "교사 판단 저장 중..."
+                        : "교사 판단 저장"}
+                    </button>
+                    {teacherDecision ? (
+                      <p className="text-sm text-slate-600">
+                        마지막 저장: {formatDateTime(teacherDecision.decidedAt)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ) : (

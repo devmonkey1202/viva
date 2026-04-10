@@ -90,15 +90,24 @@ export const AnalysisReportSchema = z.object({
 
 export type AnalysisReport = z.infer<typeof AnalysisReportSchema>;
 
+export const TeacherDecisionStatusSchema = z.enum([
+  "approved_understanding",
+  "needs_followup",
+  "manual_review_required",
+]);
+
 export const TeacherDecisionSchema = z.object({
-  decision: z.enum([
-    "approved_understanding",
-    "needs_followup",
-    "manual_review_required",
-  ]),
+  decision: TeacherDecisionStatusSchema,
   notes: z.string(),
   decidedAt: z.string().datetime(),
 });
+export type TeacherDecision = z.infer<typeof TeacherDecisionSchema>;
+
+export const TeacherDecisionInputSchema = z.object({
+  decision: TeacherDecisionStatusSchema,
+  notes: z.string().trim().min(1).max(4000),
+});
+export type TeacherDecisionInput = z.infer<typeof TeacherDecisionInputSchema>;
 
 export const VerificationInputSchema = z.object({
   assignmentTitle: z.string().min(1),
@@ -128,3 +137,106 @@ export const AnalyzeUnderstandingRequestSchema = VerificationInputSchema.extend(
 export type AnalyzeUnderstandingRequest = z.infer<
   typeof AnalyzeUnderstandingRequestSchema
 >;
+
+export const AnalyzeUnderstandingStoredRequestSchema =
+  AnalyzeUnderstandingRequestSchema.extend({
+    verificationId: z.string().min(1),
+  });
+
+export type AnalyzeUnderstandingStoredRequest = z.infer<
+  typeof AnalyzeUnderstandingStoredRequestSchema
+>;
+
+export const GenerateQuestionSetResponseSchema = z.object({
+  verificationId: z.string().min(1),
+  questionSet: QuestionSetSchema,
+});
+
+export type GenerateQuestionSetResponse = z.infer<
+  typeof GenerateQuestionSetResponseSchema
+>;
+
+export const AnalyzeUnderstandingResponseSchema = z.object({
+  verificationId: z.string().min(1),
+  analysisReport: AnalysisReportSchema,
+});
+
+export type AnalyzeUnderstandingResponse = z.infer<
+  typeof AnalyzeUnderstandingResponseSchema
+>;
+
+export const SaveTeacherDecisionRequestSchema = z.object({
+  verificationId: z.string().min(1),
+  decision: TeacherDecisionInputSchema,
+});
+
+export type SaveTeacherDecisionRequest = z.infer<
+  typeof SaveTeacherDecisionRequestSchema
+>;
+
+export const SaveTeacherDecisionResponseSchema = z.object({
+  verificationId: z.string().min(1),
+  teacherDecision: TeacherDecisionSchema,
+});
+
+export type SaveTeacherDecisionResponse = z.infer<
+  typeof SaveTeacherDecisionResponseSchema
+>;
+
+export const VerificationActivitySchema = z.object({
+  type: z.enum([
+    "question_generated",
+    "analysis_saved",
+    "teacher_decision_saved",
+  ]),
+  recordedAt: z.string().datetime(),
+  message: z.string().min(1),
+});
+
+export type VerificationActivity = z.infer<typeof VerificationActivitySchema>;
+
+export const VerificationRecordSchema = VerificationInputSchema.extend({
+  verificationId: z.string().min(1),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  questionSet: QuestionSetSchema,
+  studentAnswers: z.array(StudentAnswerSchema).length(3).optional(),
+  analysisReport: AnalysisReportSchema.optional(),
+  teacherDecision: TeacherDecisionSchema.optional(),
+  activity: z.array(VerificationActivitySchema),
+});
+
+export type VerificationRecord = z.infer<typeof VerificationRecordSchema>;
+
+export const OperatorSummaryBucketSchema = z.object({
+  label: z.string().min(1),
+  count: z.number().int().nonnegative(),
+});
+
+export type OperatorSummaryBucket = z.infer<typeof OperatorSummaryBucketSchema>;
+
+export const OperatorRecentVerificationSchema = z.object({
+  verificationId: z.string().min(1),
+  assignmentTitle: z.string().min(1),
+  updatedAt: z.string().datetime(),
+  classification: AnalysisClassificationSchema.optional(),
+  teacherDecision: TeacherDecisionStatusSchema.optional(),
+});
+
+export type OperatorRecentVerification = z.infer<
+  typeof OperatorRecentVerificationSchema
+>;
+
+export const OperatorSummarySchema = z.object({
+  generatedAt: z.string().datetime(),
+  totalVerifications: z.number().int().nonnegative(),
+  analyzedVerifications: z.number().int().nonnegative(),
+  teacherDecisions: z.number().int().nonnegative(),
+  classificationCounts: z.array(OperatorSummaryBucketSchema),
+  teacherDecisionCounts: z.array(OperatorSummaryBucketSchema),
+  topMissingConcepts: z.array(OperatorSummaryBucketSchema),
+  topMisconceptions: z.array(OperatorSummaryBucketSchema),
+  recentVerifications: z.array(OperatorRecentVerificationSchema),
+});
+
+export type OperatorSummary = z.infer<typeof OperatorSummarySchema>;
