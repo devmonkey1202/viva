@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f1e8;
-  --foreground: #132033;
-  --surface: #ffffff;
-  --surface-muted: #eef3f7;
-  --border-soft: rgba(20, 32, 51, 0.1);
-  --accent: #d96b28;
-  --accent-deep: #b44d11;
+  --background: #e8ddcb;
+  --foreground: #181411;
+  --paper: rgba(252, 247, 239, 0.9);
+  --paper-strong: #fffaf2;
+  --paper-muted: rgba(250, 244, 234, 0.72);
+  --line: rgba(44, 32, 19, 0.16);
+  --line-strong: rgba(44, 32, 19, 0.28);
+  --accent: #7d2e2a;
+  --accent-soft: rgba(125, 46, 42, 0.12);
+  --signal: #21463d;
+  --signal-soft: rgba(33, 70, 61, 0.12);
+  --gold: #89683b;
+  --danger: #7f2025;
+  --warning: #8a5a1f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-plus-jakarta);
-  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-viva-sans);
+  --font-serif: var(--font-viva-serif);
 }
 
 * {
@@ -27,11 +34,30 @@ html {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(255, 224, 193, 0.7), transparent 34%),
-    radial-gradient(circle at top right, rgba(204, 227, 244, 0.75), transparent 28%),
-    linear-gradient(180deg, #fcf7f0 0%, #f7f1e7 100%);
+    radial-gradient(circle at top left, rgba(255, 245, 222, 0.88), transparent 26%),
+    radial-gradient(circle at top right, rgba(111, 61, 56, 0.18), transparent 18%),
+    linear-gradient(180deg, #efe5d6 0%, #e4d7c2 100%);
   color: var(--foreground);
-  font-family: var(--font-plus-jakarta), sans-serif;
+  font-family: var(--font-viva-sans), sans-serif;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(53, 40, 24, 0.03) 0,
+      rgba(53, 40, 24, 0.03) 1px,
+      transparent 1px,
+      transparent 38px
+    ),
+    linear-gradient(90deg, rgba(92, 70, 42, 0.05), transparent 16%, transparent 84%, rgba(92, 70, 42, 0.05));
+  opacity: 0.85;
+  z-index: -1;
 }
 
 a {
@@ -46,6 +72,266 @@ button {
 }
 
 ::selection {
-  background: rgba(217, 107, 40, 0.18);
-  color: #0f172a;
+  background: rgba(125, 46, 42, 0.16);
+  color: #17120e;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(125, 46, 42, 0.18);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(125, 46, 42, 0);
+  }
+}
+
+.viva-page {
+  position: relative;
+  margin-inline: auto;
+  display: flex;
+  width: 100%;
+  max-width: 92rem;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem;
+}
+
+.viva-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 250, 242, 0.94), rgba(249, 241, 228, 0.9));
+  box-shadow:
+    0 30px 90px rgba(41, 30, 18, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.viva-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+}
+
+.viva-panel-soft {
+  background: linear-gradient(180deg, rgba(248, 241, 230, 0.9), rgba(241, 231, 216, 0.82));
+}
+
+.viva-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(125, 46, 42, 0.18);
+  background: rgba(125, 46, 42, 0.08);
+  padding: 0.55rem 0.95rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.viva-display {
+  font-family: var(--font-viva-serif), serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.96;
+}
+
+.viva-caption {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(24, 20, 17, 0.55);
+}
+
+.viva-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+.viva-button-primary,
+.viva-button-secondary,
+.viva-button-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.95rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.viva-button-primary {
+  border: 1px solid rgba(71, 25, 22, 0.12);
+  background: linear-gradient(135deg, #7d2e2a, #5d241f);
+  color: #fff8f2;
+  box-shadow: 0 18px 35px rgba(125, 46, 42, 0.18);
+}
+
+.viva-button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 42px rgba(125, 46, 42, 0.24);
+}
+
+.viva-button-secondary {
+  border: 1px solid rgba(33, 70, 61, 0.2);
+  background: rgba(33, 70, 61, 0.08);
+  color: var(--signal);
+}
+
+.viva-button-secondary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(33, 70, 61, 0.34);
+  background: rgba(33, 70, 61, 0.12);
+}
+
+.viva-button-ghost {
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 242, 0.72);
+  color: rgba(24, 20, 17, 0.78);
+}
+
+.viva-button-ghost:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  color: var(--foreground);
+}
+
+.viva-button-primary:disabled,
+.viva-button-secondary:disabled,
+.viva-button-ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+}
+
+.viva-field,
+.viva-textarea {
+  width: 100%;
+  border: 1px solid rgba(57, 42, 26, 0.16);
+  background: rgba(255, 250, 242, 0.88);
+  color: var(--foreground);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.viva-field {
+  border-radius: 1.35rem;
+  padding: 0.95rem 1rem;
+}
+
+.viva-textarea {
+  border-radius: 1.75rem;
+  padding: 1rem 1rem 1.05rem;
+  line-height: 1.75;
+  resize: vertical;
+}
+
+.viva-field:focus,
+.viva-textarea:focus {
+  outline: none;
+  border-color: rgba(125, 46, 42, 0.42);
+  box-shadow: 0 0 0 4px rgba(125, 46, 42, 0.08);
+  background: rgba(255, 252, 247, 0.96);
+}
+
+.viva-grid-rule {
+  border-top: 1px solid rgba(56, 40, 23, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.9), rgba(247, 238, 223, 0.74)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(70, 50, 29, 0.06) 0,
+      rgba(70, 50, 29, 0.06) 1px,
+      transparent 1px,
+      transparent 36px
+    );
+}
+
+.viva-stat {
+  border: 1px solid rgba(57, 42, 26, 0.12);
+  background: rgba(255, 250, 242, 0.68);
+}
+
+.viva-pill-select {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 242, 0.74);
+  padding: 0.72rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: rgba(24, 20, 17, 0.78);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.viva-pill-select:hover {
+  transform: translateY(-1px);
+  border-color: rgba(57, 42, 26, 0.28);
+  color: var(--foreground);
+}
+
+.viva-pill-select[data-active="true"] {
+  border-color: rgba(125, 46, 42, 0.16);
+  background: linear-gradient(135deg, #7d2e2a, #5d241f);
+  color: #fff8f2;
+}
+
+.viva-signal-dot {
+  display: inline-flex;
+  height: 0.55rem;
+  width: 0.55rem;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: pulse-glow 2.2s ease-in-out infinite;
+}
+
+.viva-reveal-1 {
+  animation: rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.viva-reveal-2 {
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.viva-reveal-3 {
+  animation: rise-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 640px) {
+  .viva-page {
+    gap: 1.75rem;
+    padding: 1.5rem;
+  }
 }

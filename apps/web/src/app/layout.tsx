@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
 
-const sans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
+const sans = Noto_Sans_KR({
+  variable: "--font-viva-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
 });
 
-const serif = Fraunces({
-  variable: "--font-fraunces",
+const serif = Noto_Serif_KR({
+  variable: "--font-viva-serif",
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
   title: "VIVA",
   description:
-    "AI 시대에도 학생의 진짜 이해를 제출물 기반 검증으로 증명하게 만드는 VIVA 교육 검증 서비스",
+    "AI 시대에도 학생의 진짜 이해를 제출 이후 검증으로 드러내는 VIVA 교육 검증 서비스",
 };
 
 export default function RootLayout({

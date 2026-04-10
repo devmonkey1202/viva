@@ -57,15 +57,18 @@
   교사 워크벤치에 verification id, export, 운영자 이동, 교사 판단 UI 반영
   로컬 서버 기준 실제 HTTP 흐름 검증 완료
   질문 생성 -> 분석 -> 교사 판단 -> 요약 -> export 응답 확인
+  `DATABASE_URL`이 있으면 Neon/Postgres, 없으면 로컬 JSON 저장소를 쓰는 하이브리드 저장 구조 구현
+  랜딩/교사/운영자 화면 전면 재디자인
+  로컬 서버 기준 페이지 응답과 API 흐름 재검증 완료
 - in_progress:
   AI service adapter 고도화
 - next:
-  저장 어댑터를 관리형 DB로 전환할지 판단
-  배포 설정 구체화
+  Vercel 배포 설정 구체화
+  Neon 실제 연결 검증
   AI 리포트 초안 본문 심화
 - risks:
   원본 문서명과 제품 브랜드명이 혼재되어 혼동될 위험
-  파일 저장 어댑터가 수평 확장 배포에는 그대로 맞지 않을 위험
+  Neon 실배포 연결 전까지는 로컬 저장 검증 위주라는 한계
   구현 속도보다 문서가 앞서갈 위험
 - docs_updated:
   README

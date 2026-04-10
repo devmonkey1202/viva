@@ -34,12 +34,14 @@ AI_FAST_MODEL=gpt-5.2
 AI_REASONING_MODEL=gpt-5.2
 AI_REQUEST_TIMEOUT_MS=20000
 AI_MAX_RETRIES=1
+DATABASE_URL=
 ```
 
 API 키가 없으면 앱은 자동으로 mock fallback 모드로 동작한다.
 
-질문 생성, 분석, 교사 판단 결과는 `data/verification-store.json`에 저장된다.
-이 파일은 Git에 포함되지 않는다.
+- `DATABASE_URL`이 없으면 질문 생성, 분석, 교사 판단 결과는 `data/verification-store.json`에 저장된다.
+- `DATABASE_URL`이 있으면 Neon/Postgres 저장소를 사용한다.
+- 로컬 JSON 저장 파일은 Git에 포함되지 않는다.
 
 ## 검증
 

@@ -1,290 +1,81 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
-import { z } from "zod";
-
 import type {
   AnalysisReport,
   AnalyzeUnderstandingStoredRequest,
   GenerateQuestionSetRequest,
-  OperatorSummary,
-  TeacherDecision,
   TeacherDecisionInput,
   VerificationRecord,
 } from "@/lib/schemas";
-import { VerificationRecordSchema } from "@/lib/schemas";
+import {
+  createVerificationRecordFromFile,
+  exportVerificationsAsCsvFromFile,
+  exportVerificationsAsJsonFromFile,
+  getOperatorSummaryFromFile,
+  listVerificationRecordsFromFile,
+  saveAnalysisForVerificationFromFile,
+  saveTeacherDecisionForVerificationFromFile,
+} from "@/lib/verification-store-file";
+import {
+  createVerificationRecordFromNeon,
+  exportVerificationsAsCsvFromNeon,
+  exportVerificationsAsJsonFromNeon,
+  getOperatorSummaryFromNeon,
+  listVerificationRecordsFromNeon,
+  saveAnalysisForVerificationFromNeon,
+  saveTeacherDecisionForVerificationFromNeon,
+} from "@/lib/verification-store-neon";
 
-const VerificationStoreFileSchema = z.object({
-  verifications: z.array(VerificationRecordSchema).default([]),
-});
+const hasDatabaseUrl = () => Boolean(process.env.DATABASE_URL?.trim());
 
-type VerificationStoreFile = z.infer<typeof VerificationStoreFileSchema>;
-
-const STORE_PATH = path.join(
-  /* turbopackIgnore: true */ process.cwd(),
-  "data",
-  "verification-store.json",
-);
-
-let storeQueue = Promise.resolve();
-
-const queueStoreOperation = async <T>(operation: () => Promise<T>) => {
-  const next = storeQueue.then(operation, operation);
-  storeQueue = next.then(
-    () => undefined,
-    () => undefined,
-  );
-
-  return next;
-};
-
-const emptyStore = (): VerificationStoreFile => ({ verifications: [] });
-
-const ensureStoreFile = async () => {
-  const storeDirectory = path.dirname(STORE_PATH);
-
-  await mkdir(storeDirectory, { recursive: true });
-
-  try {
-    await readFile(STORE_PATH, "utf8");
-  } catch {
-    await writeFile(
-      STORE_PATH,
-      JSON.stringify(emptyStore(), null, 2),
-      "utf8",
-    );
-  }
-};
-
-const readStore = async () => {
-  await ensureStoreFile();
-
-  const raw = await readFile(STORE_PATH, "utf8");
-  const parsed = raw.trim().length === 0 ? emptyStore() : JSON.parse(raw);
-
-  return VerificationStoreFileSchema.parse(parsed);
-};
-
-const writeStore = async (store: VerificationStoreFile) => {
-  await writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
-};
-
-const sortByUpdatedAtDesc = (records: VerificationRecord[]) =>
-  [...records].sort(
-    (left, right) =>
-      new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
-  );
-
-const buildBuckets = (counts: Map<string, number>, limit = 6) =>
-  [...counts.entries()]
-    .map(([label, count]) => ({ label, count }))
-    .sort((left, right) => {
-      if (right.count !== left.count) {
-        return right.count - left.count;
-      }
-
-      return left.label.localeCompare(right.label, "ko");
-    })
-    .slice(0, limit);
-
-const incrementBucket = (counts: Map<string, number>, value: string) => {
-  const label = value.trim();
-
-  if (!label) {
-    return;
-  }
-
-  counts.set(label, (counts.get(label) ?? 0) + 1);
-};
-
-const requireVerification = (
-  records: VerificationRecord[],
-  verificationId: string,
-) => {
-  const verification = records.find(
-    (item) => item.verificationId === verificationId,
-  );
-
-  if (!verification) {
-    throw new Error("해당 검증 세션을 찾을 수 없습니다.");
-  }
-
-  return verification;
-};
-
-export const createVerificationRecord = async (
+const createVerificationRecordImpl = (
   input: GenerateQuestionSetRequest,
   questionSet: VerificationRecord["questionSet"],
 ) =>
-  queueStoreOperation(async () => {
-    const store = await readStore();
-    const now = new Date().toISOString();
+  hasDatabaseUrl()
+    ? createVerificationRecordFromNeon(input, questionSet)
+    : createVerificationRecordFromFile(input, questionSet);
 
-    const verification = VerificationRecordSchema.parse({
-      verificationId: randomUUID(),
-      createdAt: now,
-      updatedAt: now,
-      ...input,
-      questionSet,
-      activity: [
-        {
-          type: "question_generated",
-          recordedAt: now,
-          message: "질문 세트를 생성하고 검증 세션을 시작했습니다.",
-        },
-      ],
-    });
-
-    store.verifications.unshift(verification);
-    await writeStore(store);
-
-    return verification;
-  });
-
-export const saveAnalysisForVerification = async (
+const saveAnalysisForVerificationImpl = (
   input: AnalyzeUnderstandingStoredRequest,
   analysisReport: AnalysisReport,
 ) =>
-  queueStoreOperation(async () => {
-    const store = await readStore();
-    const verification = requireVerification(store.verifications, input.verificationId);
-    const now = new Date().toISOString();
+  hasDatabaseUrl()
+    ? saveAnalysisForVerificationFromNeon(input, analysisReport)
+    : saveAnalysisForVerificationFromFile(input, analysisReport);
 
-    verification.updatedAt = now;
-    verification.questionSet = input.questionSet;
-    verification.studentAnswers = input.studentAnswers;
-    verification.analysisReport = analysisReport;
-    verification.teacherDecision = undefined;
-    verification.activity.push({
-      type: "analysis_saved",
-      recordedAt: now,
-      message: `분석 결과를 저장했습니다. 분류: ${analysisReport.classification}`,
-    });
-
-    await writeStore(store);
-
-    return VerificationRecordSchema.parse(verification);
-  });
-
-export const saveTeacherDecisionForVerification = async (
+const saveTeacherDecisionForVerificationImpl = (
   verificationId: string,
   decisionInput: TeacherDecisionInput,
 ) =>
-  queueStoreOperation(async () => {
-    const store = await readStore();
-    const verification = requireVerification(store.verifications, verificationId);
-    const now = new Date().toISOString();
+  hasDatabaseUrl()
+    ? saveTeacherDecisionForVerificationFromNeon(verificationId, decisionInput)
+    : saveTeacherDecisionForVerificationFromFile(verificationId, decisionInput);
 
-    const teacherDecision: TeacherDecision = {
-      decision: decisionInput.decision,
-      notes: decisionInput.notes,
-      decidedAt: now,
-    };
+const listVerificationRecordsImpl = () =>
+  hasDatabaseUrl()
+    ? listVerificationRecordsFromNeon()
+    : listVerificationRecordsFromFile();
 
-    verification.updatedAt = now;
-    verification.teacherDecision = teacherDecision;
-    verification.activity.push({
-      type: "teacher_decision_saved",
-      recordedAt: now,
-      message: `교사 최종 판단을 저장했습니다. 결정: ${decisionInput.decision}`,
-    });
+const getOperatorSummaryImpl = () =>
+  hasDatabaseUrl() ? getOperatorSummaryFromNeon() : getOperatorSummaryFromFile();
 
-    await writeStore(store);
+const exportVerificationsAsJsonImpl = () =>
+  hasDatabaseUrl()
+    ? exportVerificationsAsJsonFromNeon()
+    : exportVerificationsAsJsonFromFile();
 
-    return VerificationRecordSchema.parse(verification);
-  });
+const exportVerificationsAsCsvImpl = () =>
+  hasDatabaseUrl()
+    ? exportVerificationsAsCsvFromNeon()
+    : exportVerificationsAsCsvFromFile();
 
-export const listVerificationRecords = async () => {
-  const store = await readStore();
-
-  return sortByUpdatedAtDesc(store.verifications);
-};
-
-export const getOperatorSummary = async (): Promise<OperatorSummary> => {
-  const records = await listVerificationRecords();
-
-  const classificationCounts = new Map<string, number>();
-  const teacherDecisionCounts = new Map<string, number>();
-  const missingConceptCounts = new Map<string, number>();
-  const misconceptionCounts = new Map<string, number>();
-
-  for (const record of records) {
-    if (record.analysisReport) {
-      incrementBucket(classificationCounts, record.analysisReport.classification);
-
-      for (const missingConcept of record.analysisReport.conceptCoverage
-        .missingConcepts) {
-        incrementBucket(missingConceptCounts, missingConcept);
-      }
-
-      for (const misconception of record.analysisReport.misconceptionLabels) {
-        incrementBucket(misconceptionCounts, misconception);
-      }
-    }
-
-    if (record.teacherDecision) {
-      incrementBucket(teacherDecisionCounts, record.teacherDecision.decision);
-    }
-  }
-
-  return {
-    generatedAt: new Date().toISOString(),
-    totalVerifications: records.length,
-    analyzedVerifications: records.filter((record) => Boolean(record.analysisReport))
-      .length,
-    teacherDecisions: records.filter((record) => Boolean(record.teacherDecision))
-      .length,
-    classificationCounts: buildBuckets(classificationCounts),
-    teacherDecisionCounts: buildBuckets(teacherDecisionCounts),
-    topMissingConcepts: buildBuckets(missingConceptCounts),
-    topMisconceptions: buildBuckets(misconceptionCounts),
-    recentVerifications: records.slice(0, 8).map((record) => ({
-      verificationId: record.verificationId,
-      assignmentTitle: record.assignmentTitle,
-      updatedAt: record.updatedAt,
-      classification: record.analysisReport?.classification,
-      teacherDecision: record.teacherDecision?.decision,
-    })),
-  };
-};
-
-export const exportVerificationsAsJson = async () => listVerificationRecords();
-
-const csvEscape = (value: string) => `"${value.replaceAll('"', '""')}"`;
-
-export const exportVerificationsAsCsv = async () => {
-  const records = await listVerificationRecords();
-
-  const header = [
-    "verification_id",
-    "assignment_title",
-    "created_at",
-    "updated_at",
-    "classification",
-    "confidence_band",
-    "teacher_decision",
-    "missing_concepts",
-    "misconception_labels",
-    "teacher_notes",
-  ];
-
-  const rows = records.map((record) => [
-    record.verificationId,
-    record.assignmentTitle,
-    record.createdAt,
-    record.updatedAt,
-    record.analysisReport?.classification ?? "",
-    record.analysisReport?.confidenceBand ?? "",
-    record.teacherDecision?.decision ?? "",
-    record.analysisReport?.conceptCoverage.missingConcepts.join(" | ") ?? "",
-    record.analysisReport?.misconceptionLabels.join(" | ") ?? "",
-    record.teacherDecision?.notes ?? "",
-  ]);
-
-  return [header, ...rows]
-    .map((row) => row.map((value) => csvEscape(value)).join(","))
-    .join("\n");
-};
+export const createVerificationRecord = createVerificationRecordImpl;
+export const saveAnalysisForVerification = saveAnalysisForVerificationImpl;
+export const saveTeacherDecisionForVerification =
+  saveTeacherDecisionForVerificationImpl;
+export const listVerificationRecords = listVerificationRecordsImpl;
+export const getOperatorSummary = getOperatorSummaryImpl;
+export const exportVerificationsAsJson = exportVerificationsAsJsonImpl;
+export const exportVerificationsAsCsv = exportVerificationsAsCsvImpl;
+export const usingManagedDatabase = hasDatabaseUrl;
