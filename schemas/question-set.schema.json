@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "question-set.schema.json",
+  "title": "QuestionSet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "questionSetId",
+    "generatedAt",
+    "promptVersion",
+    "modelVersion",
+    "questions",
+    "overallStrategy"
+  ],
+  "properties": {
+    "questionSetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "promptVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overallStrategy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cautionNotes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "question",
+          "intent",
+          "targetConcepts",
+          "riskSignals"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "why",
+              "transfer",
+              "counterexample"
+            ]
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "intent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targetConcepts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "riskSignals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "why"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "transfer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "counterexample"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "teacher-decision.schema.json",
+  "title": "TeacherDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision",
+    "notes",
+    "decidedAt"
+  ],
+  "properties": {
+    "decision": {
+      "type": "string",
+      "enum": [
+        "approved_understanding",
+        "needs_followup",
+        "manual_review_required"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

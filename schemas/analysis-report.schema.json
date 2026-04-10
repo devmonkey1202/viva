@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analysis-report.schema.json",
+  "title": "AnalysisReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "analysisId",
+    "generatedAt",
+    "promptVersion",
+    "modelVersion",
+    "classification",
+    "confidenceBand",
+    "semanticAlignment",
+    "conceptCoverage",
+    "transferAbility",
+    "contradictionCheck",
+    "misconceptionLabels",
+    "teacherSummary",
+    "reteachingPoints",
+    "riskFlags"
+  ],
+  "properties": {
+    "analysisId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "promptVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "sufficient_understanding",
+        "surface_memorization",
+        "submission_dependency",
+        "core_misconception",
+        "uncertain"
+      ]
+    },
+    "confidenceBand": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "semanticAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "aligned",
+            "partially_aligned",
+            "misaligned"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "conceptCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coveredConcepts",
+        "missingConcepts"
+      ],
+      "properties": {
+        "coveredConcepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingConcepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "transferAbility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "strong",
+            "partial",
+            "weak",
+            "unclear"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contradictionCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "contradictions"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "minor",
+            "major"
+          ]
+        },
+        "contradictions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "submissionClaim",
+              "answerClaim",
+              "explanation"
+            ],
+            "properties": {
+              "submissionClaim": {
+                "type": "string"
+              },
+              "answerClaim": {
+                "type": "string"
+              },
+              "explanation": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "misconceptionLabels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "teacherSummary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reteachingPoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "riskFlags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
