@@ -11,6 +11,7 @@ import {
   createVerificationRecordFromFile,
   exportVerificationsAsCsvFromFile,
   exportVerificationsAsJsonFromFile,
+  getVerificationRecordFromFile,
   getOperatorSummaryFromFile,
   listVerificationRecordsFromFile,
   saveAnalysisForVerificationFromFile,
@@ -20,6 +21,7 @@ import {
   createVerificationRecordFromNeon,
   exportVerificationsAsCsvFromNeon,
   exportVerificationsAsJsonFromNeon,
+  getVerificationRecordFromNeon,
   getOperatorSummaryFromNeon,
   listVerificationRecordsFromNeon,
   saveAnalysisForVerificationFromNeon,
@@ -52,6 +54,11 @@ const saveTeacherDecisionForVerificationImpl = (
     ? saveTeacherDecisionForVerificationFromNeon(verificationId, decisionInput)
     : saveTeacherDecisionForVerificationFromFile(verificationId, decisionInput);
 
+const getVerificationRecordImpl = (verificationId: string) =>
+  hasDatabaseUrl()
+    ? getVerificationRecordFromNeon(verificationId)
+    : getVerificationRecordFromFile(verificationId);
+
 const listVerificationRecordsImpl = () =>
   hasDatabaseUrl()
     ? listVerificationRecordsFromNeon()
@@ -74,6 +81,7 @@ export const createVerificationRecord = createVerificationRecordImpl;
 export const saveAnalysisForVerification = saveAnalysisForVerificationImpl;
 export const saveTeacherDecisionForVerification =
   saveTeacherDecisionForVerificationImpl;
+export const getVerificationRecord = getVerificationRecordImpl;
 export const listVerificationRecords = listVerificationRecordsImpl;
 export const getOperatorSummary = getOperatorSummaryImpl;
 export const exportVerificationsAsJson = exportVerificationsAsJsonImpl;

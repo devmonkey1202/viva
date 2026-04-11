@@ -208,6 +208,14 @@ export const VerificationRecordSchema = VerificationInputSchema.extend({
 
 export type VerificationRecord = z.infer<typeof VerificationRecordSchema>;
 
+export const GetVerificationResponseSchema = z.object({
+  verification: VerificationRecordSchema,
+});
+
+export type GetVerificationResponse = z.infer<
+  typeof GetVerificationResponseSchema
+>;
+
 export const OperatorSummaryBucketSchema = z.object({
   label: z.string().min(1),
   count: z.number().int().nonnegative(),

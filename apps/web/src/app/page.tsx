@@ -1,207 +1,176 @@
 import Link from "next/link";
 
+import { AppHeader } from "@/components/app-header";
 import { StatusBadge } from "@/components/status-badge";
+import { MetricCard, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 
 const principles = [
   {
-    index: "01",
-    title: "질문이 학생마다 달라야 한다",
-    body: "VIVA는 고정 문제 세트가 아니라 제출물과 루브릭을 함께 읽고, 왜형·전이형·반례형 질문을 새로 구성합니다.",
+    title: "제출물마다 다른 질문이 만들어집니다.",
+    body: "고정 질문 세트가 아니라 제출물, 루브릭, 위험 포인트를 함께 읽고 왜형·전이형·반례형 질문을 생성합니다.",
   },
   {
-    index: "02",
-    title: "점수보다 증거가 먼저 와야 한다",
-    body: "결과는 점수 한 줄이 아니라 누락 개념, 충돌 문장, 재설명 포인트, 교사용 요약으로 제시됩니다.",
+    title: "점수보다 근거가 먼저 보입니다.",
+    body: "빠진 개념, 충돌 문장, 재설명 포인트, 위험 신호가 구조화되어 교사가 바로 판단할 수 있습니다.",
   },
   {
-    index: "03",
-    title: "교사가 최종 판단을 가져야 한다",
-    body: "AI는 자동 채점자가 아니라 검증 엔진입니다. 최종 판단과 피드백 책임은 언제나 교사에게 남깁니다.",
+    title: "최종 판단은 교사가 가져갑니다.",
+    body: "VIVA는 자동 채점기가 아니라 검증 레이어입니다. 판단 책임은 AI가 아니라 교사에게 남겨둡니다.",
   },
 ];
 
-const tracks = [
-  {
-    label: "Teacher Track",
-    title: "교사는 제출 이후의 이해 붕괴 지점을 빠르게 잡습니다.",
-    body: "과제와 루브릭을 넣고, 학생 제출물을 기준으로 검증 질문을 생성한 뒤, 답변을 근거 중심으로 읽습니다.",
-    href: "/teacher",
-    action: "교사 워크벤치",
-  },
-  {
-    label: "Operator Track",
-    title: "운영자는 반복 오개념과 후속 개입 지점을 봅니다.",
-    body: "개별 세션을 넘어 반과 과정 단위의 누락 개념, 오개념, 교사 판단 분포를 요약해서 확인합니다.",
-    href: "/operator",
-    action: "운영자 요약",
-  },
+const steps = [
+  "교사가 과제, 루브릭, 제출물을 정리합니다.",
+  "VIVA가 학생별 질문 3개를 생성합니다.",
+  "학생은 짧고 분명하게 답변합니다.",
+  "제출물, 질문, 답변, 루브릭을 함께 비교합니다.",
+  "교사는 근거를 보고 최종 판단합니다.",
 ];
 
-const flow = [
-  "과제와 루브릭 등록",
-  "제출물 기반 질문 3개 생성",
-  "학생의 짧은 답변 수집",
-  "제출물·질문·답변 삼자 비교",
-  "교사 최종 판단 및 export",
+const roles = [
+  {
+    label: "교강사",
+    title: "질문 생성과 최종 판단을 맡습니다.",
+    body: "과제 기준을 넣고, 학생별 질문을 생성한 뒤, 근거와 충돌 지점을 보고 최종 판단을 저장합니다.",
+    action: { href: "/teacher", label: "교사용 화면" },
+  },
+  {
+    label: "학생",
+    title: "짧은 답변으로 이해를 설명합니다.",
+    body: "별도 학생 화면에서 질문 3개에 답합니다. 길게 쓰는 것보다 이유와 조건을 분명히 말하는 것이 중요합니다.",
+  },
+  {
+    label: "운영자",
+    title: "반복되는 오개념을 봅니다.",
+    body: "분석 분포, 교사 판단 분포, 자주 빠지는 개념, 반복 오개념 패턴을 한 화면에서 확인합니다.",
+    action: { href: "/operator", label: "운영 요약" },
+  },
 ];
 
 export default function Home() {
   return (
-    <main className="viva-page py-4 sm:py-6">
-      <section className="viva-panel viva-reveal-1 rounded-[2rem] px-6 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-        <div className="grid gap-8 xl:grid-cols-[1.22fr_0.78fr]">
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="viva-kicker">
-                <span className="viva-signal-dot" />
-                viva voce verification
-              </span>
-              <StatusBadge tone="neutral">AI 시대 교육 검증 레이어</StatusBadge>
-            </div>
+    <main className="app-shell">
+      <AppHeader
+        current="landing"
+        utility={
+          <Link href="/teacher" className="button button--ghost button--compact">
+            교사용 화면
+          </Link>
+        }
+      />
 
-            <div className="space-y-5">
-              <p className="viva-caption">Submission Aftercare</p>
-              <h1 className="viva-display max-w-5xl text-[3.2rem] text-[var(--foreground)] sm:text-[4.2rem] lg:text-[5.5rem]">
-                결과물이 아니라
-                <br />
-                <span className="text-[var(--accent)]">이해의 증거</span>를
-                남깁니다.
-              </h1>
-              <p className="max-w-3xl text-base leading-8 text-[rgba(24,20,17,0.74)] sm:text-lg">
-                VIVA는 LMS도, AI 튜터도, AI 탐지기도 아닙니다. 제출 이후에
-                학생이 정말로 이해했는지를 짧고 정교한 검증 흐름으로 드러내는
-                교육용 검증 시스템입니다.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link href="/teacher" className="viva-button-primary">
-                교사 워크벤치 열기
+      <div className="page-stack">
+        <PageIntro
+          eyebrow="Submission Verification Layer"
+          title="결과물이 아니라 이해를 다시 확인합니다."
+          description="VIVA는 제출 이후 학생이 내용을 실제로 이해했는지 검증하는 교육 평가 레이어입니다. LMS도, AI 튜터도, AI 탐지기도 아니라 교사의 판단 속도를 높이는 검증 도구입니다."
+          actions={
+            <div className="button-row">
+              <Link href="/teacher" className="button button--primary">
+                교사용 워크벤치
               </Link>
-              <Link href="/operator" className="viva-button-secondary">
-                운영자 대시보드 열기
+              <Link href="/operator" className="button button--secondary">
+                운영 요약 보기
               </Link>
             </div>
+          }
+          meta={
+            <div className="metric-grid metric-grid--compact">
+              <MetricCard label="질문 구조" value="3문항" note="왜형 · 전이형 · 반례형" />
+              <MetricCard label="판정 구조" value="AI + 교사" note="AI는 근거를 정리하고 교사가 결정" />
+              <MetricCard label="산출" value="CSV / JSON" note="운영 요약과 세션 export 지원" />
+            </div>
+          }
+        />
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: "질문 축", value: "3 types" },
-                { label: "판정 구조", value: "AI + Teacher" },
-                { label: "내보내기", value: "JSON / CSV" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="viva-stat rounded-[1.5rem] px-4 py-4"
-                >
-                  <p className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-[rgba(24,20,17,0.52)]">
-                    {item.label}
-                  </p>
-                  <p className="mt-3 text-2xl font-semibold text-[var(--foreground)]">
-                    {item.value}
-                  </p>
-                </div>
+        <div className="landing-grid">
+          <SurfaceCard
+            tone="muted"
+            eyebrow="What VIVA Is Not"
+            title="학습 플랫폼을 하나 더 만드는 프로젝트가 아닙니다."
+            description="과제 제출 이후에 생기는 판단 공백, 즉 '이 학생이 정말 이해했는가'를 다루는 검증 레이어입니다."
+          >
+            <div className="token-row">
+              {["LMS 아님", "AI 튜터 아님", "AI 탐지기 아님"].map((item) => (
+                <span key={item} className="token-chip">
+                  {item}
+                </span>
               ))}
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="grid gap-4">
-            <article className="viva-panel-soft rounded-[1.8rem] px-5 py-5">
-              <p className="viva-caption">Core Promise</p>
-              <div className="mt-4 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
-                  <p className="text-sm leading-7 text-[rgba(24,20,17,0.74)]">
-                    학생별 제출물에 맞는 질문을 생성합니다.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--signal)]" />
-                  <p className="text-sm leading-7 text-[rgba(24,20,17,0.74)]">
-                    답변을 근거 중심으로 구조화해 교사가 읽기 쉽게 보여줍니다.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--gold)]" />
-                  <p className="text-sm leading-7 text-[rgba(24,20,17,0.74)]">
-                    운영자는 누적 결과에서 반복 오개념과 후속 개입 포인트를
-                    확인합니다.
-                  </p>
-                </div>
-              </div>
-            </article>
-
-            <article className="viva-grid-rule rounded-[1.8rem] px-5 py-5">
-              <p className="viva-caption">Flow</p>
-              <div className="mt-4 grid gap-4">
-                {flow.map((item, index) => (
-                  <div key={item} className="grid grid-cols-[auto_1fr] gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(125,46,42,0.2)] bg-[rgba(125,46,42,0.08)] text-sm font-extrabold text-[var(--accent)]">
-                        {index + 1}
-                      </div>
-                      {index < flow.length - 1 ? (
-                        <div className="mt-2 h-full w-px bg-[rgba(44,32,19,0.16)]" />
-                      ) : null}
-                    </div>
-                    <p className="pb-4 text-sm leading-7 text-[rgba(24,20,17,0.72)]">
-                      {item}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
+          <SurfaceCard
+            tone="accent"
+            eyebrow="What VIVA Does"
+            title="교사가 더 빠르게, 더 근거 있게 판단하게 만듭니다."
+            description="질문 생성, 답변 수집, 분석, 오개념 패턴 요약까지 연결해 판단의 근거와 운영 인사이트를 함께 만듭니다."
+          >
+            <div className="badge-row">
+              <StatusBadge tone="accent">검증 질문 생성</StatusBadge>
+              <StatusBadge tone="info">근거 구조화</StatusBadge>
+              <StatusBadge tone="success">교사 최종 판단</StatusBadge>
+            </div>
+          </SurfaceCard>
         </div>
-      </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        {principles.map((item, index) => (
-          <article
-            key={item.index}
-            className={`viva-panel rounded-[1.8rem] px-5 py-6 viva-reveal-${Math.min(
-              index + 1,
-              3,
-            )}`}
-          >
-            <p className="viva-caption">{item.index}</p>
-            <h2 className="mt-4 text-[1.6rem] font-semibold leading-tight text-[var(--foreground)]">
-              {item.title}
+        <section className="section-stack">
+          <div className="section-block__heading">
+            <p className="eyebrow">Design Principle</p>
+            <h2 className="section-headline">
+              판단이 빨라지는 구조가 먼저 보여야 합니다.
             </h2>
-            <p className="mt-4 text-sm leading-7 text-[rgba(24,20,17,0.72)]">
-              {item.body}
-            </p>
-          </article>
-        ))}
-      </section>
+          </div>
+          <div className="landing-card-grid">
+            {principles.map((item) => (
+              <SurfaceCard key={item.title} title={item.title}>
+                <p className="body-copy">{item.body}</p>
+              </SurfaceCard>
+            ))}
+          </div>
+        </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        {tracks.map((item, index) => (
-          <article
-            key={item.label}
-            className={`viva-panel rounded-[1.9rem] px-6 py-6 viva-reveal-${Math.min(
-              index + 2,
-              3,
-            )}`}
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <StatusBadge tone={index === 0 ? "accent" : "success"}>
-                {item.label}
-              </StatusBadge>
-            </div>
-            <h2 className="mt-5 max-w-2xl text-[2rem] font-semibold leading-tight text-[var(--foreground)]">
-              {item.title}
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[rgba(24,20,17,0.72)]">
-              {item.body}
-            </p>
-            <div className="mt-6">
-              <Link href={item.href} className="viva-button-ghost">
-                {item.action}
-              </Link>
-            </div>
-          </article>
-        ))}
-      </section>
+        <section className="section-stack">
+          <div className="section-block__heading">
+            <p className="eyebrow">Workflow</p>
+            <h2 className="section-headline">실제 사용 흐름은 다섯 단계로 끝납니다.</h2>
+          </div>
+          <div className="step-list">
+            {steps.map((step, index) => (
+              <div key={step} className="step-list__item">
+                <span className="step-list__index">{index + 1}</span>
+                <p className="body-copy">{step}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-stack">
+          <div className="section-block__heading">
+            <p className="eyebrow">Surfaces</p>
+            <h2 className="section-headline">사용자마다 보는 화면의 목적이 다릅니다.</h2>
+          </div>
+          <div className="landing-card-grid">
+            {roles.map((role) => (
+              <SurfaceCard
+                key={role.label}
+                eyebrow={role.label}
+                title={role.title}
+                description={role.body}
+              >
+                {role.action ? (
+                  <Link href={role.action.href} className="button button--ghost">
+                    {role.action.label}
+                  </Link>
+                ) : (
+                  <p className="helper-text">
+                    학생 화면은 교사가 생성한 세션 링크로 진입합니다.
+                  </p>
+                )}
+              </SurfaceCard>
+            ))}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

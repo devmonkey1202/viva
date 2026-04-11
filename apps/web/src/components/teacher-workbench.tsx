@@ -1,65 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useState, useTransition } from "react";
 
+import { AppHeader } from "@/components/app-header";
 import { StatusBadge } from "@/components/status-badge";
+import {
+  EmptyState,
+  Field,
+  MetricCard,
+  PageIntro,
+  SurfaceCard,
+} from "@/components/ui-blocks";
 import { demoAnswerDraft, demoVerificationInput } from "@/lib/demo-data";
+import {
+  analysisClassificationMeta,
+  buildStudentVerificationPath,
+  buildStudentVerificationUrl,
+  formatDateTime,
+  formatQuestionType,
+  teacherDecisionMeta,
+} from "@/lib/presentation";
 import type {
   AnalysisReport,
   AnalyzeUnderstandingResponse,
   AnalyzeUnderstandingStoredRequest,
   GenerateQuestionSetResponse,
+  GetVerificationResponse,
   QuestionSet,
   QuestionType,
   SaveTeacherDecisionResponse,
   TeacherDecision,
   TeacherDecisionInput,
+  VerificationActivity,
 } from "@/lib/schemas";
 
 type TeacherWorkbenchProps = {
   aiConfigured: boolean;
   managedDatabase: boolean;
-};
-
-const classificationMeta: Record<
-  AnalysisReport["classification"],
-  { label: string; tone: "success" | "warning" | "danger" | "info"; note: string }
-> = {
-  sufficient_understanding: {
-    label: "이해 충분",
-    tone: "success",
-    note: "핵심 개념과 전이 설명이 전반적으로 일관됩니다.",
-  },
-  surface_memorization: {
-    label: "표면 암기",
-    tone: "warning",
-    note: "용어는 맞지만 구조적 이해의 증거가 약합니다.",
-  },
-  submission_dependency: {
-    label: "제출물 의존",
-    tone: "warning",
-    note: "제출물 표현에 기대고 있어 독립적 설명이 부족합니다.",
-  },
-  core_misconception: {
-    label: "핵심 오개념",
-    tone: "danger",
-    note: "루브릭의 핵심 개념을 잘못 이해했을 가능성이 높습니다.",
-  },
-  uncertain: {
-    label: "불확실",
-    tone: "info",
-    note: "추가 질문이나 교사 판단이 더 필요합니다.",
-  },
-};
-
-const teacherDecisionMeta: Record<
-  TeacherDecision["decision"],
-  { label: string; tone: "success" | "warning" | "danger" }
-> = {
-  approved_understanding: { label: "이해 승인", tone: "success" },
-  needs_followup: { label: "후속 확인 필요", tone: "warning" },
-  manual_review_required: { label: "수동 검토 필요", tone: "danger" },
 };
 
 const teacherDecisionOptions = Object.entries(teacherDecisionMeta) as Array<
@@ -83,72 +61,36 @@ const parseMultilineInput = (value: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-const formatQuestionType = (type: QuestionType) => {
-  switch (type) {
-    case "why":
-      return "왜형";
-    case "transfer":
-      return "전이형";
-    case "counterexample":
-      return "반례형";
-  }
-};
+const answersFromPairs = (
+  answers: Array<{ type: QuestionType; answer: string }> | undefined,
+) => ({
+  why: answers?.find((item) => item.type === "why")?.answer ?? "",
+  transfer: answers?.find((item) => item.type === "transfer")?.answer ?? "",
+  counterexample:
+    answers?.find((item) => item.type === "counterexample")?.answer ?? "",
+});
 
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-
-function SectionCard({
-  eyebrow,
+function DetailList({
   title,
-  description,
-  action,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="viva-panel rounded-[1.85rem] px-5 py-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="viva-caption">{eyebrow}</p>
-          <h2 className="mt-2 text-[1.7rem] font-semibold leading-tight text-[var(--foreground)]">
-            {title}
-          </h2>
-          {description ? (
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[rgba(24,20,17,0.68)]">
-              {description}
-            </p>
-          ) : null}
-        </div>
-        {action}
-      </div>
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-}
-
-function ListBlock({
-  eyebrow,
   items,
   emptyText,
 }: {
-  eyebrow: string;
+  title: string;
   items: string[];
   emptyText: string;
 }) {
   return (
-    <div className="viva-grid-rule rounded-[1.45rem] px-4 py-4">
-      <p className="viva-caption">{eyebrow}</p>
-      <ul className="mt-4 grid gap-2 text-sm leading-7 text-[rgba(24,20,17,0.74)]">
-        {items.length > 0 ? items.map((item) => <li key={item}>• {item}</li>) : <li>• {emptyText}</li>}
-      </ul>
+    <div className="detail-list">
+      <p className="detail-list__title">{title}</p>
+      {items.length > 0 ? (
+        <ul className="detail-list__items">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="helper-text">{emptyText}</p>
+      )}
     </div>
   );
 }
@@ -177,18 +119,27 @@ export function TeacherWorkbench({
     null,
   );
   const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [teacherDecision, setTeacherDecision] = useState<TeacherDecision | null>(null);
+  const [teacherDecision, setTeacherDecision] = useState<TeacherDecision | null>(
+    null,
+  );
   const [decisionDraft, setDecisionDraft] =
     useState<TeacherDecisionInput>(initialDecisionState);
   const [answers, setAnswers] =
     useState<Record<QuestionType, string>>(initialAnswerState);
+  const [activity, setActivity] = useState<VerificationActivity[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [clientOrigin, setClientOrigin] = useState("");
   const [activeAction, setActiveAction] = useState<
-    "questions" | "analysis" | "decision" | null
+    "questions" | "analysis" | "decision" | "sync" | null
   >(null);
   const [isPending, startTransition] = useTransition();
 
   const deferredSubmissionText = useDeferredValue(submissionText);
+
+  useEffect(() => {
+    setClientOrigin(window.location.origin);
+  }, []);
 
   const verificationInput = {
     assignmentTitle,
@@ -196,6 +147,84 @@ export function TeacherWorkbench({
     rubricCoreConcepts: parseMultilineInput(rubricConcepts),
     rubricRiskPoints: parseMultilineInput(riskPoints),
     submissionText,
+  };
+
+  const studentPath = verificationId
+    ? buildStudentVerificationPath(verificationId)
+    : null;
+  const studentUrl =
+    verificationId && clientOrigin
+      ? buildStudentVerificationUrl(clientOrigin, verificationId)
+      : "";
+
+  const completionCount = Object.values(answers).filter(
+    (value) => value.trim().length > 0,
+  ).length;
+
+  const sessionStatus = teacherDecision
+    ? "교사 판단 완료"
+    : analysisReport
+      ? "근거 검토 가능"
+      : questionSet
+        ? "학생 응답 대기"
+        : "세션 준비 중";
+
+  const syncLatestVerification = () => {
+    if (!verificationId) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setCopyMessage(null);
+    setActiveAction("sync");
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const response = await fetch(`/api/verifications/${verificationId}`, {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            const error = (await response.json()) as { message?: string };
+            throw new Error(error.message ?? "세션을 불러오지 못했습니다.");
+          }
+
+          const payload = (await response.json()) as GetVerificationResponse;
+          const verification = payload.verification;
+
+          setAssignmentTitle(verification.assignmentTitle);
+          setAssignmentDescription(verification.assignmentDescription);
+          setRubricConcepts(verification.rubricCoreConcepts.join("\n"));
+          setRiskPoints(verification.rubricRiskPoints.join("\n"));
+          setSubmissionText(verification.submissionText);
+          setQuestionSet(verification.questionSet);
+          setAnalysisReport(verification.analysisReport ?? null);
+          setTeacherDecision(verification.teacherDecision ?? null);
+          setAnswers(answersFromPairs(verification.studentAnswers));
+          setActivity(verification.activity);
+          setDecisionDraft(
+            verification.teacherDecision
+              ? {
+                  decision: verification.teacherDecision.decision,
+                  notes: verification.teacherDecision.notes,
+                }
+              : {
+                  decision: "approved_understanding",
+                  notes: verification.analysisReport?.teacherSummary ?? "",
+                },
+          );
+        } catch (error) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "세션 동기화 중 오류가 발생했습니다.",
+          );
+        } finally {
+          setActiveAction(null);
+        }
+      })();
+    });
   };
 
   const resetToDemo = () => {
@@ -210,19 +239,14 @@ export function TeacherWorkbench({
     setTeacherDecision(null);
     setDecisionDraft(initialDecisionState);
     setAnswers(initialAnswerState);
+    setActivity([]);
     setErrorMessage(null);
-  };
-
-  const loadDemoAnswers = () => {
-    setAnswers({
-      why: demoAnswerDraft.why,
-      transfer: demoAnswerDraft.transfer,
-      counterexample: demoAnswerDraft.counterexample,
-    });
+    setCopyMessage(null);
   };
 
   const generateQuestions = () => {
     setErrorMessage(null);
+    setCopyMessage(null);
     setActiveAction("questions");
 
     startTransition(() => {
@@ -246,9 +270,18 @@ export function TeacherWorkbench({
           setTeacherDecision(null);
           setDecisionDraft(initialDecisionState);
           setAnswers(initialAnswerState);
+          setActivity([
+            {
+              type: "question_generated",
+              recordedAt: payload.questionSet.generatedAt,
+              message: "질문 세트를 생성하고 학생 응답 링크를 준비했습니다.",
+            },
+          ]);
         } catch (error) {
           setErrorMessage(
-            error instanceof Error ? error.message : "질문 생성 중 오류가 발생했습니다.",
+            error instanceof Error
+              ? error.message
+              : "질문 생성 중 오류가 발생했습니다.",
           );
         } finally {
           setActiveAction(null);
@@ -257,31 +290,32 @@ export function TeacherWorkbench({
     });
   };
 
-  const runAnalysis = () => {
+  const runAnalysis = (answerDraft: Record<QuestionType, string>) => {
     if (!questionSet || !verificationId) {
       return;
     }
 
     setErrorMessage(null);
+    setCopyMessage(null);
     setActiveAction("analysis");
 
     startTransition(() => {
       void (async () => {
         try {
-          const analysisRequest: AnalyzeUnderstandingStoredRequest = {
+          const requestBody: AnalyzeUnderstandingStoredRequest = {
             verificationId,
             ...verificationInput,
             questionSet,
             studentAnswers: questionSet.questions.map((question) => ({
               type: question.type,
-              answer: answers[question.type].trim(),
+              answer: answerDraft[question.type].trim(),
             })),
           };
 
           const response = await fetch("/api/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(analysisRequest),
+            body: JSON.stringify(requestBody),
           });
 
           if (!response.ok) {
@@ -289,26 +323,46 @@ export function TeacherWorkbench({
             throw new Error(error.message ?? "이해 분석에 실패했습니다.");
           }
 
-          const result = (await response.json()) as AnalyzeUnderstandingResponse;
-          setVerificationId(result.verificationId);
-          setAnalysisReport(result.analysisReport);
+          const payload = (await response.json()) as AnalyzeUnderstandingResponse;
+          setAnalysisReport(payload.analysisReport);
           setTeacherDecision(null);
+          setActivity((current) => [
+            ...current,
+            {
+              type: "analysis_saved",
+              recordedAt: payload.analysisReport.generatedAt,
+              message: `학생 답변을 분석했습니다. 분류: ${analysisClassificationMeta[payload.analysisReport.classification].label}`,
+            },
+          ]);
           setDecisionDraft((current) => ({
             decision: current.decision,
             notes:
               current.notes.trim().length > 0
                 ? current.notes
-                : result.analysisReport.teacherSummary,
+                : payload.analysisReport.teacherSummary,
           }));
         } catch (error) {
           setErrorMessage(
-            error instanceof Error ? error.message : "이해 분석 중 오류가 발생했습니다.",
+            error instanceof Error
+              ? error.message
+              : "이해 분석 중 오류가 발생했습니다.",
           );
         } finally {
           setActiveAction(null);
         }
       })();
     });
+  };
+
+  const fillDemoAnswersAndAnalyze = () => {
+    const nextAnswers = {
+      why: demoAnswerDraft.why,
+      transfer: demoAnswerDraft.transfer,
+      counterexample: demoAnswerDraft.counterexample,
+    };
+
+    setAnswers(nextAnswers);
+    runAnalysis(nextAnswers);
   };
 
   const saveTeacherDecision = () => {
@@ -317,6 +371,7 @@ export function TeacherWorkbench({
     }
 
     setErrorMessage(null);
+    setCopyMessage(null);
     setActiveAction("decision");
 
     startTransition(() => {
@@ -337,11 +392,20 @@ export function TeacherWorkbench({
           }
 
           const payload = (await response.json()) as SaveTeacherDecisionResponse;
-          setVerificationId(payload.verificationId);
           setTeacherDecision(payload.teacherDecision);
+          setActivity((current) => [
+            ...current,
+            {
+              type: "teacher_decision_saved",
+              recordedAt: payload.teacherDecision.decidedAt,
+              message: `교사 최종 판단을 저장했습니다. 결정: ${teacherDecisionMeta[payload.teacherDecision.decision].label}`,
+            },
+          ]);
         } catch (error) {
           setErrorMessage(
-            error instanceof Error ? error.message : "교사 판단 저장 중 오류가 발생했습니다.",
+            error instanceof Error
+              ? error.message
+              : "교사 판단 저장 중 오류가 발생했습니다.",
           );
         } finally {
           setActiveAction(null);
@@ -350,305 +414,464 @@ export function TeacherWorkbench({
     });
   };
 
+  const copyStudentLink = async () => {
+    if (!studentUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(studentUrl);
+      setCopyMessage("학생 링크를 복사했습니다.");
+    } catch {
+      setCopyMessage("링크 복사에 실패했습니다. 직접 복사해 주세요.");
+    }
+  };
+
   return (
-    <main className="viva-page py-4 sm:py-6">
-      <section className="viva-panel viva-reveal-1 rounded-[2rem] px-6 py-6 sm:px-8 sm:py-8">
-        <div className="grid gap-8 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="viva-kicker">teacher hearing console</span>
+    <main className="app-shell">
+      <AppHeader
+        current="teacher"
+        utility={
+          <div className="button-row">
+            <Link href="/api/export?format=csv" className="button button--ghost button--compact">
+              CSV export
+            </Link>
+            <Link href="/operator" className="button button--ghost button--compact">
+              운영 요약
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="page-stack">
+        <PageIntro
+          eyebrow="Teacher Workbench"
+          title="과제 기준을 정리하고, 학생 이해를 검토합니다."
+          description="교사는 과제와 루브릭을 정리하고, 학생별 질문을 만든 뒤, 제출된 답변과 근거를 검토해 최종 판단을 남깁니다. 학생 응답 화면은 분리되고, 교사용 화면은 검토에 집중합니다."
+          actions={
+            <div className="button-row">
+              <button type="button" onClick={resetToDemo} className="button button--ghost">
+                데모 입력 불러오기
+              </button>
+              <button
+                type="button"
+                onClick={generateQuestions}
+                disabled={isPending}
+                className="button button--primary"
+              >
+                {activeAction === "questions" ? "질문 생성 중..." : "질문 생성"}
+              </button>
+            </div>
+          }
+          meta={
+            <div className="badge-row">
               <StatusBadge tone={aiConfigured ? "success" : "warning"}>
-                {aiConfigured ? "실제 AI 연결 가능" : "Mock fallback"}
+                {aiConfigured ? "실제 AI 연결" : "Mock fallback"}
               </StatusBadge>
               <StatusBadge tone={managedDatabase ? "success" : "warning"}>
                 {managedDatabase ? "Managed DB" : "Local store"}
               </StatusBadge>
+              <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
             </div>
-            <p className="viva-caption">Verification Workbench</p>
-            <h1 className="viva-display max-w-4xl text-[2.8rem] text-[var(--foreground)] sm:text-[4rem]">
-              교사는 순서를 따라가고,
-              <br />
-              <span className="text-[var(--accent)]">VIVA는 근거</span>를 만듭니다.
-            </h1>
-            <p className="max-w-3xl text-base leading-8 text-[rgba(24,20,17,0.72)]">
-              과제와 루브릭을 넣고 질문 생성과 분석을 실행하면 됩니다. 자동 채점이
-              아니라 검증 워크플로우를 구성하는 것이 이 화면의 목적입니다.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={resetToDemo} className="viva-button-ghost">
-                데모 입력값 불러오기
-              </button>
-              <Link href="/operator" className="viva-button-secondary">
-                운영자 요약 보기
-              </Link>
-              <Link href="/api/export?format=csv" className="viva-button-ghost">
-                CSV export
-              </Link>
-            </div>
-          </div>
+          }
+        />
 
-          <div className="grid gap-4">
-            <div className="viva-grid-rule rounded-[1.8rem] px-5 py-5">
-              <p className="viva-caption">Current Session</p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                {[
-                  ["세션 상태", verificationId ? "생성됨" : "대기 중"],
-                  ["분석 상태", analysisReport ? "완료" : "미실행"],
-                  ["교사 판단", teacherDecision ? "저장됨" : "미저장"],
-                ].map(([label, value]) => (
-                  <div key={label} className="viva-stat rounded-[1.45rem] px-4 py-4">
-                    <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-[rgba(24,20,17,0.52)]">
-                      {label}
-                    </p>
-                    <p className="mt-3 text-xl font-semibold text-[var(--foreground)]">
-                      {value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {verificationId ? (
-                <p className="mt-4 text-xs leading-6 text-[rgba(24,20,17,0.54)]">
-                  verification id: {verificationId}
-                </p>
-              ) : null}
-            </div>
-            <div className="viva-panel-soft rounded-[1.8rem] px-5 py-5">
-              <p className="viva-caption">Action Order</p>
-              <div className="mt-4 grid gap-3 text-sm leading-7 text-[rgba(24,20,17,0.72)]">
-                {["과제와 루브릭 입력", "질문 3개 생성", "학생 답변 입력", "이해 분석 실행", "교사 판단 저장"].map((item, index) => (
-                  <div key={item} className="grid grid-cols-[2rem_1fr] gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(125,46,42,0.18)] bg-[rgba(125,46,42,0.08)] text-xs font-extrabold text-[var(--accent)]">
-                      {index + 1}
-                    </div>
-                    <p className="pt-1">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {errorMessage ? (
-        <div className="viva-panel rounded-[1.6rem] border-[rgba(127,32,37,0.2)] bg-[rgba(127,32,37,0.06)] px-5 py-4 text-sm leading-7 text-[rgba(127,32,37,0.96)]">
-          {errorMessage}
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 xl:grid-cols-[0.94fr_1.06fr]">
-        <div className="grid gap-4">
-          <SectionCard
-            eyebrow="Assignment Setup"
-            title="과제와 루브릭 입력"
-            description="질문 생성과 분석의 기준이 되는 입력입니다."
-            action={<StatusBadge tone="neutral">교사 입력</StatusBadge>}
-          >
-            <div className="grid gap-4">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">과제 제목</span>
-                <input value={assignmentTitle} onChange={(event) => setAssignmentTitle(event.target.value)} className="viva-field" />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">과제 설명</span>
-                <textarea value={assignmentDescription} onChange={(event) => setAssignmentDescription(event.target.value)} rows={5} className="viva-textarea" />
-              </label>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">핵심 개념</span>
-                  <textarea value={rubricConcepts} onChange={(event) => setRubricConcepts(event.target.value)} rows={7} className="viva-textarea" />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">취약 포인트</span>
-                  <textarea value={riskPoints} onChange={(event) => setRiskPoints(event.target.value)} rows={7} className="viva-textarea" />
-                </label>
-              </div>
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            eyebrow="Submission Review"
-            title="학생 제출물"
-            description="질문은 이 제출물의 표현과 논리 구조를 기준으로 생성됩니다."
-            action={<StatusBadge tone="accent">제출 기반</StatusBadge>}
-          >
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">제출물 본문</span>
-              <textarea value={submissionText} onChange={(event) => setSubmissionText(event.target.value)} rows={13} className="viva-textarea" />
-            </label>
-            <div className="viva-grid-rule mt-4 rounded-[1.45rem] px-4 py-4">
-              <p className="viva-caption">Preview Focus</p>
-              <p className="mt-4 text-sm leading-8 text-[rgba(24,20,17,0.74)]">{deferredSubmissionText}</p>
-            </div>
-          </SectionCard>
+        <div className="metric-grid">
+          <MetricCard label="세션 상태" value={sessionStatus} note="질문 생성부터 교사 판단까지" />
+          <MetricCard label="질문 세트" value={questionSet ? "준비됨" : "미생성"} note="학생 응답 링크와 함께 공유" />
+          <MetricCard
+            label="응답 작성"
+            value={`${completionCount}/3`}
+            note="학생 화면 또는 시연용 자동 응답 기준"
+          />
         </div>
 
-        <div className="grid gap-4">
-          <SectionCard
-            eyebrow="Question Generation"
-            title="제출물 기반 질문 3개"
-            description="왜형, 전이형, 반례형 세 축을 분리해 검증합니다."
-            action={
-              <button type="button" onClick={generateQuestions} disabled={isPending} className="viva-button-primary">
-                {activeAction === "questions" ? "질문 생성 중..." : "질문 생성"}
-              </button>
-            }
-          >
-            {questionSet ? (
-              <div className="grid gap-4">
-                <div className="viva-panel-soft rounded-[1.45rem] px-4 py-4">
-                  <p className="viva-caption">Overall Strategy</p>
-                  <p className="mt-3 text-sm leading-7 text-[rgba(24,20,17,0.74)]">{questionSet.overallStrategy}</p>
-                </div>
-                {questionSet.questions.map((question) => (
-                  <article key={question.type} className="viva-grid-rule rounded-[1.45rem] px-4 py-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-[var(--foreground)]">{formatQuestionType(question.type)} 질문</h3>
-                      <StatusBadge tone="neutral">{question.type}</StatusBadge>
-                    </div>
-                    <p className="mt-4 text-sm leading-7 text-[rgba(24,20,17,0.82)]">{question.question}</p>
-                    <p className="mt-4 text-sm leading-7 text-[rgba(24,20,17,0.58)]">의도: {question.intent}</p>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="viva-grid-rule rounded-[1.45rem] px-4 py-6 text-sm leading-7 text-[rgba(24,20,17,0.62)]">
-                질문 생성 버튼을 누르면 왜형·전이형·반례형 질문이 표시됩니다.
-              </div>
-            )}
-          </SectionCard>
+        {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
+        {copyMessage ? <div className="inline-notice">{copyMessage}</div> : null}
 
-          <SectionCard
-            eyebrow="Student Response"
-            title="학생 답변 입력"
-            description="짧고 독립적인 설명으로 실제 이해를 확인합니다."
-            action={
-              <button type="button" onClick={loadDemoAnswers} disabled={!questionSet} className="viva-button-ghost">
-                데모 답변 채우기
-              </button>
-            }
-          >
-            {questionSet ? (
-              <div className="grid gap-4">
-                {questionSet.questions.map((question) => (
-                  <label key={question.type} className="grid gap-2">
-                    <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">{formatQuestionType(question.type)} 답변</span>
+        <div className="teacher-layout">
+          <div className="teacher-layout__main">
+            <SurfaceCard
+              eyebrow="1. Assignment Setup"
+              title="과제와 루브릭을 정리합니다."
+              description="질문과 분석은 아래 입력을 기준으로 작동합니다."
+            >
+              <div className="form-grid">
+                <Field label="과제 제목">
+                  <input
+                    value={assignmentTitle}
+                    onChange={(event) => setAssignmentTitle(event.target.value)}
+                    className="form-input"
+                  />
+                </Field>
+                <Field label="과제 설명">
+                  <textarea
+                    value={assignmentDescription}
+                    onChange={(event) => setAssignmentDescription(event.target.value)}
+                    rows={5}
+                    className="form-textarea"
+                  />
+                </Field>
+                <div className="split-grid">
+                  <Field
+                    label="핵심 개념"
+                    helper="한 줄에 하나씩 입력합니다."
+                  >
                     <textarea
-                      value={answers[question.type]}
-                      onChange={(event) => setAnswers((current) => ({ ...current, [question.type]: event.target.value }))}
-                      rows={4}
-                      className="viva-textarea"
+                      value={rubricConcepts}
+                      onChange={(event) => setRubricConcepts(event.target.value)}
+                      rows={7}
+                      className="form-textarea"
                     />
-                  </label>
-                ))}
-                <button type="button" onClick={runAnalysis} disabled={!questionSet || isPending} className="viva-button-secondary">
-                  {activeAction === "analysis" ? "이해 분석 중..." : "이해 분석 실행"}
+                  </Field>
+                  <Field
+                    label="위험 포인트"
+                    helper="학생이 흔히 틀리거나 혼동하는 지점을 적습니다."
+                  >
+                    <textarea
+                      value={riskPoints}
+                      onChange={(event) => setRiskPoints(event.target.value)}
+                      rows={7}
+                      className="form-textarea"
+                    />
+                  </Field>
+                </div>
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard
+              eyebrow="2. Submission"
+              title="학생 제출물을 검토 기준과 함께 둡니다."
+              description="질문은 제출물 표현과 설명 구조를 기준으로 만들어집니다."
+            >
+              <Field label="제출물 본문">
+                <textarea
+                  value={submissionText}
+                  onChange={(event) => setSubmissionText(event.target.value)}
+                  rows={14}
+                  className="form-textarea"
+                />
+              </Field>
+
+              <div className="preview-panel">
+                <p className="preview-panel__label">현재 제출물 미리보기</p>
+                <p className="preview-panel__body">{deferredSubmissionText}</p>
+              </div>
+            </SurfaceCard>
+          </div>
+
+          <div className="teacher-layout__side">
+            <SurfaceCard
+              eyebrow="3. Question Set"
+              title="학생별 질문 3개를 생성합니다."
+              description="왜형, 전이형, 반례형 질문으로 이해의 구조를 확인합니다."
+            >
+              {questionSet ? (
+                <div className="stack-grid">
+                  <div className="summary-box">
+                    <p className="summary-box__label">생성 전략</p>
+                    <p className="summary-box__body">{questionSet.overallStrategy}</p>
+                  </div>
+                  {questionSet.questions.map((question) => (
+                    <div key={question.type} className="question-card">
+                      <div className="question-card__head">
+                        <strong>{formatQuestionType(question.type)}</strong>
+                        <StatusBadge tone="neutral">{question.type}</StatusBadge>
+                      </div>
+                      <p className="question-card__body">{question.question}</p>
+                      <p className="question-card__hint">{question.intent}</p>
+                    </div>
+                  ))}
+                  {questionSet.cautionNotes.length > 0 ? (
+                    <DetailList
+                      title="주의 메모"
+                      items={questionSet.cautionNotes}
+                      emptyText=""
+                    />
+                  ) : null}
+                </div>
+              ) : (
+                <EmptyState
+                  title="질문 세트가 아직 없습니다."
+                  description="과제와 루브릭을 확인한 뒤 질문 생성 버튼을 누르면 학생별 질문 세트가 만들어집니다."
+                />
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard
+              eyebrow="4. Student Link"
+              title="학생 응답 링크를 공유합니다."
+              description="학생은 별도 화면에서 질문에 답하고, 교사는 이 화면에서 결과를 다시 불러옵니다."
+            >
+              {verificationId ? (
+                <div className="stack-grid">
+                  <div className="field-block">
+                    <span className="field-block__label">학생용 경로</span>
+                    <input
+                      readOnly
+                      value={studentUrl || studentPath || ""}
+                      className="form-input form-input--mono"
+                    />
+                  </div>
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      onClick={copyStudentLink}
+                      className="button button--secondary"
+                    >
+                      링크 복사
+                    </button>
+                    <Link
+                      href={studentPath ?? "#"}
+                      target="_blank"
+                      className="button button--ghost"
+                    >
+                      학생 화면 열기
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={syncLatestVerification}
+                      disabled={isPending}
+                      className="button button--ghost"
+                    >
+                      {activeAction === "sync" ? "동기화 중..." : "최신 결과 불러오기"}
+                    </button>
+                  </div>
+                  <p className="helper-text">
+                    학생 응답이 끝나면 최신 결과 불러오기로 분석 상태와 답변을
+                    동기화합니다.
+                  </p>
+                </div>
+              ) : (
+                <EmptyState
+                  title="학생 링크는 질문 생성 뒤에 활성화됩니다."
+                  description="질문 세트가 먼저 생성되어야 학생별 링크가 만들어집니다."
+                />
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard
+              eyebrow="Demo Run"
+              title="시연용 자동 응답을 바로 돌릴 수 있습니다."
+              description="실제 학생 응답이 없을 때 제품 흐름을 빠르게 검증하는 용도입니다."
+            >
+              <div className="button-row">
+                <button
+                  type="button"
+                  onClick={fillDemoAnswersAndAnalyze}
+                  disabled={!questionSet || isPending}
+                  className="button button--secondary"
+                >
+                  {activeAction === "analysis"
+                    ? "시연 분석 중..."
+                    : "샘플 답변으로 분석"}
                 </button>
               </div>
-            ) : (
-              <div className="viva-grid-rule rounded-[1.45rem] px-4 py-6 text-sm leading-7 text-[rgba(24,20,17,0.62)]">
-                질문이 생성되면 답변 입력 영역이 열립니다.
-              </div>
-            )}
-          </SectionCard>
+              <p className="helper-text">
+                이 기능은 데모 검증용입니다. 실제 서비스 흐름에서는 학생이 별도
+                학생 화면에서 답변합니다.
+              </p>
+            </SurfaceCard>
+          </div>
+        </div>
 
-          <SectionCard
-            eyebrow="Evidence Review"
-            title="교사 판단 근거"
-            description="AI 결과는 설명 가능한 근거로 구조화됩니다."
+        <div className="review-layout">
+          <SurfaceCard
+            className="review-layout__main"
+            eyebrow="5. Evidence Review"
+            title="AI 분석 결과와 근거를 검토합니다."
+            description="분류명보다 근거 구조와 빠진 개념, 충돌 지점을 먼저 봅니다."
             action={
-              <StatusBadge tone={analysisReport ? classificationMeta[analysisReport.classification].tone : "neutral"}>
-                {analysisReport ? classificationMeta[analysisReport.classification].label : "분석 전"}
-              </StatusBadge>
+              analysisReport ? (
+                <StatusBadge tone={analysisClassificationMeta[analysisReport.classification].tone}>
+                  {analysisClassificationMeta[analysisReport.classification].label}
+                </StatusBadge>
+              ) : undefined
             }
           >
             {analysisReport ? (
-              <div className="grid gap-4">
-                <div className="viva-panel-soft rounded-[1.45rem] px-4 py-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <StatusBadge tone={classificationMeta[analysisReport.classification].tone}>
-                      {classificationMeta[analysisReport.classification].label}
+              <div className="stack-grid">
+                <div className="summary-box summary-box--accent">
+                  <div className="badge-row">
+                    <StatusBadge tone={analysisClassificationMeta[analysisReport.classification].tone}>
+                      {analysisClassificationMeta[analysisReport.classification].label}
                     </StatusBadge>
-                    <StatusBadge tone="neutral">신뢰도 {analysisReport.confidenceBand}</StatusBadge>
+                    <StatusBadge tone="neutral">
+                      신뢰도 {analysisReport.confidenceBand}
+                    </StatusBadge>
                   </div>
-                  <p className="mt-4 text-sm leading-7 text-[rgba(24,20,17,0.82)]">{analysisReport.teacherSummary}</p>
-                  <p className="mt-3 text-sm leading-7 text-[rgba(24,20,17,0.58)]">{classificationMeta[analysisReport.classification].note}</p>
+                  <p className="summary-box__body">{analysisReport.teacherSummary}</p>
+                  <p className="helper-text">
+                    {analysisClassificationMeta[analysisReport.classification].note}
+                  </p>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <ListBlock eyebrow="Missing Concepts" items={analysisReport.conceptCoverage.missingConcepts} emptyText="빠진 개념이 두드러지지 않습니다." />
-                  <ListBlock eyebrow="Reteaching Points" items={analysisReport.reteachingPoints} emptyText="재설명 포인트가 없습니다." />
+                <div className="evidence-grid">
+                  <DetailList
+                    title="빠진 개념"
+                    items={analysisReport.conceptCoverage.missingConcepts}
+                    emptyText="누락된 핵심 개념이 없습니다."
+                  />
+                  <DetailList
+                    title="재설명 포인트"
+                    items={analysisReport.reteachingPoints}
+                    emptyText="즉시 재설명 포인트가 없습니다."
+                  />
+                  <DetailList
+                    title="정렬 근거"
+                    items={analysisReport.semanticAlignment.evidence}
+                    emptyText="정렬 근거가 없습니다."
+                  />
+                  <DetailList
+                    title="위험 신호"
+                    items={analysisReport.riskFlags}
+                    emptyText="추가 위험 신호가 없습니다."
+                  />
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <ListBlock eyebrow="Alignment Evidence" items={analysisReport.semanticAlignment.evidence} emptyText="정렬 근거가 없습니다." />
-                  <ListBlock eyebrow="Risk Flags" items={analysisReport.riskFlags} emptyText="추가 위험 신호가 감지되지 않았습니다." />
+                <div className="evidence-grid">
+                  <DetailList
+                    title="오개념 라벨"
+                    items={analysisReport.misconceptionLabels}
+                    emptyText="반복 오개념 라벨이 없습니다."
+                  />
+                  <DetailList
+                    title="전이 능력 근거"
+                    items={analysisReport.transferAbility.evidence}
+                    emptyText="전이 근거가 충분하지 않습니다."
+                  />
                 </div>
 
-                <div className="viva-grid-rule rounded-[1.45rem] px-4 py-4">
-                  <p className="viva-caption">Contradictions</p>
+                <div className="detail-list">
+                  <p className="detail-list__title">충돌 문장</p>
                   {analysisReport.contradictionCheck.contradictions.length > 0 ? (
-                    <div className="mt-4 grid gap-3">
-                      {analysisReport.contradictionCheck.contradictions.map((item, index) => (
-                        <div key={`${item.submissionClaim}-${index}`} className="viva-stat rounded-[1.2rem] px-4 py-4 text-sm leading-7 text-[rgba(24,20,17,0.78)]">
-                          <p>제출물 주장: {item.submissionClaim}</p>
-                          <p className="mt-1">답변 주장: {item.answerClaim}</p>
-                          <p className="mt-3 text-[rgba(24,20,17,0.58)]">{item.explanation}</p>
+                    <div className="stack-grid">
+                      {analysisReport.contradictionCheck.contradictions.map((item) => (
+                        <div
+                          key={`${item.submissionClaim}-${item.answerClaim}`}
+                          className="contradiction-card"
+                        >
+                          <p className="contradiction-card__label">제출물 주장</p>
+                          <p className="contradiction-card__body">
+                            {item.submissionClaim}
+                          </p>
+                          <p className="contradiction-card__label">답변 주장</p>
+                          <p className="contradiction-card__body">{item.answerClaim}</p>
+                          <p className="contradiction-card__hint">{item.explanation}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-4 text-sm leading-7 text-[rgba(24,20,17,0.62)]">현재 두드러지는 충돌 문장은 없습니다.</p>
+                    <p className="helper-text">충돌 문장이 없습니다.</p>
                   )}
-                </div>
-
-                <div className="viva-panel rounded-[1.45rem] px-4 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="viva-caption">Teacher Override</p>
-                      <h3 className="mt-2 text-xl font-semibold text-[var(--foreground)]">교사 최종 판단</h3>
-                    </div>
-                    <StatusBadge tone={teacherDecision ? "success" : "warning"}>
-                      {teacherDecision ? teacherDecisionMeta[teacherDecision.decision].label : "미저장"}
-                    </StatusBadge>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {teacherDecisionOptions.map(([decision, meta]) => (
-                      <button
-                        key={decision}
-                        type="button"
-                        data-active={decisionDraft.decision === decision}
-                        onClick={() => setDecisionDraft((current) => ({ ...current, decision }))}
-                        className="viva-pill-select"
-                      >
-                        {meta.label}
-                      </button>
-                    ))}
-                  </div>
-                  <label className="mt-4 grid gap-2">
-                    <span className="text-sm font-semibold text-[rgba(24,20,17,0.74)]">교사 판단 메모</span>
-                    <textarea value={decisionDraft.notes} onChange={(event) => setDecisionDraft((current) => ({ ...current, notes: event.target.value }))} rows={4} className="viva-textarea" />
-                  </label>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={saveTeacherDecision}
-                      disabled={isPending || !verificationId || decisionDraft.notes.trim().length === 0}
-                      className="viva-button-primary"
-                    >
-                      {activeAction === "decision" ? "교사 판단 저장 중..." : "교사 판단 저장"}
-                    </button>
-                    {teacherDecision ? (
-                      <p className="text-sm text-[rgba(24,20,17,0.56)]">마지막 저장: {formatDateTime(teacherDecision.decidedAt)}</p>
-                    ) : null}
-                  </div>
                 </div>
               </div>
             ) : (
-              <div className="viva-grid-rule rounded-[1.45rem] px-4 py-6 text-sm leading-7 text-[rgba(24,20,17,0.62)]">
-                학생 답변을 입력한 뒤 이해 분석 실행 버튼을 누르면 교사가 바로 읽을 수 있는 근거 중심 결과가 표시됩니다.
-              </div>
+              <EmptyState
+                title="아직 검토할 분석 결과가 없습니다."
+                description="학생 화면에서 답변이 제출되거나, 시연용 자동 응답을 돌린 뒤 여기서 근거를 검토합니다."
+              />
             )}
-          </SectionCard>
+          </SurfaceCard>
+
+          <div className="review-layout__side">
+            <SurfaceCard
+              eyebrow="6. Teacher Decision"
+              title="교사 최종 판단을 저장합니다."
+              description="AI 분석과 별도로 교사 판단을 남겨 최종 책임을 유지합니다."
+            >
+              <div className="decision-options">
+                {teacherDecisionOptions.map(([decision, meta]) => (
+                  <button
+                    key={decision}
+                    type="button"
+                    data-active={decisionDraft.decision === decision}
+                    onClick={() =>
+                      setDecisionDraft((current) => ({ ...current, decision }))
+                    }
+                    className="option-button"
+                  >
+                    {meta.label}
+                  </button>
+                ))}
+              </div>
+
+              <Field label="교사 메모" helper="최종 판단 근거를 짧게 남깁니다.">
+                <textarea
+                  value={decisionDraft.notes}
+                  onChange={(event) =>
+                    setDecisionDraft((current) => ({
+                      ...current,
+                      notes: event.target.value,
+                    }))
+                  }
+                  rows={5}
+                  className="form-textarea"
+                />
+              </Field>
+
+              <div className="button-row">
+                <button
+                  type="button"
+                  onClick={saveTeacherDecision}
+                  disabled={isPending || !verificationId || !analysisReport}
+                  className="button button--primary"
+                >
+                  {activeAction === "decision" ? "판단 저장 중..." : "교사 판단 저장"}
+                </button>
+              </div>
+
+              {teacherDecision ? (
+                <div className="summary-box">
+                  <div className="badge-row">
+                    <StatusBadge tone={teacherDecisionMeta[teacherDecision.decision].tone}>
+                      {teacherDecisionMeta[teacherDecision.decision].label}
+                    </StatusBadge>
+                    <StatusBadge tone="neutral">
+                      {formatDateTime(teacherDecision.decidedAt)}
+                    </StatusBadge>
+                  </div>
+                  <p className="summary-box__body">{teacherDecision.notes}</p>
+                </div>
+              ) : (
+                <p className="helper-text">
+                  아직 저장된 교사 최종 판단이 없습니다.
+                </p>
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard
+              eyebrow="Session Record"
+              title="세션 기록"
+              description="질문 생성, 분석, 교사 판단 저장 흐름을 확인합니다."
+            >
+              <div className="stack-grid">
+                <div className="summary-box">
+                  <p className="summary-box__label">세션 ID</p>
+                  <p className="summary-box__mono">{verificationId ?? "미생성"}</p>
+                </div>
+                {activity.length > 0 ? (
+                  <ul className="timeline-list">
+                    {activity.map((item, index) => (
+                      <li key={`${item.recordedAt}-${index}`} className="timeline-list__item">
+                        <span className="timeline-list__dot" />
+                        <div>
+                          <p className="timeline-list__title">{item.message}</p>
+                          <p className="timeline-list__meta">
+                            {formatDateTime(item.recordedAt)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="helper-text">
+                    아직 기록된 세션 활동이 없습니다.
+                  </p>
+                )}
+              </div>
+            </SurfaceCard>
+          </div>
         </div>
       </div>
     </main>

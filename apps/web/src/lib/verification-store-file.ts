@@ -195,6 +195,15 @@ export const saveTeacherDecisionForVerificationFromFile = async (
     return VerificationRecordSchema.parse(verification);
   });
 
+export const getVerificationRecordFromFile = async (verificationId: string) => {
+  const store = await readStore();
+
+  return (
+    store.verifications.find((item) => item.verificationId === verificationId) ??
+    null
+  );
+};
+
 export const listVerificationRecordsFromFile = async () => {
   const store = await readStore();
 

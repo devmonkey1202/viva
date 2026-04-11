@@ -228,6 +228,23 @@ export const listVerificationRecordsFromNeon = async () => {
   return sortByUpdatedAtDesc(rows.map(rowToVerificationRecord));
 };
 
+export const getVerificationRecordFromNeon = async (verificationId: string) => {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT *
+    FROM verification_records
+    WHERE verification_id = ${verificationId}
+    LIMIT 1
+  `) as VerificationRow[];
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return rowToVerificationRecord(rows[0]);
+};
+
 export const saveAnalysisForVerificationFromNeon = async (
   input: AnalyzeUnderstandingStoredRequest,
   analysisReport: AnalysisReport,

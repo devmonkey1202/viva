@@ -59,7 +59,13 @@
   질문 생성 -> 분석 -> 교사 판단 -> 요약 -> export 응답 확인
   `DATABASE_URL`이 있으면 Neon/Postgres, 없으면 로컬 JSON 저장소를 쓰는 하이브리드 저장 구조 구현
   랜딩/교사/운영자 화면 전면 재디자인
+  교사용 desktop-first, 운영자 desktop-first, 학생 mobile-first 기준으로 surface 구조 재설계
+  학생 답변 화면 `/student/[verificationId]` 구현
+  검증 세션 조회 API `/api/verifications/[verificationId]` 구현
+  teacher 화면에서 학생 링크 공유, 결과 동기화, 세션 기록 확인 흐름 추가
+  디자인 시스템 토큰과 공통 surface/card/button/input 규칙 정리
   로컬 서버 기준 페이지 응답과 API 흐름 재검증 완료
+  프로덕션 빌드 기준 `/`, `/teacher`, `/operator`, `/student/[verificationId]`, 질문 생성, 세션 조회, 분석, 교사 판단, 요약 흐름 재검증 완료
 - in_progress:
   AI service adapter 고도화
 - next:
@@ -70,6 +76,7 @@
   원본 문서명과 제품 브랜드명이 혼재되어 혼동될 위험
   Neon 실배포 연결 전까지는 로컬 저장 검증 위주라는 한계
   구현 속도보다 문서가 앞서갈 위험
+  사용자가 제공한 Neon REST/Data API 주소와 현재 `DATABASE_URL` 기반 어댑터가 다르므로 연결 정보 정리가 필요
 - docs_updated:
   README
   WORKBOARD
