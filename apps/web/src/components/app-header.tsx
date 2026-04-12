@@ -22,7 +22,7 @@ export function AppHeader({
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <Link href="/" className="brand-link" aria-label="VIVA 홈">
+        <Link href="/" className="brand-link" aria-label="VIVA 홈으로 이동">
           <div className="brand-link__copy">
             <strong>VIVA</strong>
             <span>제출 이후 이해를 검증하는 레이어</span>

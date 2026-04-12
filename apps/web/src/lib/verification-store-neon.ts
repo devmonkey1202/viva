@@ -14,6 +14,7 @@ import type {
   VerificationRecord,
 } from "@/lib/schemas";
 import { VerificationRecordSchema } from "@/lib/schemas";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
 type VerificationRow = {
   verification_id: string;
@@ -32,7 +33,7 @@ type VerificationRow = {
 };
 
 const getSql = () => {
-  const databaseUrl = process.env.DATABASE_URL;
+  const { databaseUrl } = getRuntimeConfig();
 
   if (!databaseUrl) {
     throw new Error("DATABASE_URL이 설정되지 않았습니다.");

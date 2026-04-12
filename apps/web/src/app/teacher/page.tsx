@@ -1,15 +1,13 @@
 import { TeacherWorkbench } from "@/components/teacher-workbench";
+import { getRuntimeStatus } from "@/lib/runtime-config";
 
 export default function TeacherPage() {
-  const aiConfigured = Boolean(
-    process.env.AI_API_KEY ?? process.env.OPENAI_API_KEY,
-  );
-  const managedDatabase = Boolean(process.env.DATABASE_URL?.trim());
+  const runtime = getRuntimeStatus();
 
   return (
     <TeacherWorkbench
-      aiConfigured={aiConfigured}
-      managedDatabase={managedDatabase}
+      aiConfigured={runtime.aiConfigured}
+      managedDatabase={runtime.managedDatabase}
     />
   );
 }

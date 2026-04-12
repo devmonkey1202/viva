@@ -14,6 +14,7 @@ import type {
   VerificationRecord,
 } from "@/lib/schemas";
 import { VerificationRecordSchema } from "@/lib/schemas";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
 const VerificationStoreFileSchema = z.object({
   verifications: z.array(VerificationRecordSchema).default([]),
@@ -21,11 +22,7 @@ const VerificationStoreFileSchema = z.object({
 
 type VerificationStoreFile = z.infer<typeof VerificationStoreFileSchema>;
 
-const STORE_PATH = path.join(
-  /* turbopackIgnore: true */ process.cwd(),
-  "data",
-  "verification-store.json",
-);
+const getStorePath = () => getRuntimeConfig().verificationStorePath;
 
 let storeQueue = Promise.resolve();
 
@@ -42,15 +39,16 @@ const queueStoreOperation = async <T>(operation: () => Promise<T>) => {
 const emptyStore = (): VerificationStoreFile => ({ verifications: [] });
 
 const ensureStoreFile = async () => {
-  const storeDirectory = path.dirname(STORE_PATH);
+  const storePath = getStorePath();
+  const storeDirectory = path.dirname(storePath);
 
   await mkdir(storeDirectory, { recursive: true });
 
   try {
-    await readFile(STORE_PATH, "utf8");
+    await readFile(storePath, "utf8");
   } catch {
     await writeFile(
-      STORE_PATH,
+      storePath,
       JSON.stringify(emptyStore(), null, 2),
       "utf8",
     );
@@ -59,15 +57,16 @@ const ensureStoreFile = async () => {
 
 const readStore = async () => {
   await ensureStoreFile();
+  const storePath = getStorePath();
 
-  const raw = await readFile(STORE_PATH, "utf8");
+  const raw = await readFile(storePath, "utf8");
   const parsed = raw.trim().length === 0 ? emptyStore() : JSON.parse(raw);
 
   return VerificationStoreFileSchema.parse(parsed);
 };
 
 const writeStore = async (store: VerificationStoreFile) => {
-  await writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await writeFile(getStorePath(), JSON.stringify(store, null, 2), "utf8");
 };
 
 const sortByUpdatedAtDesc = (records: VerificationRecord[]) =>

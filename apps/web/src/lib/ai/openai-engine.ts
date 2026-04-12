@@ -12,8 +12,9 @@ import {
   type GenerateQuestionSetRequest,
   QuestionSetSchema,
 } from "@/lib/schemas";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
-const getApiKey = () => process.env.AI_API_KEY ?? process.env.OPENAI_API_KEY;
+const getApiKey = () => getRuntimeConfig().aiApiKey;
 
 const getClient = () => {
   const apiKey = getApiKey();
@@ -24,8 +25,8 @@ const getClient = () => {
 
   return new OpenAI({
     apiKey,
-    maxRetries: Number(process.env.AI_MAX_RETRIES ?? "1"),
-    timeout: Number(process.env.AI_REQUEST_TIMEOUT_MS ?? "20000"),
+    maxRetries: getRuntimeConfig().aiMaxRetries,
+    timeout: getRuntimeConfig().aiRequestTimeoutMs,
   });
 };
 
@@ -43,7 +44,7 @@ export const generateQuestionSetWithOpenAI = async (
   }
 
   const response = await client.responses.create({
-    model: process.env.AI_FAST_MODEL ?? "gpt-5.2",
+    model: getRuntimeConfig().aiFastModel,
     instructions: questionGenerationPrompt,
     input: `JSON payload:\n${JSON.stringify({
       promptVersion: QUESTION_GENERATION_PROMPT_VERSION,
@@ -69,7 +70,7 @@ export const analyzeUnderstandingWithOpenAI = async (
   }
 
   const response = await client.responses.create({
-    model: process.env.AI_REASONING_MODEL ?? "gpt-5.2",
+    model: getRuntimeConfig().aiReasoningModel,
     instructions: answerAnalysisPrompt,
     input: `JSON payload:\n${JSON.stringify({
       promptVersion: ANSWER_ANALYSIS_PROMPT_VERSION,

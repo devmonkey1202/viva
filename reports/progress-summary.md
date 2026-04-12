@@ -2,92 +2,38 @@
 
 ## 2026-04-10
 
-- done:
-  원본 문서 전수 확인
-  대회 기준 정리
-  프로젝트 정체성 고정
-  공모전 제출형 v1 기준 확정
-  아키텍처/도메인/클린 코드/안전장치/제출 운영 문서화
-  실행용 작업 보드/로드맵/기능 명세/진행 관리 문서 추가
-  AI 개발 마스터 플랜/품질 평가/런타임 배포 문서 추가
-  질문 생성/답변 분석 프롬프트 v1 초안 작성
-  AI 출력 스키마 v1 초안 작성
-  샘플 루브릭/제출물/답변 데이터 초안 작성
-  Next.js 기반 웹 앱 생성
-  랜딩 페이지 구현
-  교사 워크벤치 구현
-  질문 생성 API 구현
-  분석 API 구현
-  OpenAI 연결 + mock fallback 구조 구현
-  lint/build 통과
-- in_progress:
-  실제 저장/판단/export 흐름 확장
-- next:
-  저장 계층 연결
-  교사 최종 판단 저장
-  export 구현
-  운영자 요약 화면
-  AI 리포트 초안 1차 보강
-- risks:
-  범위 과확장
-  문서와 구현 불일치
-  마감 직전 리포트 몰아쓰기
-- docs_updated:
-  README
-  PROJECT_RULES
-  docs/*
-  WORKBOARD
+- 원본 문서 학습 완료
+- 제품 정체성, 공모전 방향, v1 범위 고정
+- 문서 구조와 저장소 기준 정리
+- Next.js 웹 앱 골격 생성
+- 질문 생성/분석 기본 API 구현
 
 ## 2026-04-11
 
-- done:
-  Git 저장소 초기화
-  원격 저장소 `https://github.com/devmonkey1202/viva.git` 연결
-  Git 작성자 계정 `devmonkey1202 <juwon1202@icloud.com>`으로 수정
-  제품 브랜드명 `VIVA` 확정
-  README, 앱 메타데이터, 리포트 초안, 핵심 문서에 `VIVA` 반영
-  `직접 학습` 대신 `VIVA 전용 AI 시스템 직접 구현` 전략 문서화
-  decision log에 제품명/AI 전략 결정 기록
-  앱 lint/build 재검증 통과
-  질문 생성 시 검증 세션 저장 연결
-  분석 결과 저장 연결
-  교사 최종 판단 저장 API 구현
-  JSON/CSV export API 구현
-  운영자 요약 API 및 `/operator` 화면 구현
-  교사 워크벤치에 verification id, export, 운영자 이동, 교사 판단 UI 반영
-  로컬 서버 기준 실제 HTTP 흐름 검증 완료
-  질문 생성 -> 분석 -> 교사 판단 -> 요약 -> export 응답 확인
-  `DATABASE_URL`이 있으면 Neon/Postgres, 없으면 로컬 JSON 저장소를 쓰는 하이브리드 저장 구조 구현
-  랜딩/교사/운영자 화면 전면 재디자인
-  교사용 desktop-first, 운영자 desktop-first, 학생 mobile-first 기준으로 surface 구조 재설계
-  학생 답변 화면 `/student/[verificationId]` 구현
-  검증 세션 조회 API `/api/verifications/[verificationId]` 구현
-  teacher 화면에서 학생 링크 공유, 결과 동기화, 세션 기록 확인 흐름 추가
-  디자인 시스템 토큰과 공통 surface/card/button/input 규칙 정리
-  로컬 서버 기준 페이지 응답과 API 흐름 재검증 완료
-  프로덕션 빌드 기준 `/`, `/teacher`, `/operator`, `/student/[verificationId]`, 질문 생성, 세션 조회, 분석, 교사 판단, 요약 흐름 재검증 완료
-  OpenAI `json_object` 응답 조건에 맞춰 입력/프롬프트 구조 조정
-  제공된 API 키 기준 `gpt-5-nano` 실호출 성공 확인
-  실AI + Neon DB 기준 질문 생성/분석 흐름 재검증 완료
-  학생 화면에 브라우저 STT(Web Speech API) + 텍스트 fallback 구현
-  음성 전사 원문, 정규화 메모, 입력 방식 메타 저장 구현
-  STT 메타를 포함한 답변 저장/조회 API 흐름 검증 완료
-- in_progress:
-  디자인 3차 전면 재설계
-- next:
-  Vercel 배포 설정 구체화
-  라이브 배포 검증
-  AI 리포트 초안 본문 심화
-- risks:
-  원본 문서명과 제품 브랜드명이 혼재되어 혼동될 위험
-  구현 속도보다 문서가 앞서갈 위험
-  현재 제공된 키 기준으로는 `gpt-5.4*` 계열이 quota 부족이고 `gpt-5-nano`만 안정적으로 사용 가능
-- docs_updated:
-  README
-  WORKBOARD
-  reports/progress-summary.md
-  reports/ai-report-draft.md
-  apps/web/README.md
-  docs/project-charter.md
-  docs/ai-development-master-plan.md
-  docs/decision-log.md
+- Git 저장소 초기화 및 원격 연결
+- 브랜드명 `VIVA` 확정
+- 교사/운영자/학생 화면 분리
+- JSON 저장 + Neon 저장 경로 구현
+- 교사 판단, export, 운영자 요약 구현
+- OpenAI 연결 + mock fallback 구조 구현
+
+## 2026-04-13
+
+- OpenAI Responses API 구조화 출력 안정화
+- `gpt-5-nano` 실호출 확인
+- 학생 화면 STT(Web Speech API) + 텍스트 fallback 구현
+- 학생 답변 메타 저장 구현
+- 교사 화면에서 학생 답변/전사 메타 검토 가능하도록 보강
+- 랜딩/헤더/교사/운영자 문자열 깨짐 정리
+- `/api/health` 추가
+- 런타임 설정 공통화
+- API 에러 처리 공통화
+- 자동 스모크 테스트 `scripts/smoke-http.mjs` 추가
+- GitHub Actions CI 추가
+- `npm run verify` 기준 검증 통과
+
+## 현재 판단
+
+- 기능 구현 완성도는 높다.
+- 자동 검증과 재현 가능성이 이전보다 좋아졌다.
+- 아직 배포와 최종 제출물 정리가 남아 있다.

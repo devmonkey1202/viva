@@ -1,6 +1,7 @@
 import type {
   AnalysisReport,
   QuestionType,
+  StudentAnswer,
   TeacherDecision,
 } from "@/lib/schemas";
 
@@ -8,7 +9,7 @@ export const questionTypeMeta: Record<
   QuestionType,
   { label: string; shortLabel: string; order: number }
 > = {
-  why: { label: "왜 그렇게 했는지", shortLabel: "왜형", order: 1 },
+  why: { label: "왜 그렇게 되는지", shortLabel: "왜형", order: 1 },
   transfer: {
     label: "조건이 바뀌면 어떻게 되는지",
     shortLabel: "전이형",
@@ -32,7 +33,7 @@ export const analysisClassificationMeta: Record<
   sufficient_understanding: {
     label: "이해 충분",
     tone: "success",
-    note: "핵심 개념과 설명 구조가 루브릭과 안정적으로 맞습니다.",
+    note: "핵심 개념과 설명 구조가 루브릭과 안정적으로 맞아 있습니다.",
   },
   surface_memorization: {
     label: "표면 암기",
@@ -42,7 +43,7 @@ export const analysisClassificationMeta: Record<
   submission_dependency: {
     label: "제출물 의존",
     tone: "warning",
-    note: "제출물 표현에 기대고 있어 독립적인 설명력이 낮습니다.",
+    note: "제출물 표현에 기대고 있어 독립적인 설명력이 부족합니다.",
   },
   core_misconception: {
     label: "핵심 오개념",
@@ -71,6 +72,20 @@ export const teacherDecisionMeta: Record<
   manual_review_required: {
     label: "수동 검토 필요",
     tone: "danger",
+  },
+};
+
+export const studentInputMethodMeta: Record<
+  NonNullable<StudentAnswer["inputMethod"]> | "text",
+  { label: string; tone: "neutral" | "info" }
+> = {
+  text: {
+    label: "텍스트 입력",
+    tone: "neutral",
+  },
+  voice: {
+    label: "음성 전사",
+    tone: "info",
   },
 };
 

@@ -8,13 +8,14 @@ import {
   formatDateTime,
   teacherDecisionMeta,
 } from "@/lib/presentation";
-import { getOperatorSummary, usingManagedDatabase } from "@/lib/verification-store";
+import { getRuntimeStatus } from "@/lib/runtime-config";
+import { getOperatorSummary } from "@/lib/verification-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function OperatorPage() {
   const summary = await getOperatorSummary();
-  const managedDatabase = usingManagedDatabase();
+  const runtime = getRuntimeStatus();
 
   return (
     <main className="app-shell">
@@ -36,18 +37,18 @@ export default async function OperatorPage() {
         <PageIntro
           eyebrow="Operator Dashboard"
           title="반복되는 이해 붕괴 지점을 먼저 봅니다."
-          description="세션 단위 결과보다 누적 패턴이 중요합니다. 어떤 개념이 자주 빠지고, 어떤 오개념이 반복되며, 교사 판단이 어디에서 갈리는지 한 화면에서 확인합니다."
+          description="개별 세션보다 누적 패턴이 더 중요합니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 운영 화면에서 확인합니다."
           actions={
             <div className="button-row">
               <Link href="/teacher" className="button button--primary">
-                교사용 화면
+                교사 화면으로 이동
               </Link>
             </div>
           }
           meta={
             <div className="badge-row">
-              <StatusBadge tone={managedDatabase ? "success" : "warning"}>
-                {managedDatabase ? "Managed DB" : "Local store"}
+              <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
+                {runtime.managedDatabase ? "Managed DB" : "Local store"}
               </StatusBadge>
               <StatusBadge tone="neutral">
                 갱신 {formatDateTime(summary.generatedAt)}
@@ -60,17 +61,17 @@ export default async function OperatorPage() {
           <MetricCard
             label="총 검증 세션"
             value={summary.totalVerifications}
-            note="질문이 생성된 세션 수"
+            note="질문이 생성된 전체 세션 수"
           />
           <MetricCard
             label="분석 완료"
             value={summary.analyzedVerifications}
-            note="학생 답변까지 도달한 세션 수"
+            note="학생 답변과 분석이 저장된 세션 수"
           />
           <MetricCard
             label="교사 판단 저장"
             value={summary.teacherDecisions}
-            note="최종 판단이 기록된 세션 수"
+            note="최종 판단까지 기록된 세션 수"
           />
         </div>
 
@@ -78,7 +79,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Analysis Distribution"
             title="AI 분류 분포"
-            description="현재 세션이 어떤 상태로 분류되고 있는지 확인합니다."
+            description="현재 세션이 어떤 이해 상태로 분류되고 있는지 확인합니다."
           >
             {summary.classificationCounts.length > 0 ? (
               <div className="stack-grid">
@@ -91,11 +92,9 @@ export default async function OperatorPage() {
                   return (
                     <div key={item.label} className="list-row">
                       <div className="list-row__copy">
-                        <p className="list-row__title">
-                          {meta?.label ?? item.label}
-                        </p>
+                        <p className="list-row__title">{meta?.label ?? item.label}</p>
                         <p className="list-row__body">
-                          {meta?.note ?? "분류 설명이 없습니다."}
+                          {meta?.note ?? "분류 설명이 아직 없습니다."}
                         </p>
                       </div>
                       <strong className="list-row__value">{item.count}</strong>
@@ -111,7 +110,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Teacher Override"
             title="교사 최종 판단 분포"
-            description="AI 분류와 별도로 교사가 어떤 결정을 내렸는지 봅니다."
+            description="AI 분류와 별도로 교사가 어떤 결정을 내렸는지 확인합니다."
           >
             {summary.teacherDecisionCounts.length > 0 ? (
               <div className="stack-grid">
@@ -140,8 +139,8 @@ export default async function OperatorPage() {
         <div className="operator-grid">
           <SurfaceCard
             eyebrow="Missing Concepts"
-            title="자주 빠지는 핵심 개념"
-            description="학생 답변에서 반복적으로 누락되는 개념입니다."
+            title="자주 비는 핵심 개념"
+            description="학생 답변에서 반복적으로 누락되는 루브릭 개념입니다."
           >
             {summary.topMissingConcepts.length > 0 ? (
               <div className="stack-grid">
@@ -161,8 +160,8 @@ export default async function OperatorPage() {
 
           <SurfaceCard
             eyebrow="Misconception Clusters"
-            title="반복 오개념"
-            description="재설명 우선순위를 정할 때 먼저 보는 묶음입니다."
+            title="반복 오개념 묶음"
+            description="재설명 우선순위를 정할 때 먼저 보는 반복 오개념입니다."
           >
             {summary.topMisconceptions.length > 0 ? (
               <div className="stack-grid">
@@ -183,8 +182,8 @@ export default async function OperatorPage() {
 
         <SurfaceCard
           eyebrow="Recent Sessions"
-          title="최근 검증 세션"
-          description="최신 검증 흐름을 세션 단위로 확인합니다."
+          title="최신 검증 세션"
+          description="최근에 업데이트된 세션을 순서대로 확인합니다."
         >
           {summary.recentVerifications.length > 0 ? (
             <div className="table-scroll">
@@ -233,7 +232,7 @@ export default async function OperatorPage() {
             </div>
           ) : (
             <div className="table-empty">
-              아직 기록된 검증 세션이 없습니다. 교사용 화면에서 질문을 생성하면
+              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면
               여기에 누적됩니다.
             </div>
           )}

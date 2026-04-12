@@ -27,8 +27,9 @@ import {
   saveAnalysisForVerificationFromNeon,
   saveTeacherDecisionForVerificationFromNeon,
 } from "@/lib/verification-store-neon";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
-const hasDatabaseUrl = () => Boolean(process.env.DATABASE_URL?.trim());
+const hasDatabaseUrl = () => getRuntimeConfig().managedDatabase;
 
 const createVerificationRecordImpl = (
   input: GenerateQuestionSetRequest,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
+import { createApiErrorResponse } from "@/lib/api-error-response";
 import { analyzeUnderstanding } from "@/lib/ai/service";
 import {
   AnalyzeUnderstandingResponseSchema,
@@ -23,17 +23,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
-    const message =
-      error instanceof ZodError
-        ? "분석 입력 형식이 올바르지 않습니다."
-        : "이해 분석 중 오류가 발생했습니다.";
-
-    return NextResponse.json(
-      {
-        message,
-        details: error instanceof ZodError ? error.flatten() : undefined,
-      },
-      { status: 400 },
-    );
+    return createApiErrorResponse(error, {
+      validationMessage: "분석 입력 형식이 올바르지 않습니다.",
+      fallbackMessage: "이해 분석 중 오류가 발생했습니다.",
+    });
   }
 }
