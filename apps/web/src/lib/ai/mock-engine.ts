@@ -18,10 +18,16 @@ const getFocusExcerpt = (submissionText: string) => {
 const getQuestionTargetConcepts = (
   concepts: string[],
   fallback: string,
-): string[] => concepts.slice(0, 2).filter(Boolean).length > 0 ? concepts.slice(0, 2) : [fallback];
+): string[] =>
+  concepts.slice(0, 2).filter(Boolean).length > 0
+    ? concepts.slice(0, 2)
+    : [fallback];
 
 export const generateMockQuestionSet = (
   input: GenerateQuestionSetRequest,
+  options?: {
+    fallbackReason?: string;
+  },
 ): QuestionSet => {
   const excerpt = getFocusExcerpt(input.submissionText);
   const targetConcepts = getQuestionTargetConcepts(
@@ -39,6 +45,9 @@ export const generateMockQuestionSet = (
     cautionNotes: [
       "현재는 데모용 mock 생성 결과입니다.",
       "실제 모델 연결 시 질문 표현은 달라질 수 있습니다.",
+      ...(options?.fallbackReason
+        ? [`Mock fallback reason: ${options.fallbackReason}`]
+        : []),
     ],
     questions: [
       {
@@ -91,6 +100,9 @@ const getAnswersByType = (
 
 export const analyzeMockUnderstanding = (
   input: AnalyzeUnderstandingRequest,
+  options?: {
+    fallbackReason?: string;
+  },
 ): AnalysisReport => {
   const answers = getAnswersByType(input);
   const why = normalizeText(answers.why);
@@ -107,29 +119,22 @@ export const analyzeMockUnderstanding = (
 
   const strongWhy =
     why.length > 25 &&
-    includesAny(why, ["이유", "오차", "센서", "근거", "때문", "그래서"]);
+    includesAny(why, ["이유", "근거", "그래서", "때문", "원인"]);
   const strongTransfer =
     transfer.length > 25 &&
-    includesAny(transfer, ["만약", "조건", "진공", "달라", "가까워"]);
+    includesAny(transfer, ["만약", "조건", "달라", "경우", "변화"]);
   const strongCounterexample =
     counterexample.length > 25 &&
-    includesAny(counterexample, [
-      "항상",
-      "아니",
-      "한계",
-      "경우",
-      "일정",
-      "성립하지",
-    ]);
+    includesAny(counterexample, ["한계", "아니", "반례", "경우", "성립하지"]);
 
   const misconceptionDetected = includesAny(combined, [
-    "가속도가 더 커진다",
+    "중력가속도가 커진다",
     "중력가속도는 속도 자체",
     "공기 저항이 없으면 가속도가 0",
   ]);
 
   const contradictionFound =
-    input.submissionText.includes("낙하 시간이 짧을수록 가속도가 더 크") &&
+    input.submissionText.includes("낙하 시간은 짧을수록 가속도가 크다") &&
     counterexample.includes("가속도 자체는 거의 일정");
 
   let classification: AnalysisReport["classification"] = "uncertain";
@@ -166,10 +171,16 @@ export const analyzeMockUnderstanding = (
     riskFlags.push("제출물과 답변 사이에 논리 충돌 가능성");
   }
 
+  if (options?.fallbackReason) {
+    riskFlags.push(`Mock fallback reason: ${options.fallbackReason}`);
+  }
+
   const reteachingPoints =
     missingConcepts.length > 0
-      ? missingConcepts.map((concept) => `${concept} 개념을 다시 확인할 필요가 있습니다.`)
-      : ["조건 변화와 반례 설명을 연결하는 방식은 유지할 가치가 있습니다."];
+      ? missingConcepts.map(
+          (concept) => `${concept} 개념을 다시 확인할 필요가 있습니다.`,
+        )
+      : ["조건 변화와 반례 설명을 연결하는 방식을 추가로 점검하면 좋습니다."];
 
   return {
     analysisId: `ar_mock_${crypto.randomUUID()}`,
@@ -184,8 +195,8 @@ export const analyzeMockUnderstanding = (
       evidence: [
         "학생 답변이 제출물의 주장과 얼마나 일치하는지 확인했습니다.",
         contradictionFound
-          ? "답변에서 제출물의 일부 설명을 수정하는 신호가 발견되었습니다."
-          : "자기 언어로 근거를 재설명하는 시도가 관찰됩니다.",
+          ? "답변에서 제출물의 일부 설명을 수정하는 신호가 발견됐습니다."
+          : "자기 언어로 근거를 재설명하려는 시도가 관찰됐습니다.",
       ],
     },
     conceptCoverage: {
@@ -193,14 +204,10 @@ export const analyzeMockUnderstanding = (
       missingConcepts,
     },
     transferAbility: {
-      status: strongTransfer
-        ? "strong"
-        : strongWhy
-          ? "partial"
-          : "unclear",
+      status: strongTransfer ? "strong" : strongWhy ? "partial" : "unclear",
       evidence: [
         strongTransfer
-          ? "조건 변화 상황을 가정하여 결과 해석 변화를 설명했습니다."
+          ? "조건 변화 상황을 가정하고 결과 해석 변화를 설명했습니다."
           : "조건 변화 상황에 대한 설명이 충분히 구체적이지 않습니다.",
       ],
     },
@@ -210,7 +217,7 @@ export const analyzeMockUnderstanding = (
         ? [
             {
               submissionClaim:
-                "낙하 시간이 짧을수록 가속도가 더 크다고 볼 수 있다.",
+                "낙하 시간은 짧을수록 가속도가 크다고 보고 있습니다.",
               answerClaim: answers.counterexample,
               explanation:
                 "학생 답변이 제출물의 단정적 설명을 부분적으로 수정하고 있습니다.",
@@ -221,7 +228,7 @@ export const analyzeMockUnderstanding = (
     misconceptionLabels,
     teacherSummary:
       classification === "sufficient_understanding"
-        ? "학생은 제출물의 설명을 그대로 반복하는 수준을 넘어, 조건 변화와 반례까지 자기 언어로 설명하고 있습니다."
+        ? "학생은 제출물의 설명을 반복하는 수준을 넘어, 조건 변화와 반례까지 자기 언어로 설명하고 있습니다."
         : classification === "core_misconception"
           ? "학생 답변에서 핵심 개념을 잘못 이해한 신호가 보여 추가 설명과 교사 확인이 필요합니다."
           : classification === "submission_dependency"

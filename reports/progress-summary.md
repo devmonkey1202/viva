@@ -24,18 +24,21 @@
 - 학생 화면 STT(Web Speech API) + 텍스트 fallback 구현
 - 학생 답변 메타 저장 구현
 - 교사 화면에서 학생 답변/전사 메타 검토 가능하도록 보강
-- 랜딩/헤더/교사/운영자 문자열 깨짐 정리
-- `/api/health` 추가
 - 런타임 설정 공통화
 - API 에러 처리 공통화
 - 자동 스모크 테스트 `scripts/smoke-http.mjs` 추가
 - mock 경로와 live 경로를 분리한 스모크 테스트 구성
 - GitHub Actions CI 추가
-- `npm run verify` 기준 검증 통과
-- `npm run smoke:live` 기준 실AI + 실DB 스모크 통과
+- teacher/student 핵심 로직을 순수 함수와 서브컴포넌트로 분해
+- 단위 테스트 추가
+- 검증 세션 목록 API 추가
+- 교사용 최근 세션 브라우저 추가
+- mock fallback reason 기록 추가
+- Vercel production domain 확인
 
 ## 현재 판단
 
 - 기능 구현 완성도는 높다.
-- 자동 검증과 재현 가능성이 이전보다 좋아졌다.
-- 아직 배포와 최종 제출물 정리가 남아 있다.
+- 자동 검증과 재현 가능성은 이전보다 좋아졌다.
+- 배포는 살아 있지만 production AI는 아직 fallback 상태다.
+- 아직 AI 리포트 최종본, 제출용 PDF 세트, 디자인 마감이 남아 있다.

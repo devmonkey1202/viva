@@ -9,6 +9,7 @@ import { QuestionSetPreview } from "@/components/question-set-preview";
 import { SessionTimeline } from "@/components/session-timeline";
 import { StatusBadge } from "@/components/status-badge";
 import { StudentAnswerReview } from "@/components/student-answer-review";
+import { VerificationSessionBrowser } from "@/components/verification-session-browser";
 import {
   EmptyState,
   Field,
@@ -406,6 +407,39 @@ export function TeacherWorkbench({
     }
   };
 
+  const selectVerification = (nextVerificationId: string) => {
+    setVerificationId(nextVerificationId);
+    setErrorMessage(null);
+    setCopyMessage(null);
+    setActiveAction("sync");
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const response = await fetch(`/api/verifications/${nextVerificationId}`, {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            const error = (await response.json()) as { message?: string };
+            throw new Error(error.message ?? "선택한 세션을 불러오지 못했습니다.");
+          }
+
+          const payload = (await response.json()) as GetVerificationResponse;
+          applyVerificationPayload(payload);
+        } catch (error) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "세션 불러오기 중 오류가 발생했습니다.",
+          );
+        } finally {
+          setActiveAction(null);
+        }
+      })();
+    });
+  };
+
   return (
     <main className="app-shell">
       <AppHeader
@@ -747,6 +781,16 @@ export function TeacherWorkbench({
               <SessionTimeline
                 verificationId={verificationId}
                 activity={activity}
+              />
+            </SurfaceCard>
+            <SurfaceCard
+              eyebrow="Session Browser"
+              title="최근 세션 다시 불러오기"
+              description="과제명이나 세션 ID로 이전 검증 기록을 다시 열 수 있습니다."
+            >
+              <VerificationSessionBrowser
+                activeVerificationId={verificationId}
+                onSelectVerification={selectVerification}
               />
             </SurfaceCard>
           </div>

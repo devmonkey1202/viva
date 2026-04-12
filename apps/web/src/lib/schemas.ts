@@ -224,6 +224,25 @@ export type GetVerificationResponse = z.infer<
   typeof GetVerificationResponseSchema
 >;
 
+export const VerificationListItemSchema = z.object({
+  verificationId: z.string().min(1),
+  assignmentTitle: z.string().min(1),
+  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  classification: AnalysisClassificationSchema.optional(),
+  teacherDecision: TeacherDecisionStatusSchema.optional(),
+  questionModelVersion: z.string().min(1),
+  analysisModelVersion: z.string().min(1).optional(),
+});
+export type VerificationListItem = z.infer<typeof VerificationListItemSchema>;
+
+export const ListVerificationsResponseSchema = z.object({
+  items: z.array(VerificationListItemSchema),
+});
+export type ListVerificationsResponse = z.infer<
+  typeof ListVerificationsResponseSchema
+>;
+
 export const OperatorSummaryBucketSchema = z.object({
   label: z.string().min(1),
   count: z.number().int().nonnegative(),

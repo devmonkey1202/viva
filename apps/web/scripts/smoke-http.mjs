@@ -174,6 +174,13 @@ try {
   assert.equal(verification.response.status, 200);
   assert.equal(verification.data.verification.verificationId, verificationId);
 
+  const verificationList = await fetchJson(
+    `${baseUrl}/api/verifications?limit=5&query=${encodeURIComponent("이진 탐색")}`,
+  );
+  assert.equal(verificationList.response.status, 200);
+  assert.ok(verificationList.data.items.length >= 1);
+  assert.equal(verificationList.data.items[0].verificationId, verificationId);
+
   const analyze = await fetchJson(`${baseUrl}/api/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
