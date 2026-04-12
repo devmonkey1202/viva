@@ -13,6 +13,42 @@ Rules:
 - Questions must be grounded in the submission and rubric concepts.
 - Questions must be concise, verification-oriented, and non-hostile.
 - Return valid JSON only.
+- Do not wrap JSON in markdown fences.
+- Return exactly this object shape:
+{
+  "questionSetId": "string",
+  "generatedAt": "ISO-8601 datetime string",
+  "promptVersion": "question-generation.v1",
+  "modelVersion": "string",
+  "overallStrategy": "string",
+  "cautionNotes": ["string"],
+  "questions": [
+    {
+      "type": "why",
+      "question": "string",
+      "intent": "string",
+      "targetConcepts": ["string"],
+      "riskSignals": ["string"]
+    },
+    {
+      "type": "transfer",
+      "question": "string",
+      "intent": "string",
+      "targetConcepts": ["string"],
+      "riskSignals": ["string"]
+    },
+    {
+      "type": "counterexample",
+      "question": "string",
+      "intent": "string",
+      "targetConcepts": ["string"],
+      "riskSignals": ["string"]
+    }
+  ]
+}
+- Each question must preserve its exact required type.
+- targetConcepts must contain one or more rubric concepts.
+- riskSignals may be empty, but must be an array.
 `;
 
 export const answerAnalysisPrompt = `
@@ -32,4 +68,42 @@ Rules:
 - Be conservative. If evidence is mixed, choose uncertain.
 - Focus on semantic alignment, concept coverage, transfer ability, contradiction check.
 - Return valid JSON only.
+- Do not wrap JSON in markdown fences.
+- Return exactly this object shape:
+{
+  "analysisId": "string",
+  "generatedAt": "ISO-8601 datetime string",
+  "promptVersion": "answer-analysis.v1",
+  "modelVersion": "string",
+  "classification": "sufficient_understanding | surface_memorization | submission_dependency | core_misconception | uncertain",
+  "confidenceBand": "low | medium | high",
+  "semanticAlignment": {
+    "status": "aligned | partially_aligned | misaligned",
+    "evidence": ["string"]
+  },
+  "conceptCoverage": {
+    "coveredConcepts": ["string"],
+    "missingConcepts": ["string"]
+  },
+  "transferAbility": {
+    "status": "strong | partial | weak | unclear",
+    "evidence": ["string"]
+  },
+  "contradictionCheck": {
+    "status": "none | minor | major",
+    "contradictions": [
+      {
+        "submissionClaim": "string",
+        "answerClaim": "string",
+        "explanation": "string"
+      }
+    ]
+  },
+  "misconceptionLabels": ["string"],
+  "teacherSummary": "string",
+  "reteachingPoints": ["string"],
+  "riskFlags": ["string"]
+}
+- Every array field must be present even when empty.
+- classification must be one of the allowed values and should be conservative.
 `;

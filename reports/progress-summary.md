@@ -66,17 +66,19 @@
   디자인 시스템 토큰과 공통 surface/card/button/input 규칙 정리
   로컬 서버 기준 페이지 응답과 API 흐름 재검증 완료
   프로덕션 빌드 기준 `/`, `/teacher`, `/operator`, `/student/[verificationId]`, 질문 생성, 세션 조회, 분석, 교사 판단, 요약 흐름 재검증 완료
+  OpenAI `json_object` 응답 조건에 맞춰 입력/프롬프트 구조 조정
+  제공된 API 키 기준 `gpt-5-nano` 실호출 성공 확인
+  실AI + Neon DB 기준 질문 생성/분석 흐름 재검증 완료
 - in_progress:
-  AI service adapter 고도화
+  디자인 3차 전면 재설계
 - next:
   Vercel 배포 설정 구체화
-  Neon 실제 연결 검증
+  라이브 배포 검증
   AI 리포트 초안 본문 심화
 - risks:
   원본 문서명과 제품 브랜드명이 혼재되어 혼동될 위험
-  Neon 실배포 연결 전까지는 로컬 저장 검증 위주라는 한계
   구현 속도보다 문서가 앞서갈 위험
-  사용자가 제공한 Neon REST/Data API 주소와 현재 `DATABASE_URL` 기반 어댑터가 다르므로 연결 정보 정리가 필요
+  현재 제공된 키 기준으로는 `gpt-5.4*` 계열이 quota 부족이고 `gpt-5-nano`만 안정적으로 사용 가능
 - docs_updated:
   README
   WORKBOARD

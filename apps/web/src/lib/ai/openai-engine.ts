@@ -45,10 +45,15 @@ export const generateQuestionSetWithOpenAI = async (
   const response = await client.responses.create({
     model: process.env.AI_FAST_MODEL ?? "gpt-5.2",
     instructions: questionGenerationPrompt,
-    input: JSON.stringify({
+    input: `JSON payload:\n${JSON.stringify({
       promptVersion: QUESTION_GENERATION_PROMPT_VERSION,
       ...input,
-    }),
+    })}`,
+    text: {
+      format: {
+        type: "json_object",
+      },
+    },
   });
 
   return QuestionSetSchema.parse(safeJsonParse(response.output_text));
@@ -66,10 +71,15 @@ export const analyzeUnderstandingWithOpenAI = async (
   const response = await client.responses.create({
     model: process.env.AI_REASONING_MODEL ?? "gpt-5.2",
     instructions: answerAnalysisPrompt,
-    input: JSON.stringify({
+    input: `JSON payload:\n${JSON.stringify({
       promptVersion: ANSWER_ANALYSIS_PROMPT_VERSION,
       ...input,
-    }),
+    })}`,
+    text: {
+      format: {
+        type: "json_object",
+      },
+    },
   });
 
   return AnalysisReportSchema.parse(safeJsonParse(response.output_text));
