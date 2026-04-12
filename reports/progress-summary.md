@@ -29,8 +29,10 @@
 - 런타임 설정 공통화
 - API 에러 처리 공통화
 - 자동 스모크 테스트 `scripts/smoke-http.mjs` 추가
+- mock 경로와 live 경로를 분리한 스모크 테스트 구성
 - GitHub Actions CI 추가
 - `npm run verify` 기준 검증 통과
+- `npm run smoke:live` 기준 실AI + 실DB 스모크 통과
 
 ## 현재 판단
 

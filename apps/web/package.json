@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "smoke:http": "node ./scripts/smoke-http.mjs",
+    "smoke:live": "node ./scripts/smoke-http.mjs --live",
     "verify": "npm run lint && npm run build && npm run smoke:http"
   },
   "dependencies": {

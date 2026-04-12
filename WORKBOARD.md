@@ -34,6 +34,7 @@
   - `npm run lint`
   - `npm run build`
   - `npm run smoke:http`
+  - `npm run smoke:live`
   - `npm run verify`
 - GitHub Actions CI 추가
 
@@ -49,6 +50,7 @@
 - 운영자가 분포와 패턴을 볼 수 있다.
 - JSON/CSV export가 된다.
 - 자동 검증이 재실행 가능하다.
+- 실AI + 실DB 경로도 로컬 스모크 테스트로 재확인 가능하다.
 
 ## 남은 일
 

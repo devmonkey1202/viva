@@ -57,10 +57,12 @@ VERIFICATION_STORE_PATH=
 npm run lint
 npm run build
 npm run smoke:http
+npm run smoke:live
 npm run verify
 ```
 
 - `smoke:http`는 mock AI + 파일 저장 모드에서 핵심 HTTP 흐름을 자동 검증합니다.
+- `smoke:live`는 `.env.local` 기준 실AI + 실DB 경로를 스모크 테스트합니다.
 - `verify`는 `lint -> build -> smoke:http`를 한 번에 실행합니다.
 
 ## 현재 구조

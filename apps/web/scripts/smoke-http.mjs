@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -9,14 +9,45 @@ import { setTimeout as delay } from "node:timers/promises";
 const rootDir = process.cwd();
 const port = 3200 + Math.floor(Math.random() * 200);
 const baseUrl = `http://127.0.0.1:${port}`;
+const useRealAi = process.argv.includes("--live") || process.argv.includes("--live-ai");
+const useManagedDb =
+  process.argv.includes("--live") || process.argv.includes("--live-db");
+const requestTimeoutMs = useRealAi ? 90_000 : 15_000;
 
 const logs = { stdout: "", stderr: "" };
 const nextBin = path.join(rootDir, "node_modules", "next", "dist", "bin", "next");
 
+const readEnvFile = async (filename) => {
+  try {
+    const raw = await readFile(path.join(rootDir, filename), "utf8");
+    const entries = {};
+
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) {
+        continue;
+      }
+
+      const delimiterIndex = trimmed.indexOf("=");
+      if (delimiterIndex === -1) {
+        continue;
+      }
+
+      const key = trimmed.slice(0, delimiterIndex).trim();
+      const value = trimmed.slice(delimiterIndex + 1).trim();
+      entries[key] = value;
+    }
+
+    return entries;
+  } catch {
+    return {};
+  }
+};
+
 const fetchWithTimeout = (url, init) =>
   fetch(url, {
     ...init,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(requestTimeoutMs),
   });
 
 const waitForServer = async (url, timeoutMs = 30_000) => {
@@ -50,11 +81,25 @@ const fetchJson = async (url, init) => {
 
 const tempDir = await mkdtemp(path.join(os.tmpdir(), "viva-smoke-"));
 const storePath = path.join(tempDir, "verification-store.json");
+const envFileEntries = useRealAi || useManagedDb ? await readEnvFile(".env.local") : {};
+
 const serverEnv = {
   ...process.env,
-  AI_API_KEY: "",
-  OPENAI_API_KEY: "",
-  DATABASE_URL: "",
+  AI_API_KEY: useRealAi
+    ? process.env.AI_API_KEY ?? envFileEntries.AI_API_KEY ?? ""
+    : "",
+  OPENAI_API_KEY: useRealAi
+    ? process.env.OPENAI_API_KEY ?? envFileEntries.OPENAI_API_KEY ?? ""
+    : "",
+  DATABASE_URL: useManagedDb
+    ? process.env.DATABASE_URL ?? envFileEntries.DATABASE_URL ?? ""
+    : "",
+  AI_FAST_MODEL: useRealAi
+    ? process.env.AI_FAST_MODEL ?? envFileEntries.AI_FAST_MODEL ?? ""
+    : process.env.AI_FAST_MODEL ?? "",
+  AI_REASONING_MODEL: useRealAi
+    ? process.env.AI_REASONING_MODEL ?? envFileEntries.AI_REASONING_MODEL ?? ""
+    : process.env.AI_REASONING_MODEL ?? "",
   VERIFICATION_STORE_PATH: storePath,
 };
 
@@ -78,7 +123,7 @@ try {
   const health = await fetchJson(`${baseUrl}/api/health`);
   assert.equal(health.response.status, 200);
   assert.equal(health.data.status, "ok");
-  assert.equal(health.data.runtime.storeMode, "file");
+  assert.equal(health.data.runtime.storeMode, useManagedDb ? "managed" : "file");
 
   const home = await fetchWithTimeout(`${baseUrl}/`);
   const teacher = await fetchWithTimeout(`${baseUrl}/teacher`);
@@ -108,7 +153,11 @@ try {
   });
   assert.equal(questions.response.status, 200, questions.text);
   assert.equal(questions.data.questionSet.questions.length, 3);
-  assert.equal(questions.data.questionSet.modelVersion, "mock-engine");
+  if (useRealAi) {
+    assert.notEqual(questions.data.questionSet.modelVersion, "mock-engine");
+  } else {
+    assert.equal(questions.data.questionSet.modelVersion, "mock-engine");
+  }
 
   const verificationId = questions.data.verificationId;
   const studentPage = await fetchWithTimeout(`${baseUrl}/student/${verificationId}`);
@@ -186,10 +235,13 @@ try {
     JSON.stringify(
       {
         status: "ok",
+        mode: useRealAi || useManagedDb ? "live" : "mock",
         port,
         verificationId,
         classification: analyze.data.analysisReport.classification,
         confidenceBand: analyze.data.analysisReport.confidenceBand,
+        questionModel: questions.data.questionSet.modelVersion,
+        analysisModel: analyze.data.analysisReport.modelVersion,
       },
       null,
       2,
