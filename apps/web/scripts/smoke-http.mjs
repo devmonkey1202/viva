@@ -8,10 +8,13 @@ import { setTimeout as delay } from "node:timers/promises";
 
 const rootDir = process.cwd();
 const port = 3200 + Math.floor(Math.random() * 200);
-const baseUrl = `http://127.0.0.1:${port}`;
 const useRealAi = process.argv.includes("--live") || process.argv.includes("--live-ai");
 const useManagedDb =
   process.argv.includes("--live") || process.argv.includes("--live-db");
+const baseUrlArg = process.argv.find((argument) => argument.startsWith("--base-url="));
+const remoteBaseUrl = baseUrlArg?.slice("--base-url=".length).trim().replace(/\/+$/, "") ?? "";
+const useRemoteServer = remoteBaseUrl.length > 0;
+const baseUrl = useRemoteServer ? remoteBaseUrl : `http://127.0.0.1:${port}`;
 const requestTimeoutMs = useRealAi ? 90_000 : 15_000;
 
 const logs = { stdout: "", stderr: "" };
@@ -103,17 +106,19 @@ const serverEnv = {
   VERIFICATION_STORE_PATH: storePath,
 };
 
-const server = spawn(process.execPath, [nextBin, "start", "--port", String(port)], {
-  cwd: rootDir,
-  env: serverEnv,
-  stdio: ["ignore", "pipe", "pipe"],
-});
+const server = useRemoteServer
+  ? null
+  : spawn(process.execPath, [nextBin, "start", "--port", String(port)], {
+      cwd: rootDir,
+      env: serverEnv,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 
-server.stdout.on("data", (chunk) => {
+server?.stdout.on("data", (chunk) => {
   logs.stdout += chunk.toString();
 });
 
-server.stderr.on("data", (chunk) => {
+server?.stderr.on("data", (chunk) => {
   logs.stderr += chunk.toString();
 });
 
@@ -123,7 +128,9 @@ try {
   const health = await fetchJson(`${baseUrl}/api/health`);
   assert.equal(health.response.status, 200);
   assert.equal(health.data.status, "ok");
-  assert.equal(health.data.runtime.storeMode, useManagedDb ? "managed" : "file");
+  if (!useRemoteServer) {
+    assert.equal(health.data.runtime.storeMode, useManagedDb ? "managed" : "file");
+  }
 
   const home = await fetchWithTimeout(`${baseUrl}/`);
   const teacher = await fetchWithTimeout(`${baseUrl}/teacher`);
@@ -235,8 +242,9 @@ try {
     JSON.stringify(
       {
         status: "ok",
-        mode: useRealAi || useManagedDb ? "live" : "mock",
-        port,
+        mode: useRemoteServer ? "remote" : useRealAi || useManagedDb ? "live" : "mock",
+        port: useRemoteServer ? null : port,
+        baseUrl,
         verificationId,
         classification: analyze.data.analysisReport.classification,
         confidenceBand: analyze.data.analysisReport.confidenceBand,
@@ -253,6 +261,6 @@ try {
   console.error(logs.stderr);
   throw error;
 } finally {
-  server.kill();
+  server?.kill();
   await rm(tempDir, { recursive: true, force: true });
 }

@@ -10,6 +10,7 @@ export const QuestionItemSchema = z.object({
   targetConcepts: z.array(z.string().min(1)).min(1),
   riskSignals: z.array(z.string().min(1)).default([]),
 });
+export type QuestionItem = z.infer<typeof QuestionItemSchema>;
 
 export const QuestionSetSchema = z
   .object({
