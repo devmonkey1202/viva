@@ -124,10 +124,17 @@ export type GenerateQuestionSetRequest = z.infer<
   typeof GenerateQuestionSetRequestSchema
 >;
 
+export const StudentAnswerInputMethodSchema = z.enum(["text", "voice"]);
+
 export const StudentAnswerSchema = z.object({
   type: QuestionTypeSchema,
   answer: z.string().min(1),
+  inputMethod: StudentAnswerInputMethodSchema.optional(),
+  rawTranscript: z.string().min(1).optional(),
+  normalizationNotes: z.array(z.string().min(1)).optional(),
+  editedAfterTranscription: z.boolean().optional(),
 });
+export type StudentAnswer = z.infer<typeof StudentAnswerSchema>;
 
 export const AnalyzeUnderstandingRequestSchema = VerificationInputSchema.extend({
   questionSet: QuestionSetSchema,

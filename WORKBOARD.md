@@ -27,6 +27,8 @@
 - 랜딩/교사/운영자/학생 화면 전면 재설계 완료
 - teacher, operator, student surface 분리 완료
 - student 전용 답변 플로우 및 세션 조회 API 구현 완료
+- 학생 화면 STT(Web Speech API) + 텍스트 fallback 구현 완료
+- 음성 전사 메타(`inputMethod`, `rawTranscript`, `normalizationNotes`) 저장 완료
 - 실제 HTTP 요청 기준 흐름 검증 완료
 - lint/build 검증 완료
 
@@ -50,6 +52,7 @@
 - 프론트엔드: 역할별 surface 분리와 디자인 시스템 정리 완료
 - 백엔드/API: 저장/판단/export/summary 흐름 구현 완료
 - 학생 세션 조회 및 학생용 응답 화면 구현 완료
+- STT 기반 답변 수집과 텍스트 fallback 구현 완료
 - AI 프롬프트/스키마: 초안 완료, 구현 연결 시작
 - 샘플 데이터/데모: 1차 반영 완료
 - 문서/리포트: 브랜드 정리 반영 완료, 본문 생산 진행 중
@@ -98,6 +101,6 @@
 
 ## 현재 다음 액션
 
-- AI adapter 고도화
+- 디자인 3차 재설계
 - 배포 연결
 - 리포트 본문 보강

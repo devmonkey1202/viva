@@ -805,6 +805,47 @@ textarea {
   gap: 12px;
 }
 
+.voice-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.voice-preview {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #d6e2e0;
+  border-radius: var(--radius-md);
+  background: var(--surface-accent);
+  padding: 14px;
+}
+
+.voice-preview--muted {
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+
+.voice-preview__label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.voice-preview__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.voice-preview__notes {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
 .student-footer__note,
 .completion-card__hint {
   margin: 0;

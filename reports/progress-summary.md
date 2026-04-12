@@ -69,6 +69,9 @@
   OpenAI `json_object` 응답 조건에 맞춰 입력/프롬프트 구조 조정
   제공된 API 키 기준 `gpt-5-nano` 실호출 성공 확인
   실AI + Neon DB 기준 질문 생성/분석 흐름 재검증 완료
+  학생 화면에 브라우저 STT(Web Speech API) + 텍스트 fallback 구현
+  음성 전사 원문, 정규화 메모, 입력 방식 메타 저장 구현
+  STT 메타를 포함한 답변 저장/조회 API 흐름 검증 완료
 - in_progress:
   디자인 3차 전면 재설계
 - next:
