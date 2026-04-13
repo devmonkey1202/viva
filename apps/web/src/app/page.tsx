@@ -2,48 +2,92 @@ import Link from "next/link";
 
 import { AppHeader } from "@/components/app-header";
 import { StatusBadge } from "@/components/status-badge";
-import { MetricCard, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 
-const principles = [
+const validationSignals = [
   {
-    title: "제출물마다 다른 질문을 만듭니다.",
-    body: "고정 질문지가 아니라 제출물, 루브릭, 위험 신호를 함께 보고 학생별 검증 질문 3개를 만듭니다.",
+    label: "학생별 질문",
+    value: "3개",
+    body: "왜형, 전이형, 반례형 질문으로 이해를 다시 묻습니다.",
   },
   {
-    title: "점수보다 근거를 먼저 보여줍니다.",
-    body: "빠진 개념, 충돌 문장, 설명 실패 지점을 구조화해서 교사가 빠르게 읽고 결정할 수 있게 만듭니다.",
+    label: "교사 판단",
+    value: "최종 승인",
+    body: "AI는 근거를 구조화하고, 최종 판단은 교사가 맡습니다.",
   },
   {
-    title: "최종 판단은 교사가 맡습니다.",
-    body: "VIVA는 자동 채점기가 아니라 검증 인프라입니다. 판단의 책임과 맥락은 교사에게 남겨둡니다.",
+    label: "운영 요약",
+    value: "패턴 추적",
+    body: "반복 오개념과 누락 개념을 운영 화면에서 바로 확인합니다.",
   },
 ];
 
-const steps = [
-  "교사가 과제, 루브릭, 제출물을 입력합니다.",
-  "VIVA가 학생별 검증 질문 3개를 만듭니다.",
-  "학생이 짧고 분명하게 답합니다.",
-  "제출물, 질문, 답변, 루브릭을 함께 비교합니다.",
-  "교사가 근거를 보고 최종 판단합니다.",
+const frictionPoints = [
+  {
+    title: "결과물만으로는 이해를 알 수 없습니다.",
+    body: "문장을 잘 썼는지와 개념을 설명할 수 있는지는 다릅니다.",
+  },
+  {
+    title: "교사는 다시 묻기 위한 구조가 필요합니다.",
+    body: "질문 생성, 답변 수집, 근거 비교가 한 흐름으로 이어져야 합니다.",
+  },
+  {
+    title: "운영자는 반복 패턴까지 읽어야 합니다.",
+    body: "학생 개인 판정에서 끝나지 않고 수업 전체의 붕괴 지점을 봐야 합니다.",
+  },
 ];
 
-const roles = [
+const flow = [
   {
-    label: "교사",
-    title: "질문 생성부터 최종 판단까지 관리합니다.",
-    body: "과제 기준을 입력하고, 학생별 질문을 생성하고, 분석 근거를 확인해 최종 판단을 남깁니다.",
-    action: { href: "/login?next=/teacher", label: "교사 워크벤치" },
+    index: "01",
+    title: "과제 기준 입력",
+    body: "교사가 과제 설명, 루브릭, 제출물을 넣습니다.",
   },
   {
-    label: "학생",
-    title: "짧고 분명한 답으로 이해를 설명합니다.",
-    body: "질문 3개에 텍스트 또는 음성으로 답하고, 필요한 경우 이유와 조건을 짧게 덧붙입니다.",
+    index: "02",
+    title: "질문 생성",
+    body: "제출물 기반으로 학생별 검증 질문 3개를 만듭니다.",
   },
   {
-    label: "운영자",
-    title: "반복되는 오개념과 패턴을 확인합니다.",
-    body: "분류 분포, 교사 판단, 누락 개념, 반복 오개념을 한 화면에서 요약해 봅니다.",
-    action: { href: "/login?next=/operator", label: "운영 요약" },
+    index: "03",
+    title: "학생 답변",
+    body: "학생은 텍스트 또는 음성으로 짧고 분명하게 답합니다.",
+  },
+  {
+    index: "04",
+    title: "근거 비교",
+    body: "제출물, 질문, 답변, 루브릭을 함께 비교합니다.",
+  },
+  {
+    index: "05",
+    title: "교사 판단",
+    body: "교사는 근거를 읽고 최종 판단을 남깁니다.",
+  },
+];
+
+const surfaces = [
+  {
+    label: "Teacher",
+    title: "질문 생성부터 최종 판단까지 한 화면에서 처리합니다.",
+    body: "교사는 입력, 학생 링크, 분석, 판단, 최근 세션을 끊기지 않는 흐름으로 다룹니다.",
+    href: "/login?next=/teacher",
+    cta: "교사 워크벤치",
+    tone: "teacher",
+  },
+  {
+    label: "Student",
+    title: "학생은 부담 없이 짧게 답하고 끝낼 수 있어야 합니다.",
+    body: "모바일 우선 화면에서 질문 3개에 답하고, 필요하면 음성으로도 응답합니다.",
+    href: null,
+    cta: "교사 링크로 진입",
+    tone: "student",
+  },
+  {
+    label: "Operator",
+    title: "운영자는 개별 사례보다 패턴을 먼저 읽습니다.",
+    body: "분류 분포, 교사 판단, 누락 개념, 반복 오개념을 한 화면에서 요약합니다.",
+    href: "/login?next=/operator",
+    cta: "운영 요약",
+    tone: "operator",
   },
 ];
 
@@ -60,13 +104,20 @@ export default function Home() {
       />
 
       <div className="page-stack page-stack--landing">
-        <PageIntro
-          variant="landing"
-          className="landing-hero"
-          eyebrow="Submission Verification Layer"
-          title="결과물이 아니라 이해를 다시 확인합니다."
-          description="VIVA는 제출 이후 학생이 실제로 이해했는지 검증하는 평가 레이어입니다. LMS도, AI 튜터도, 탐지기도 아닌 교사 중심 검증 도구입니다."
-          actions={
+        <section className="landing-hero-2">
+          <div className="landing-hero-2__copy">
+            <p className="eyebrow">Submission Verification Layer</p>
+            <h1 className="landing-hero-2__title">
+              제출 이후의
+              <br />
+              이해를
+              <br />
+              다시 확인합니다.
+            </h1>
+            <p className="landing-hero-2__description">
+              VIVA는 결과물을 평가하는 화면이 아니라, 학생이 실제로 이해했는지 교사가 다시 검증할 수 있게
+              만드는 제품입니다. LMS도, AI 튜터도, 탐지기도 아닙니다.
+            </p>
             <div className="button-row">
               <Link href="/login?next=/teacher" className="button button--primary">
                 교사 워크벤치
@@ -75,135 +126,103 @@ export default function Home() {
                 운영 요약 보기
               </Link>
             </div>
-          }
-          meta={
-            <div className="landing-hero__aside">
-              <div className="badge-row">
-                <StatusBadge tone="accent">검증 질문 생성</StatusBadge>
-                <StatusBadge tone="info">근거 구조화</StatusBadge>
-                <StatusBadge tone="success">교사 최종 판단</StatusBadge>
-              </div>
-              <div className="metric-grid metric-grid--compact">
-                <MetricCard label="질문 구조" value="3문항" note="왜형, 전이형, 반례형" />
-                <MetricCard
-                  label="판단 구조"
-                  value="AI + 교사"
-                  note="AI가 근거를 정리하고 교사가 최종 판단합니다."
-                />
-                <MetricCard
-                  label="결과 출력"
-                  value="CSV / JSON"
-                  note="운영 요약과 세션 export를 지원합니다."
-                />
-              </div>
-              <div className="landing-hero__art" aria-hidden="true">
-                <div className="landing-hero__panel landing-hero__panel--primary" />
-                <div className="landing-hero__panel landing-hero__panel--secondary" />
-                <div className="landing-hero__panel landing-hero__panel--tertiary" />
-                <div className="landing-hero__ring" />
-                <div className="landing-hero__dot" />
-              </div>
-            </div>
-          }
-        />
-
-        <section className="landing-story-grid">
-          <SurfaceCard
-            eyebrow="Why Now"
-            title="AI를 써도 이해는 직접 확인해야 합니다."
-            description="과제 결과만 보고는 학생이 스스로 설명할 수 있는지, 조건이 바뀌어도 개념을 유지하는지 알기 어렵습니다."
-          >
-            <div className="token-row">
-              {["LMS 아님", "AI 튜터 아님", "탐지기 아님"].map((item) => (
-                <span key={item} className="token-chip">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard
-            tone="accent"
-            eyebrow="What Changes"
-            title="교사는 읽기와 판단에만 집중할 수 있습니다."
-            description="질문 생성, 학생 링크, 분석 근거, 운영 요약이 하나의 흐름으로 이어져 판단 속도를 높입니다."
-          >
             <div className="badge-row">
               <StatusBadge tone="accent">검증 질문 생성</StatusBadge>
               <StatusBadge tone="info">근거 구조화</StatusBadge>
               <StatusBadge tone="success">교사 최종 판단</StatusBadge>
             </div>
-          </SurfaceCard>
-        </section>
+          </div>
 
-        <section className="section-stack">
-          <div className="section-block__heading">
-            <p className="eyebrow">Principles</p>
-            <h2 className="section-headline">점수보다 구조와 근거가 먼저 보이게 설계합니다.</h2>
-          </div>
-          <div className="landing-card-grid">
-            {principles.map((item) => (
-              <SurfaceCard key={item.title} title={item.title}>
-                <p className="body-copy">{item.body}</p>
-              </SurfaceCard>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-stack">
-          <div className="section-block__heading">
-            <p className="eyebrow">Workflow</p>
-            <h2 className="section-headline">실사용 흐름은 다섯 단계로 끝납니다.</h2>
-          </div>
-          <div className="step-list">
-            {steps.map((step, index) => (
-              <div key={step} className="step-list__item">
-                <span className="step-list__index">{index + 1}</span>
-                <p className="body-copy">{step}</p>
-              </div>
-            ))}
+          <div className="landing-hero-2__visual" aria-hidden="true">
+            <div className="landing-hero-2__glass landing-hero-2__glass--a" />
+            <div className="landing-hero-2__glass landing-hero-2__glass--b" />
+            <div className="landing-hero-2__glass landing-hero-2__glass--c" />
+            <div className="landing-hero-2__signal landing-hero-2__signal--a" />
+            <div className="landing-hero-2__signal landing-hero-2__signal--b" />
+            <div className="landing-hero-2__signal landing-hero-2__signal--c" />
+            <div className="landing-hero-2__card landing-hero-2__card--primary">
+              <span>질문 생성</span>
+              <strong>학생별 3문항</strong>
+            </div>
+            <div className="landing-hero-2__card landing-hero-2__card--secondary">
+              <span>근거 비교</span>
+              <strong>빠진 개념과 충돌 문장</strong>
+            </div>
+            <div className="landing-hero-2__card landing-hero-2__card--accent">
+              <span>최종 판단</span>
+              <strong>교사 승인 구조</strong>
+            </div>
           </div>
         </section>
 
-        <section className="section-stack">
-          <div className="section-block__heading">
-            <p className="eyebrow">Surfaces</p>
-            <h2 className="section-headline">같은 브랜드 안에서 목적이 다른 화면으로 나눕니다.</h2>
-          </div>
-          <div className="landing-card-grid">
-            {roles.map((role) => (
-              <SurfaceCard
-                key={role.label}
-                eyebrow={role.label}
-                title={role.title}
-                description={role.body}
-              >
-                {role.action ? (
-                  <Link href={role.action.href} className="button button--ghost">
-                    {role.action.label}
-                  </Link>
-                ) : (
-                  <p className="helper-text">
-                    학생 화면은 교사가 생성한 세션 링크로 진입합니다.
-                  </p>
-                )}
-              </SurfaceCard>
-            ))}
-          </div>
+        <section className="landing-proof-grid">
+          {validationSignals.map((item) => (
+            <article key={item.label} className="landing-proof-card">
+              <p className="landing-proof-card__label">{item.label}</p>
+              <strong className="landing-proof-card__value">{item.value}</strong>
+              <p className="landing-proof-card__body">{item.body}</p>
+            </article>
+          ))}
         </section>
 
-        <section className="landing-proof-strip">
-          <div className="landing-proof-strip__copy">
-            <p className="eyebrow">Built For Delivery</p>
-            <h2 className="section-headline">
-              질문 생성, 학생 제출, 교사 판단, 운영 요약이 실제 서비스 흐름으로 이어집니다.
-            </h2>
-            <p className="body-copy">
-              VIVA는 데모 화면이 아니라 배포 가능한 검증 도구를 목표로 설계했습니다. 교사와 학생의 마찰은 낮추고,
-              운영자가 반복 오개념을 읽는 흐름까지 한 제품 안에 넣습니다.
+        <section className="landing-contrast">
+          <div className="landing-contrast__intro">
+            <p className="eyebrow">Why This Product Exists</p>
+            <h2 className="landing-contrast__title">결과물은 보이지만, 이해는 그대로 드러나지 않습니다.</h2>
+            <p className="landing-contrast__description">
+              VIVA는 학생이 제출한 결과물을 다시 설명하게 만들고, 교사가 빠르게 판단할 수 있도록 질문과 근거를
+              구조화합니다.
             </p>
           </div>
-          <div className="landing-proof-strip__actions">
+          <div className="landing-contrast__grid">
+            {frictionPoints.map((item) => (
+              <article key={item.title} className="landing-contrast__item">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-flow-2">
+          <div className="section-block__heading">
+            <p className="eyebrow">Flow</p>
+            <h2 className="section-headline">교사와 학생의 흐름은 다섯 단계로 닫힙니다.</h2>
+          </div>
+          <div className="landing-flow-2__grid">
+            {flow.map((item) => (
+              <article key={item.index} className="landing-flow-2__item">
+                <span>{item.index}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-surface-grid">
+          {surfaces.map((item) => (
+            <article key={item.label} className={`landing-surface-card landing-surface-card--${item.tone}`}>
+              <p className="eyebrow">{item.label}</p>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+              {item.href ? (
+                <Link href={item.href} className="button button--ghost">
+                  {item.cta}
+                </Link>
+              ) : (
+                <span className="landing-surface-card__note">{item.cta}</span>
+              )}
+            </article>
+          ))}
+        </section>
+
+        <section className="landing-cta-band">
+          <div className="landing-cta-band__copy">
+            <p className="eyebrow">Ready To Verify</p>
+            <h2 className="landing-cta-band__title">교사는 더 빨리 읽고, 학생은 더 짧게 설명하고, 운영자는 패턴을 더 빨리 찾습니다.</h2>
+          </div>
+          <div className="landing-cta-band__actions">
             <Link href="/login?next=/teacher" className="button button--primary">
               교사로 시작하기
             </Link>
