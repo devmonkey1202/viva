@@ -722,8 +722,8 @@ export function TeacherWorkbench({
         <PageIntro
           variant="tool"
           eyebrow="교사 워크벤치"
-          title="질문 생성부터 최종 판단까지 한 흐름으로 이어갑니다"
-          description="교사는 입력, 학생 링크 공유, 분석 검토, 최종 판단을 같은 작업 공간에서 처리합니다. 최근 세션과 제어 기능도 이 화면에서 바로 이어집니다."
+          title="질문 생성부터 최종 판단까지 한 번에 처리합니다"
+          description="입력, 링크 공유, 분석 확인, 최종 판단을 한 화면에서 끝냅니다."
           actions={
             <div className="button-row">
               <button
@@ -779,8 +779,8 @@ export function TeacherWorkbench({
           storageKey="viva:onboarding:teacher"
           tone="teacher"
           eyebrow="첫 사용 안내"
-          title="교사는 다섯 단계만 따라가면 됩니다."
-          description="기준 입력, 질문 생성, 학생 링크 공유, 결과 확인, 최종 판단 순서만 지키면 흐름이 끊기지 않습니다."
+          title="5단계만 따라가면 바로 운영됩니다."
+          description="준비 → 질문 → 링크 공유 → 분석 확인 → 교사 판단 순서로 진행하세요."
           steps={[
             {
               title: "기준 먼저 정리",
@@ -989,7 +989,7 @@ export function TeacherWorkbench({
                 </div>
                 <Field
                   label="교사 메모"
-                  helper="최종 판단 이유, 추가 지도 포인트, 보완 필요 사항을 적습니다."
+                  helper="판단 근거와 다음 지도 포인트만 간단히 남겨주세요."
                 >
                   <textarea
                     value={decisionDraft.notes}
@@ -1018,7 +1018,7 @@ export function TeacherWorkbench({
                   </div>
                 ) : (
                   <p className="helper-text">
-                    아직 저장된 교사 판단이 없습니다. 분석을 확인한 뒤 최종 메모를 남겨 주세요.
+                    아직 저장된 교사 판단이 없습니다.
                   </p>
                 )}
               </div>
@@ -1057,7 +1057,7 @@ export function TeacherWorkbench({
             <SurfaceCard
               eyebrow="Recent Sessions"
               title="최근 세션 다시 열기"
-              description="교사 워크벤치를 벗어나지 않고 최근 세션을 다시 불러옵니다."
+              description="워크벤치를 벗어나지 않고 최근 세션을 다시 엽니다."
             >
               <VerificationSessionBrowser
                 activeVerificationId={verificationId}
@@ -1068,7 +1068,7 @@ export function TeacherWorkbench({
             <SurfaceCard
               eyebrow="Activity"
               title="세션 기록"
-              description="질문 생성, 분석, 링크 제어, 최종 판단 흐름을 시간순으로 봅니다."
+              description="질문 생성부터 최종 판단까지의 기록입니다."
             >
               <SessionTimeline verificationId={verificationId} activity={activity} />
             </SurfaceCard>

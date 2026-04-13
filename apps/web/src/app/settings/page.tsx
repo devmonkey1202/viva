@@ -22,7 +22,7 @@ export default async function SettingsPage() {
           variant="settings"
           eyebrow="설정"
           title="작업 기본값과 현재 연결 상태를 빠르게 확인합니다."
-          description="이 화면에서는 다음 세션의 기본값을 정리하고, 현재 AI와 저장소 연결 상태를 함께 봅니다."
+          description="다음 세션 기본값과 현재 연결 상태를 정리합니다."
           meta={
             <div className="badge-row">
               <StatusBadge tone={runtime.aiConfigured ? "success" : "warning"}>

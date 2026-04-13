@@ -63,8 +63,8 @@ export function SettingsPanel({
         storageKey="viva:onboarding:settings"
         tone="settings"
         eyebrow="빠른 설정 안내"
-        title="먼저 세 가지 기본값만 맞추면 됩니다."
-        description="입력 방식, fallback 정책, export 형식을 먼저 정해두면 다음 세션부터 같은 기준으로 시작합니다."
+        title="세 가지 기본값만 먼저 맞추세요."
+        description="입력 방식, fallback, export 형식을 먼저 정하면 됩니다."
         steps={[
           {
             title: "입력 방식 정하기",
@@ -84,7 +84,7 @@ export function SettingsPanel({
       <SurfaceCard
         eyebrow="작업 기본값"
         title="다음 검증 세션의 기본값"
-        description="여기서 바꾼 값은 현재 브라우저의 교사용 워크벤치에서 다음 세션을 시작할 때 기본값으로 반영됩니다."
+        description="여기서 바꾼 값은 다음 세션 시작 시 기본값으로 반영됩니다."
       >
         <div className="split-grid">
           <Field label="음성 답변 허용">
@@ -158,7 +158,7 @@ export function SettingsPanel({
 
         <Field
           label="세션 보관 기준(일)"
-          helper="현재 브라우저에서 새 세션을 시작할 때 참고하는 기본값입니다."
+            helper="새 세션 시작 시 참고하는 기본값입니다."
         >
           <input
             type="number"
@@ -188,7 +188,7 @@ export function SettingsPanel({
       <SurfaceCard
         eyebrow="환경 상태"
         title="현재 배포 환경 연결"
-        description="배포 환경의 AI와 저장소 연결 상태를 요약해서 보여줍니다."
+        description="AI와 저장소 연결 상태 요약입니다."
       >
         <div className="metric-grid">
           <div className="metric-card">
