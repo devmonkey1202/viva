@@ -5,6 +5,7 @@ export type VerificationListItem = {
   assignmentTitle: string;
   updatedAt: string;
   createdAt: string;
+  studentAccessState: VerificationRecord["studentAccessState"];
   classification?: VerificationRecord["analysisReport"] extends infer T
     ? T extends { classification: infer U }
       ? U
@@ -34,6 +35,7 @@ export const toVerificationListItem = (
   assignmentTitle: verification.assignmentTitle,
   updatedAt: verification.updatedAt,
   createdAt: verification.createdAt,
+  studentAccessState: verification.studentAccessState,
   classification: verification.analysisReport?.classification,
   teacherDecision: verification.teacherDecision?.decision,
   questionModelVersion: verification.questionSet.modelVersion,
@@ -83,4 +85,3 @@ export const filterVerificationList = (
 
   return filtered.slice(0, limit).map(toVerificationListItem);
 };
-

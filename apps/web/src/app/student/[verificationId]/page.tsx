@@ -19,5 +19,9 @@ export default async function StudentPage({ params }: StudentPageProps) {
     redirect("/session-expired");
   }
 
+  if (verification.studentAccessState !== "open") {
+    redirect("/session-expired");
+  }
+
   return <StudentAnswerFlow verification={verification} />;
 }

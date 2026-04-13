@@ -9,6 +9,7 @@ import type {
   AnalyzeUnderstandingStoredRequest,
   GenerateQuestionSetRequest,
   OperatorSummary,
+  StudentAccessState,
   TeacherDecision,
   TeacherDecisionInput,
   VerificationRecord,
@@ -28,6 +29,7 @@ type VerificationRow = {
   analysis_report_json: string | null;
   teacher_decision_json: string | null;
   activity_json: string;
+  student_access_state: string;
   created_at: string;
   updated_at: string;
 };
@@ -65,9 +67,15 @@ const ensureSchema = async () => {
         analysis_report_json TEXT,
         teacher_decision_json TEXT,
         activity_json TEXT NOT NULL,
+        student_access_state TEXT NOT NULL DEFAULT 'open',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ADD COLUMN IF NOT EXISTS student_access_state TEXT NOT NULL DEFAULT 'open'
     `;
   })();
 
@@ -136,6 +144,7 @@ const rowToVerificationRecord = (row: VerificationRow) =>
       ? JSON.parse(row.teacher_decision_json)
       : undefined,
     activity: JSON.parse(row.activity_json),
+    studentAccessState: row.student_access_state,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -157,6 +166,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       analysis_report_json,
       teacher_decision_json,
       activity_json,
+      student_access_state,
       created_at,
       updated_at
     ) VALUES (
@@ -171,6 +181,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       ${record.analysisReport ? JSON.stringify(record.analysisReport) : null},
       ${record.teacherDecision ? JSON.stringify(record.teacherDecision) : null},
       ${JSON.stringify(record.activity)},
+      ${record.studentAccessState},
       ${record.createdAt},
       ${record.updatedAt}
     )
@@ -186,6 +197,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       analysis_report_json = EXCLUDED.analysis_report_json,
       teacher_decision_json = EXCLUDED.teacher_decision_json,
       activity_json = EXCLUDED.activity_json,
+      student_access_state = EXCLUDED.student_access_state,
       created_at = EXCLUDED.created_at,
       updated_at = EXCLUDED.updated_at
   `;
@@ -201,6 +213,7 @@ export const createVerificationRecordFromNeon = async (
     verificationId: randomUUID(),
     createdAt: now,
     updatedAt: now,
+    studentAccessState: "open",
     ...input,
     questionSet,
     activity: [
@@ -297,6 +310,30 @@ export const saveTeacherDecisionForVerificationFromNeon = async (
   return verification;
 };
 
+export const setStudentAccessForVerificationFromNeon = async (
+  verificationId: string,
+  state: StudentAccessState,
+) => {
+  const records = await listVerificationRecordsFromNeon();
+  const verification = requireVerification(records, verificationId);
+  const now = new Date().toISOString();
+
+  verification.updatedAt = now;
+  verification.studentAccessState = state;
+  verification.activity.push({
+    type: "student_access_updated",
+    recordedAt: now,
+    message:
+      state === "locked"
+        ? "학생 링크를 잠금 처리했습니다."
+        : "학생 링크를 다시 열었습니다.",
+  });
+
+  await persistVerificationRecord(verification);
+
+  return verification;
+};
+
 export const getOperatorSummaryFromNeon = async (): Promise<OperatorSummary> => {
   const records = await listVerificationRecordsFromNeon();
 
@@ -345,13 +382,24 @@ export const getOperatorSummaryFromNeon = async (): Promise<OperatorSummary> => 
   };
 };
 
-export const exportVerificationsAsJsonFromNeon = async () =>
-  listVerificationRecordsFromNeon();
+export const exportVerificationsAsJsonFromNeon = async (
+  verificationId?: string,
+) => {
+  const records = await listVerificationRecordsFromNeon();
+
+  return verificationId
+    ? records.filter((record) => record.verificationId === verificationId)
+    : records;
+};
 
 const csvEscape = (value: string) => `"${value.replaceAll('"', '""')}"`;
 
-export const exportVerificationsAsCsvFromNeon = async () => {
-  const records = await listVerificationRecordsFromNeon();
+export const exportVerificationsAsCsvFromNeon = async (
+  verificationId?: string,
+) => {
+  const records = verificationId
+    ? await exportVerificationsAsJsonFromNeon(verificationId)
+    : await listVerificationRecordsFromNeon();
 
   const header = [
     "verification_id",

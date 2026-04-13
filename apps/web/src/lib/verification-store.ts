@@ -5,6 +5,7 @@ import type {
   AnalyzeUnderstandingStoredRequest,
   GenerateQuestionSetRequest,
   TeacherDecisionInput,
+  StudentAccessState,
   VerificationRecord,
 } from "@/lib/schemas";
 import {
@@ -15,6 +16,7 @@ import {
   getOperatorSummaryFromFile,
   listVerificationRecordsFromFile,
   saveAnalysisForVerificationFromFile,
+  setStudentAccessForVerificationFromFile,
   saveTeacherDecisionForVerificationFromFile,
 } from "@/lib/verification-store-file";
 import {
@@ -25,6 +27,7 @@ import {
   getOperatorSummaryFromNeon,
   listVerificationRecordsFromNeon,
   saveAnalysisForVerificationFromNeon,
+  setStudentAccessForVerificationFromNeon,
   saveTeacherDecisionForVerificationFromNeon,
 } from "@/lib/verification-store-neon";
 import { getRuntimeConfig } from "@/lib/runtime-config";
@@ -55,6 +58,14 @@ const saveTeacherDecisionForVerificationImpl = (
     ? saveTeacherDecisionForVerificationFromNeon(verificationId, decisionInput)
     : saveTeacherDecisionForVerificationFromFile(verificationId, decisionInput);
 
+const setStudentAccessForVerificationImpl = (
+  verificationId: string,
+  state: StudentAccessState,
+) =>
+  hasDatabaseUrl()
+    ? setStudentAccessForVerificationFromNeon(verificationId, state)
+    : setStudentAccessForVerificationFromFile(verificationId, state);
+
 const getVerificationRecordImpl = (verificationId: string) =>
   hasDatabaseUrl()
     ? getVerificationRecordFromNeon(verificationId)
@@ -68,20 +79,22 @@ const listVerificationRecordsImpl = () =>
 const getOperatorSummaryImpl = () =>
   hasDatabaseUrl() ? getOperatorSummaryFromNeon() : getOperatorSummaryFromFile();
 
-const exportVerificationsAsJsonImpl = () =>
+const exportVerificationsAsJsonImpl = (verificationId?: string) =>
   hasDatabaseUrl()
-    ? exportVerificationsAsJsonFromNeon()
-    : exportVerificationsAsJsonFromFile();
+    ? exportVerificationsAsJsonFromNeon(verificationId)
+    : exportVerificationsAsJsonFromFile(verificationId);
 
-const exportVerificationsAsCsvImpl = () =>
+const exportVerificationsAsCsvImpl = (verificationId?: string) =>
   hasDatabaseUrl()
-    ? exportVerificationsAsCsvFromNeon()
-    : exportVerificationsAsCsvFromFile();
+    ? exportVerificationsAsCsvFromNeon(verificationId)
+    : exportVerificationsAsCsvFromFile(verificationId);
 
 export const createVerificationRecord = createVerificationRecordImpl;
 export const saveAnalysisForVerification = saveAnalysisForVerificationImpl;
 export const saveTeacherDecisionForVerification =
   saveTeacherDecisionForVerificationImpl;
+export const setStudentAccessForVerification =
+  setStudentAccessForVerificationImpl;
 export const getVerificationRecord = getVerificationRecordImpl;
 export const listVerificationRecords = listVerificationRecordsImpl;
 export const getOperatorSummary = getOperatorSummaryImpl;

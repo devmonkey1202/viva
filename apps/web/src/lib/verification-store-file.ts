@@ -9,6 +9,7 @@ import type {
   AnalyzeUnderstandingStoredRequest,
   GenerateQuestionSetRequest,
   OperatorSummary,
+  StudentAccessState,
   TeacherDecision,
   TeacherDecisionInput,
   VerificationRecord,
@@ -124,6 +125,7 @@ export const createVerificationRecordFromFile = async (
       verificationId: randomUUID(),
       createdAt: now,
       updatedAt: now,
+      studentAccessState: "open",
       ...input,
       questionSet,
       activity: [
@@ -194,6 +196,31 @@ export const saveTeacherDecisionForVerificationFromFile = async (
     return VerificationRecordSchema.parse(verification);
   });
 
+export const setStudentAccessForVerificationFromFile = async (
+  verificationId: string,
+  state: StudentAccessState,
+) =>
+  queueStoreOperation(async () => {
+    const store = await readStore();
+    const verification = requireVerification(store.verifications, verificationId);
+    const now = new Date().toISOString();
+    const isLocked = state === "locked";
+
+    verification.updatedAt = now;
+    verification.studentAccessState = state;
+    verification.activity.push({
+      type: "student_access_updated",
+      recordedAt: now,
+      message: isLocked
+        ? "학생 링크를 잠금 처리했습니다."
+        : "학생 링크를 다시 열었습니다.",
+    });
+
+    await writeStore(store);
+
+    return VerificationRecordSchema.parse(verification);
+  });
+
 export const getVerificationRecordFromFile = async (verificationId: string) => {
   const store = await readStore();
 
@@ -257,13 +284,24 @@ export const getOperatorSummaryFromFile = async (): Promise<OperatorSummary> => 
   };
 };
 
-export const exportVerificationsAsJsonFromFile = async () =>
-  listVerificationRecordsFromFile();
+export const exportVerificationsAsJsonFromFile = async (
+  verificationId?: string,
+) => {
+  const records = await listVerificationRecordsFromFile();
+
+  return verificationId
+    ? records.filter((record) => record.verificationId === verificationId)
+    : records;
+};
 
 const csvEscape = (value: string) => `"${value.replaceAll('"', '""')}"`;
 
-export const exportVerificationsAsCsvFromFile = async () => {
-  const records = await listVerificationRecordsFromFile();
+export const exportVerificationsAsCsvFromFile = async (
+  verificationId?: string,
+) => {
+  const records = verificationId
+    ? await exportVerificationsAsJsonFromFile(verificationId)
+    : await listVerificationRecordsFromFile();
 
   const header = [
     "verification_id",

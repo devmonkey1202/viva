@@ -20,6 +20,7 @@ const buildRecord = (
   submissionText: "Binary search repeatedly cuts the search range in half.",
   createdAt: "2026-04-13T12:00:00.000Z",
   updatedAt: "2026-04-13T12:30:00.000Z",
+  studentAccessState: "open",
   questionSet: {
     questionSetId: "question-set-1",
     generatedAt: "2026-04-13T12:00:00.000Z",
@@ -80,6 +81,7 @@ test("toVerificationListItem keeps teacher-facing summary fields", () => {
   assert.equal(item.questionModelVersion, "mock-engine");
   assert.equal(item.analysisModelVersion, "educator-verification-v1");
   assert.equal(item.classification, "uncertain");
+  assert.equal(item.studentAccessState, "open");
 });
 
 test("filterVerificationList matches title, concept, and verification id", () => {
@@ -137,4 +139,3 @@ test("getVerificationSessionFilter classifies session states for browser filters
   assert.equal(matchesVerificationSessionFilter(decided, "decision_complete"), true);
   assert.equal(matchesVerificationSessionFilter(awaiting, "analysis_ready"), false);
 });
-

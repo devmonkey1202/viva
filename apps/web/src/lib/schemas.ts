@@ -126,6 +126,8 @@ export type GenerateQuestionSetRequest = z.infer<
 >;
 
 export const StudentAnswerInputMethodSchema = z.enum(["text", "voice"]);
+export const StudentAccessStateSchema = z.enum(["open", "locked"]);
+export type StudentAccessState = z.infer<typeof StudentAccessStateSchema>;
 
 export const StudentAnswerSchema = z.object({
   type: QuestionTypeSchema,
@@ -196,6 +198,7 @@ export const VerificationActivitySchema = z.object({
     "question_generated",
     "analysis_saved",
     "teacher_decision_saved",
+    "student_access_updated",
   ]),
   recordedAt: z.string().datetime(),
   message: z.string().min(1),
@@ -207,6 +210,7 @@ export const VerificationRecordSchema = VerificationInputSchema.extend({
   verificationId: z.string().min(1),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  studentAccessState: StudentAccessStateSchema.default("open"),
   questionSet: QuestionSetSchema,
   studentAnswers: z.array(StudentAnswerSchema).length(3).optional(),
   analysisReport: AnalysisReportSchema.optional(),
@@ -229,6 +233,7 @@ export const VerificationListItemSchema = z.object({
   assignmentTitle: z.string().min(1),
   updatedAt: z.string().datetime(),
   createdAt: z.string().datetime(),
+  studentAccessState: StudentAccessStateSchema,
   classification: AnalysisClassificationSchema.optional(),
   teacherDecision: TeacherDecisionStatusSchema.optional(),
   questionModelVersion: z.string().min(1),
@@ -241,6 +246,22 @@ export const ListVerificationsResponseSchema = z.object({
 });
 export type ListVerificationsResponse = z.infer<
   typeof ListVerificationsResponseSchema
+>;
+
+export const UpdateStudentAccessRequestSchema = z.object({
+  state: StudentAccessStateSchema,
+});
+export type UpdateStudentAccessRequest = z.infer<
+  typeof UpdateStudentAccessRequestSchema
+>;
+
+export const UpdateStudentAccessResponseSchema = z.object({
+  verificationId: z.string().min(1),
+  studentAccessState: StudentAccessStateSchema,
+  updatedAt: z.string().datetime(),
+});
+export type UpdateStudentAccessResponse = z.infer<
+  typeof UpdateStudentAccessResponseSchema
 >;
 
 export const OperatorSummaryBucketSchema = z.object({

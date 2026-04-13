@@ -213,12 +213,41 @@ try {
   assert.equal(verification.response.status, 200);
   assert.equal(verification.data.verification.verificationId, verificationId);
 
+  const lockStudentAccess = await fetchJson(
+    `${baseUrl}/api/verifications/${verificationId}/student-access`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: "locked" }),
+    },
+  );
+  assert.equal(lockStudentAccess.response.status, 200, lockStudentAccess.text);
+  assert.equal(lockStudentAccess.data.studentAccessState, "locked");
+
+  const lockedStudentPage = await fetchWithTimeout(
+    `${baseUrl}/student/${verificationId}`,
+    { redirect: "manual" },
+  );
+  assert.equal(lockedStudentPage.status, 307);
+
+  const reopenStudentAccess = await fetchJson(
+    `${baseUrl}/api/verifications/${verificationId}/student-access`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: "open" }),
+    },
+  );
+  assert.equal(reopenStudentAccess.response.status, 200, reopenStudentAccess.text);
+  assert.equal(reopenStudentAccess.data.studentAccessState, "open");
+
   const verificationList = await fetchJson(
     `${baseUrl}/api/verifications?limit=5&query=${encodeURIComponent("이진 탐색")}`,
   );
   assert.equal(verificationList.response.status, 200);
   assert.ok(verificationList.data.items.length >= 1);
   assert.equal(verificationList.data.items[0].verificationId, verificationId);
+  assert.equal(verificationList.data.items[0].studentAccessState, "open");
 
   const analyze = await fetchJson(`${baseUrl}/api/analyze`, {
     method: "POST",
@@ -275,13 +304,19 @@ try {
 
   const exportJson = await fetchWithTimeout(`${baseUrl}/api/export?format=json`);
   const exportCsv = await fetchWithTimeout(`${baseUrl}/api/export?format=csv`);
+  const sessionExportJson = await fetchWithTimeout(
+    `${baseUrl}/api/export?format=json&verificationId=${verificationId}`,
+  );
   const exportJsonText = await exportJson.text();
   const exportCsvText = await exportCsv.text();
+  const sessionExportJsonText = await sessionExportJson.text();
   assert.equal(exportJson.status, 200);
   assert.equal(exportCsv.status, 200);
+  assert.equal(sessionExportJson.status, 200);
   assert.match(exportJson.headers.get("content-type") ?? "", /application\/json/);
   assert.match(exportCsv.headers.get("content-type") ?? "", /text\/csv/);
   assert.match(exportJsonText, new RegExp(verificationId));
+  assert.match(sessionExportJsonText, new RegExp(verificationId));
   assert.match(exportCsvText, /verification_id/);
 
   console.log(

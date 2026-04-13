@@ -149,6 +149,9 @@ export function VerificationSessionBrowser({
                     <StatusBadge tone="neutral">
                       {sessionFilterLabel[sessionFilter]}
                     </StatusBadge>
+                    {item.studentAccessState === "locked" ? (
+                      <StatusBadge tone="warning">링크 잠김</StatusBadge>
+                    ) : null}
                     {item.classification ? (
                       <StatusBadge
                         tone={analysisClassificationMeta[item.classification].tone}
@@ -180,4 +183,3 @@ export function VerificationSessionBrowser({
     </div>
   );
 }
-

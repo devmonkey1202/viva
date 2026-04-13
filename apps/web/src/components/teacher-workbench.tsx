@@ -40,6 +40,7 @@ import type {
   GetVerificationResponse,
   QuestionSet,
   SaveTeacherDecisionResponse,
+  StudentAccessState,
   TeacherDecision,
   TeacherDecisionInput,
   VerificationActivity,
@@ -102,6 +103,8 @@ export function TeacherWorkbench({
     null,
   );
   const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [studentAccessState, setStudentAccessState] =
+    useState<StudentAccessState>("open");
   const [teacherDecision, setTeacherDecision] = useState<TeacherDecision | null>(
     null,
   );
@@ -153,6 +156,9 @@ export function TeacherWorkbench({
     verificationId && clientOrigin
       ? buildStudentVerificationUrl(clientOrigin, verificationId)
       : "";
+  const currentExportHref = verificationId
+    ? `/api/export?format=json&verificationId=${verificationId}`
+    : "/api/export?format=json";
   const completionCount = Object.values(answers).filter(
     (value) => value.trim().length > 0,
   ).length;
@@ -285,6 +291,7 @@ export function TeacherWorkbench({
     setRiskPoints(nextDraft.riskPoints);
     setSubmissionText(nextDraft.submissionText);
     setQuestionSet(verification.questionSet);
+    setStudentAccessState(verification.studentAccessState);
     setAnalysisReport(verification.analysisReport ?? null);
     setTeacherDecision(verification.teacherDecision ?? null);
     setAnswers(answersFromStoredAnswers(verification.studentAnswers));
@@ -312,6 +319,7 @@ export function TeacherWorkbench({
     setRiskPoints(demoVerificationInput.rubricRiskPoints.join("\n"));
     setSubmissionText(demoVerificationInput.submissionText);
     setQuestionSet(null);
+    setStudentAccessState("open");
     setAnalysisReport(null);
     setVerificationId(null);
     setTeacherDecision(null);
@@ -353,6 +361,7 @@ export function TeacherWorkbench({
           const payload = (await response.json()) as GenerateQuestionSetResponse;
           setVerificationId(payload.verificationId);
           setQuestionSet(payload.questionSet);
+          setStudentAccessState("open");
           setAnalysisReport(null);
           setTeacherDecision(null);
           setDecisionDraft(initialDecisionState);
@@ -558,6 +567,65 @@ export function TeacherWorkbench({
     }
   };
 
+  const toggleStudentAccess = () => {
+    if (!verificationId) {
+      return;
+    }
+
+    const nextState: StudentAccessState =
+      studentAccessState === "open" ? "locked" : "open";
+
+    setErrorMessage(null);
+    setNoticeMessage(null);
+    setActiveAction("sync");
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const response = await fetch(
+            `/api/verifications/${verificationId}/student-access`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ state: nextState }),
+            },
+          );
+
+          if (!response.ok) {
+            const error = (await response.json()) as { message?: string };
+            throw new Error(
+              error.message ?? "학생 링크 상태를 변경하지 못했습니다.",
+            );
+          }
+
+          setStudentAccessState(nextState);
+          setNoticeMessage(
+            nextState === "locked"
+              ? "학생 링크를 잠금 처리했습니다."
+              : "학생 링크를 다시 열었습니다.",
+          );
+          syncLatestVerification();
+        } catch (error) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "학생 링크 상태 변경 중 오류가 발생했습니다.",
+          );
+          setActiveAction(null);
+        }
+      })();
+    });
+  };
+
+  const rerunAnalysis = () => {
+    if (completionCount !== 3) {
+      setNoticeMessage("세 문항 답변이 모두 있어야 재분석할 수 있습니다.");
+      return;
+    }
+
+    runAnalysis(answers, answerArtifacts);
+  };
+
   const selectVerification = (nextVerificationId: string) => {
     if (
       hasUnsavedLocalChanges &&
@@ -610,6 +678,14 @@ export function TeacherWorkbench({
             >
               CSV export
             </Link>
+            {verificationId ? (
+              <Link
+                href={currentExportHref}
+                className="button button--ghost button--compact"
+              >
+                세션 JSON
+              </Link>
+            ) : null}
             <Link
               href="/operator"
               className="button button--ghost button--compact"
@@ -669,6 +745,15 @@ export function TeacherWorkbench({
                 {managedDatabase ? "Managed DB" : "Local store"}
               </StatusBadge>
               <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
+              {verificationId ? (
+                <StatusBadge
+                  tone={studentAccessState === "open" ? "success" : "warning"}
+                >
+                  {studentAccessState === "open"
+                    ? "학생 링크 열림"
+                    : "학생 링크 잠김"}
+                </StatusBadge>
+              ) : null}
               <StatusBadge tone={hasUnsavedLocalChanges ? "warning" : "info"}>
                 {hasUnsavedLocalChanges ? "저장 대기" : "자동 저장"}
               </StatusBadge>
@@ -799,6 +884,15 @@ export function TeacherWorkbench({
                       className="form-input form-input--mono"
                     />
                   </div>
+                  <div className="badge-row">
+                    <StatusBadge
+                      tone={studentAccessState === "open" ? "success" : "warning"}
+                    >
+                      {studentAccessState === "open"
+                        ? "응답 링크 사용 가능"
+                        : "응답 링크 잠금 상태"}
+                    </StatusBadge>
+                  </div>
                   <div className="button-row">
                     <button
                       type="button"
@@ -854,6 +948,63 @@ export function TeacherWorkbench({
             </SurfaceCard>
           </div>
         </div>
+
+        <SurfaceCard
+          eyebrow="Session Controls"
+          title="세션 제어와 재검증"
+          description="학생 링크 상태를 조정하고, 현재 답변을 다시 분석하거나 이 세션만 따로 내보낼 수 있습니다."
+        >
+          <div className="button-row">
+            <StatusBadge
+              tone={studentAccessState === "open" ? "success" : "warning"}
+            >
+              {studentAccessState === "open"
+                ? "응답 링크 사용 가능"
+                : "응답 링크 잠금 상태"}
+            </StatusBadge>
+            {verificationId ? (
+              <>
+                <button
+                  type="button"
+                  onClick={toggleStudentAccess}
+                  disabled={isPending}
+                  className="button button--ghost"
+                >
+                  {activeAction === "sync"
+                    ? "상태 변경 중.."
+                    : studentAccessState === "open"
+                      ? "링크 잠금"
+                      : "링크 다시 열기"}
+                </button>
+                <button
+                  type="button"
+                  onClick={syncLatestVerification}
+                  disabled={isPending}
+                  className="button button--ghost"
+                >
+                  {activeAction === "sync" ? "동기화 중.." : "최신 결과 불러오기"}
+                </button>
+                <button
+                  type="button"
+                  onClick={rerunAnalysis}
+                  disabled={!questionSet || completionCount !== 3 || isPending}
+                  className="button button--ghost"
+                >
+                  {activeAction === "analysis"
+                    ? "재분석 중.."
+                    : "현재 답변 재분석"}
+                </button>
+                <Link href={currentExportHref} className="button button--secondary">
+                  세션 JSON 내보내기
+                </Link>
+              </>
+            ) : (
+              <p className="helper-text">
+                질문 세트를 먼저 생성해야 세션 제어 기능을 사용할 수 있습니다.
+              </p>
+            )}
+          </div>
+        </SurfaceCard>
 
         <div className="review-layout">
           <div className="review-layout__main">
