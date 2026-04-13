@@ -181,4 +181,3 @@ export const buildSessionStatus = (input: {
 
   return "세션 준비 중";
 };
-

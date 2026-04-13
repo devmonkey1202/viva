@@ -26,7 +26,7 @@ const sessionFilterMeta: Array<{
   label: string;
 }> = [
   { value: "all", label: "전체" },
-  { value: "awaiting_answers", label: "학생 응답 대기" },
+  { value: "awaiting_answers", label: "학생 답변 대기" },
   { value: "analysis_ready", label: "분석 완료" },
   { value: "decision_complete", label: "교사 판단 완료" },
 ];
@@ -35,7 +35,7 @@ const sessionFilterLabel: Record<
   Exclude<VerificationSessionFilter, "all">,
   string
 > = {
-  awaiting_answers: "학생 응답 대기",
+  awaiting_answers: "학생 답변 대기",
   analysis_ready: "분석 완료",
   decision_complete: "교사 판단 완료",
 };
@@ -66,7 +66,9 @@ export function VerificationSessionBrowser({
 
           if (!response.ok) {
             const error = (await response.json()) as { message?: string };
-            throw new Error(error.message ?? "세션 목록을 불러오지 못했습니다.");
+            throw new Error(
+              error.message ?? "세션 목록을 불러오지 못했습니다.",
+            );
           }
 
           const payload = (await response.json()) as ListVerificationsResponse;
@@ -98,13 +100,13 @@ export function VerificationSessionBrowser({
     <div className="stack-grid">
       <Field
         label="세션 검색"
-        helper="과제명, 개념, verificationId로 최근 세션을 찾습니다."
+        helper="과제명, 핵심 개념, verificationId로 최근 세션을 찾습니다."
       >
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           className="form-input"
-          placeholder="예: 이진 탐색, verificationId"
+          placeholder="예: 자유낙하 실험, verificationId"
         />
       </Field>
 
@@ -122,9 +124,7 @@ export function VerificationSessionBrowser({
             </button>
           ))}
         </div>
-        <p className="session-browser-summary">
-          {filteredItems.length}개 세션
-        </p>
+        <p className="session-browser-summary">{filteredItems.length}개 세션</p>
       </div>
 
       {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
@@ -150,7 +150,7 @@ export function VerificationSessionBrowser({
                       {sessionFilterLabel[sessionFilter]}
                     </StatusBadge>
                     {item.studentAccessState === "locked" ? (
-                      <StatusBadge tone="warning">링크 잠김</StatusBadge>
+                      <StatusBadge tone="warning">링크 잠금</StatusBadge>
                     ) : null}
                     {item.classification ? (
                       <StatusBadge
@@ -177,7 +177,7 @@ export function VerificationSessionBrowser({
       ) : (
         <EmptyState
           title="조건에 맞는 세션이 없습니다."
-          description="검색어나 상태 필터를 바꿔 보거나, 새 세션을 생성해 흐름을 다시 시작하세요."
+          description="검색어를 바꾸거나 새 세션을 생성해 흐름을 다시 시작하세요."
         />
       )}
     </div>

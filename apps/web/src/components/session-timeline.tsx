@@ -34,7 +34,7 @@ export function SessionTimeline({
           ))}
         </ul>
       ) : (
-        <p className="helper-text">아직 기록된 세션 활동이 없습니다.</p>
+        <p className="helper-text">아직 기록된 세션 이벤트가 없습니다.</p>
       )}
     </div>
   );

@@ -94,6 +94,9 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
 
   const questionSet = verification.questionSet;
   const alreadyAnalyzed = Boolean(verification.analysisReport);
+  const voiceAllowedByPolicy =
+    verification.sessionPreferences.studentResponseMode === "voice_or_text";
+  const voiceEnabled = voiceAllowedByPolicy && speechSupported;
 
   useEffect(() => {
     const browserWindow = window as BrowserWindow;
@@ -113,12 +116,16 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
   ).length;
 
   const supportDescription = useMemo(() => {
-    if (speechSupported) {
-      return "마이크가 있으면 음성 답변을 바로 전사할 수 있습니다. 전사 실패 시 텍스트 입력으로 계속 진행할 수 있습니다.";
+    if (!voiceAllowedByPolicy) {
+      return "이 세션은 교사 정책에 따라 텍스트 답변만 허용합니다.";
     }
 
-    return "현재 브라우저에서는 음성 입력이 지원되지 않아 텍스트 입력으로 진행합니다.";
-  }, [speechSupported]);
+    if (speechSupported) {
+      return "마이크 권한이 있으면 음성 답변을 바로 전사할 수 있습니다. 전사 실패 시에도 텍스트 입력으로 바로 이어집니다.";
+    }
+
+    return "현재 브라우저에서는 음성 입력을 지원하지 않아 텍스트 답변으로 진행합니다.";
+  }, [speechSupported, voiceAllowedByPolicy]);
 
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -149,6 +156,11 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
   };
 
   const startListening = (type: QuestionType) => {
+    if (!voiceAllowedByPolicy) {
+      setSttMessage("이 세션은 텍스트 답변만 허용합니다.");
+      return;
+    }
+
     const browserWindow = window as BrowserWindow;
     const Recognition =
       browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition;
@@ -156,7 +168,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
     if (!Recognition) {
       setSpeechSupported(false);
       setErrorMessage(
-        "이 브라우저에서는 음성 입력이 지원되지 않습니다. 텍스트 입력으로 계속 진행할 수 있습니다.",
+        "현재 브라우저에서는 음성 입력을 지원하지 않습니다. 텍스트 입력으로 계속 진행해 주세요.",
       );
       return;
     }
@@ -310,8 +322,8 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
       <div className="student-layout">
         <PageIntro
           eyebrow="Student Answer Flow"
-          title="질문에 짧고 분명하게 답해 주세요."
-          description="정답을 길게 쓰는 것보다 왜 그렇게 이해했는지 드러내는 답변이 중요합니다. 답변은 교사의 검토 자료로만 사용됩니다."
+          title="질문을 읽고 짧고 분명하게 답해 주세요"
+          description="정답을 길게 쓰는 것보다 왜 그렇게 이해했는지 드러나는 답변이 중요합니다. 학생 답변은 교사 검토 자료로만 사용됩니다."
           meta={
             <div className="student-progress">
               <div className="student-progress__count">
@@ -338,7 +350,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
         >
           <div className="student-summary">
             <div className="stack-list">
-              <p className="stack-list__label">교사가 보고 싶은 핵심 개념</p>
+              <p className="stack-list__label">교사가 중요하게 보는 핵심 개념</p>
               <div className="token-row">
                 {verification.rubricCoreConcepts.map((concept) => (
                   <span key={concept} className="token-chip">
@@ -348,7 +360,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
               </div>
             </div>
             <div className="summary-box">
-              <p className="summary-box__label">답변 방식</p>
+              <p className="summary-box__label">답변 정책</p>
               <p className="summary-box__body">{supportDescription}</p>
             </div>
           </div>
@@ -361,17 +373,17 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
           <SurfaceCard
             tone="accent"
             eyebrow="Submitted"
-            title="답변 제출이 완료되었습니다."
-            description="이 화면은 학생에게 분석 세부 결과를 직접 보여주지 않습니다. 교사가 제출물과 답변을 함께 검토한 뒤 최종 판단합니다."
+            title="답변 제출이 완료되었습니다"
+            description="학생 화면에서는 분석 결과를 직접 보여주지 않습니다. 교사가 제출물과 답변을 함께 검토한 뒤 최종 판단합니다."
           >
             <div className="completion-card">
               <StatusBadge tone="success">제출 완료</StatusBadge>
               <p className="completion-card__body">
-                교사는 제출물, 질문, 답변, 루브릭을 함께 검토합니다.
+                교사가 제출물, 질문, 답변, 루브릭을 함께 검토합니다.
               </p>
               {verification.analysisReport ? (
                 <p className="completion-card__hint">
-                  내부 분석 상태:{" "}
+                  현재 분석 상태:{" "}
                   {
                     analysisClassificationMeta[
                       verification.analysisReport.classification
@@ -397,7 +409,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
                   answer={answers[question.type]}
                   artifact={answerArtifacts[question.type]}
                   interimTranscript={liveTranscript[question.type]}
-                  speechSupported={speechSupported}
+                  voiceEnabled={voiceEnabled}
                   isListening={listeningQuestion === question.type}
                   onToggleListening={startListening}
                   onChangeAnswer={updateTypedAnswer}
@@ -407,8 +419,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
 
             <div className="student-footer">
               <p className="student-footer__note">
-                음성 입력이 실패해도 텍스트로 바로 이어서 답할 수 있습니다.
-                제출 전까지는 직접 수정할 수 있습니다.
+                음성 입력이 실패해도 텍스트로 바로 이어서 답할 수 있습니다. 제출 전까지는 직접 수정할 수 있습니다.
               </p>
               <button
                 type="button"
@@ -425,8 +436,8 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
         )}
 
         <EmptyState
-          title="교사 검토 화면과 분리된 응답 전용 화면입니다."
-          description="이 화면은 학생 답변 수집에만 집중합니다. 교사는 별도의 검토 화면에서 분석 근거와 최종 판단을 확인합니다."
+          title="이 화면은 학생 답변 수집 전용입니다"
+          description="학생은 여기서 질문에 답하고, 교사는 별도 검증 화면에서 분석 근거와 최종 판단을 확인합니다."
           action={
             <Link href="/" className="button button--ghost">
               서비스 소개 보기

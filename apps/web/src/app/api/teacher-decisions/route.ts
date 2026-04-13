@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     return createApiErrorResponse(error, {
-      validationMessage: "교사 판단 입력 형식이 올바르지 않습니다.",
+      validationMessage: "교사 판단 저장 요청 형식이 올바르지 않습니다.",
       fallbackMessage: "교사 판단 저장 중 오류가 발생했습니다.",
     });
   }

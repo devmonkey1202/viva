@@ -14,8 +14,8 @@ export function AnalysisEvidenceReview({
   if (!analysisReport) {
     return (
       <EmptyState
-        title="아직 검토할 분석 결과가 없습니다."
-        description="학생 응답을 제출하거나 시연용 자동 응답을 돌린 뒤 분석 근거가 여기에 채워집니다."
+        title="검토할 분석 결과가 아직 없습니다."
+        description="학생 답변을 제출받고 분석을 실행하면 이 영역에 근거가 채워집니다."
       />
     );
   }
@@ -31,7 +31,7 @@ export function AnalysisEvidenceReview({
             {classificationMeta.label}
           </StatusBadge>
           <StatusBadge tone="neutral">
-            신뢰도 {analysisReport.confidenceBand}
+            확신도 {analysisReport.confidenceBand}
           </StatusBadge>
         </div>
         <p className="summary-box__body">{analysisReport.teacherSummary}</p>
@@ -39,14 +39,14 @@ export function AnalysisEvidenceReview({
       </div>
       <div className="evidence-grid">
         <DetailList
-          title="빠진 개념"
+          title="비어 있는 개념"
           items={analysisReport.conceptCoverage.missingConcepts}
           emptyText="누락된 핵심 개념이 없습니다."
         />
         <DetailList
           title="재설명 포인트"
           items={analysisReport.reteachingPoints}
-          emptyText="즉시 재설명할 포인트가 없습니다."
+          emptyText="즉시 다시 설명할 포인트는 없습니다."
         />
         <DetailList
           title="정렬 근거"
@@ -56,23 +56,23 @@ export function AnalysisEvidenceReview({
         <DetailList
           title="위험 신호"
           items={analysisReport.riskFlags}
-          emptyText="추가 위험 신호가 없습니다."
+          emptyText="추가 위험 신호는 없습니다."
         />
       </div>
       <div className="evidence-grid">
         <DetailList
           title="오개념 라벨"
           items={analysisReport.misconceptionLabels}
-          emptyText="반복 오개념 라벨이 없습니다."
+          emptyText="반복 오개념 라벨은 없습니다."
         />
         <DetailList
           title="전이 능력 근거"
           items={analysisReport.transferAbility.evidence}
-          emptyText="전이 근거가 충분하지 않습니다."
+          emptyText="전이 능력 근거가 충분하지 않습니다."
         />
       </div>
       <div className="detail-list">
-        <p className="detail-list__title">충돌 문장</p>
+        <p className="detail-list__title">논리 충돌</p>
         {analysisReport.contradictionCheck.contradictions.length > 0 ? (
           <div className="stack-grid">
             {analysisReport.contradictionCheck.contradictions.map((item) => (
@@ -91,7 +91,7 @@ export function AnalysisEvidenceReview({
             ))}
           </div>
         ) : (
-          <p className="helper-text">충돌 문장이 없습니다.</p>
+          <p className="helper-text">논리 충돌 문장은 없습니다.</p>
         )}
       </div>
     </div>

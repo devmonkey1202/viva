@@ -6,6 +6,7 @@ import { SettingsPanel } from "@/components/settings-panel";
 import { PageIntro } from "@/components/ui-blocks";
 import { readVivaRoleFromCookies } from "@/lib/auth";
 import { getRuntimeStatus } from "@/lib/runtime-config";
+import { createDefaultWorkspaceSettingsSnapshot } from "@/lib/workspace-settings";
 
 export default async function SettingsPage() {
   const role = readVivaRoleFromCookies(await cookies());
@@ -20,12 +21,14 @@ export default async function SettingsPage() {
       <div className="page-stack">
         <PageIntro
           eyebrow="Settings"
-          title="검증 정책과 작업 환경을 정리합니다."
-          description="계정과 런타임 정보, 브라우저 기본 설정, 답변 수집 정책을 한 곳에서 관리합니다."
+          title="검증 정책과 작업 환경을 정리합니다"
+          description="교사 워크벤치에서 새 세션을 만들 때 사용할 기본 정책과 현재 배포 런타임 상태를 함께 관리합니다."
         />
-        <SettingsPanel runtime={runtime} />
+        <SettingsPanel
+          runtime={runtime}
+          initialSettings={createDefaultWorkspaceSettingsSnapshot()}
+        />
       </div>
     </main>
   );
 }
-

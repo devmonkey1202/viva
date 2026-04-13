@@ -48,21 +48,15 @@ const ensureStoreFile = async () => {
   try {
     await readFile(storePath, "utf8");
   } catch {
-    await writeFile(
-      storePath,
-      JSON.stringify(emptyStore(), null, 2),
-      "utf8",
-    );
+    await writeFile(storePath, JSON.stringify(emptyStore(), null, 2), "utf8");
   }
 };
 
 const readStore = async () => {
   await ensureStoreFile();
   const storePath = getStorePath();
-
   const raw = await readFile(storePath, "utf8");
   const parsed = raw.trim().length === 0 ? emptyStore() : JSON.parse(raw);
-
   return VerificationStoreFileSchema.parse(parsed);
 };
 
@@ -127,6 +121,7 @@ export const createVerificationRecordFromFile = async (
       updatedAt: now,
       studentAccessState: "open",
       ...input,
+      sessionPreferences: input.sessionPreferences,
       questionSet,
       activity: [
         {
@@ -232,7 +227,6 @@ export const getVerificationRecordFromFile = async (verificationId: string) => {
 
 export const listVerificationRecordsFromFile = async () => {
   const store = await readStore();
-
   return sortByUpdatedAtDesc(store.verifications);
 };
 
@@ -308,6 +302,8 @@ export const exportVerificationsAsCsvFromFile = async (
     "assignment_title",
     "created_at",
     "updated_at",
+    "student_response_mode",
+    "preferred_export_format",
     "classification",
     "confidence_band",
     "teacher_decision",
@@ -321,6 +317,8 @@ export const exportVerificationsAsCsvFromFile = async (
     record.assignmentTitle,
     record.createdAt,
     record.updatedAt,
+    record.sessionPreferences.studentResponseMode,
+    record.sessionPreferences.preferredExportFormat,
     record.analysisReport?.classification ?? "",
     record.analysisReport?.confidenceBand ?? "",
     record.teacherDecision?.decision ?? "",

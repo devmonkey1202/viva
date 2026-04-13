@@ -120,7 +120,24 @@ export const VerificationInputSchema = z.object({
 
 export type VerificationInput = z.infer<typeof VerificationInputSchema>;
 
-export const GenerateQuestionSetRequestSchema = VerificationInputSchema;
+export const VerificationSessionPreferencesSchema = z.object({
+  studentResponseMode: z
+    .enum(["voice_or_text", "text_only"])
+    .default("voice_or_text"),
+  preferredExportFormat: z.enum(["csv", "json"]).default("csv"),
+  allowMockFallback: z.boolean().default(true),
+});
+export type VerificationSessionPreferences = z.infer<
+  typeof VerificationSessionPreferencesSchema
+>;
+
+export const GenerateQuestionSetRequestSchema = VerificationInputSchema.extend({
+  sessionPreferences: VerificationSessionPreferencesSchema.default({
+    studentResponseMode: "voice_or_text",
+    preferredExportFormat: "csv",
+    allowMockFallback: true,
+  }),
+});
 export type GenerateQuestionSetRequest = z.infer<
   typeof GenerateQuestionSetRequestSchema
 >;
@@ -142,6 +159,7 @@ export type StudentAnswer = z.infer<typeof StudentAnswerSchema>;
 export const AnalyzeUnderstandingRequestSchema = VerificationInputSchema.extend({
   questionSet: QuestionSetSchema,
   studentAnswers: z.array(StudentAnswerSchema).length(3),
+  sessionPreferences: VerificationSessionPreferencesSchema.optional(),
 });
 
 export type AnalyzeUnderstandingRequest = z.infer<
@@ -211,6 +229,11 @@ export const VerificationRecordSchema = VerificationInputSchema.extend({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   studentAccessState: StudentAccessStateSchema.default("open"),
+  sessionPreferences: VerificationSessionPreferencesSchema.default({
+    studentResponseMode: "voice_or_text",
+    preferredExportFormat: "csv",
+    allowMockFallback: true,
+  }),
   questionSet: QuestionSetSchema,
   studentAnswers: z.array(StudentAnswerSchema).length(3).optional(),
   analysisReport: AnalysisReportSchema.optional(),

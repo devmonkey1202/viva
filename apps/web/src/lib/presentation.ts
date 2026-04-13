@@ -9,14 +9,18 @@ export const questionTypeMeta: Record<
   QuestionType,
   { label: string; shortLabel: string; order: number }
 > = {
-  why: { label: "왜 그렇게 되는지", shortLabel: "왜형", order: 1 },
+  why: {
+    label: "왜 그렇게 판단했는지 설명",
+    shortLabel: "왜형",
+    order: 1,
+  },
   transfer: {
-    label: "조건이 바뀌면 어떻게 되는지",
+    label: "조건이 바뀌면 어떻게 되는지 설명",
     shortLabel: "전이형",
     order: 2,
   },
   counterexample: {
-    label: "언제 성립하지 않는지",
+    label: "언제 성립하지 않는지 설명",
     shortLabel: "반례형",
     order: 3,
   },
@@ -33,22 +37,22 @@ export const analysisClassificationMeta: Record<
   sufficient_understanding: {
     label: "이해 충분",
     tone: "success",
-    note: "핵심 개념과 설명 구조가 루브릭과 안정적으로 맞아 있습니다.",
+    note: "핵심 개념과 설명 구조가 루브릭과 대체로 일치합니다.",
   },
   surface_memorization: {
     label: "표면 암기",
     tone: "warning",
-    note: "표현은 맞지만 구조적 이해를 보여주는 근거가 약합니다.",
+    note: "표현은 맞지만 개념 연결과 설명 이유가 부족합니다.",
   },
   submission_dependency: {
     label: "제출물 의존",
     tone: "warning",
-    note: "제출물 표현에 기대고 있어 독립적인 설명력이 부족합니다.",
+    note: "제출물 문장을 반복하지만 독립적인 이해 설명은 약합니다.",
   },
   core_misconception: {
     label: "핵심 오개념",
     tone: "danger",
-    note: "루브릭의 핵심 개념을 잘못 이해했을 가능성이 높습니다.",
+    note: "핵심 개념을 잘못 이해했을 가능성이 높습니다.",
   },
   uncertain: {
     label: "불확실",

@@ -47,7 +47,7 @@ export async function POST(request: Request, context: RouteContext) {
   } catch (error) {
     return createApiErrorResponse(error, {
       validationMessage: "학생 링크 상태 변경 요청 형식이 올바르지 않습니다.",
-      fallbackMessage: "학생 링크 상태를 변경하는 중 오류가 발생했습니다.",
+      fallbackMessage: "학생 링크 상태 변경 중 오류가 발생했습니다.",
     });
   }
 }

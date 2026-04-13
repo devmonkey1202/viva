@@ -31,8 +31,8 @@ export function TeacherFlowGuide({ steps }: TeacherFlowGuideProps) {
   return (
     <SurfaceCard
       eyebrow="Flow Guide"
-      title="지금 어디까지 왔는지와 다음 행동을 한 화면에서 봅니다."
-      description="교사용 흐름은 입력, 질문 생성, 학생 응답 수집, 분석, 최종 판단 순서로 이어집니다."
+      title="지금 어디까지 왔는지와 다음 작업을 한 화면에서 확인합니다"
+      description="교사 흐름은 입력, 질문 생성, 학생 답변 수집, 분석, 최종 판단 순서로 이어집니다."
     >
       <div className="flow-guide">
         {steps.map((step, index) => (

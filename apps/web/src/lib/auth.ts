@@ -12,12 +12,12 @@ export const vivaRoleMeta: Record<
 > = {
   teacher: {
     label: "교사",
-    description: "과제 기준 정리, 질문 생성, 분석 검토, 최종 판단",
+    description: "과제 입력, 질문 생성, 학생 답변 검토, 최종 판단",
     defaultPath: "/teacher",
   },
   operator: {
     label: "운영자",
-    description: "분포 확인, 오개념 패턴 분석, 최근 세션 모니터링",
+    description: "분포 확인, 반복 오개념 점검, 최근 세션 모니터링",
     defaultPath: "/operator",
   },
 };
@@ -26,12 +26,13 @@ type CookieReader = {
   get: (name: string) => { value: string } | undefined;
 };
 
-export const parseVivaRole = (value: string | undefined | null): VivaRole | null =>
+export const parseVivaRole = (
+  value: string | undefined | null,
+): VivaRole | null =>
   value === "teacher" || value === "operator" ? value : null;
 
-export const readVivaRoleFromCookies = (
-  cookies: CookieReader,
-) => parseVivaRole(cookies.get(vivaRoleCookieName)?.value);
+export const readVivaRoleFromCookies = (cookies: CookieReader) =>
+  parseVivaRole(cookies.get(vivaRoleCookieName)?.value);
 
 export const isProtectedAppPath = (pathname: string) =>
   pathname.startsWith("/teacher") ||

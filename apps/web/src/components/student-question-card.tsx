@@ -15,7 +15,7 @@ type StudentQuestionCardProps = {
   answer: string;
   artifact: StudentQuestionArtifact;
   interimTranscript: string;
-  speechSupported: boolean;
+  voiceEnabled: boolean;
   isListening: boolean;
   onToggleListening: (type: QuestionType) => void;
   onChangeAnswer: (type: QuestionType, value: string) => void;
@@ -28,7 +28,7 @@ export function StudentQuestionCard({
   answer,
   artifact,
   interimTranscript,
-  speechSupported,
+  voiceEnabled,
   isListening,
   onToggleListening,
   onChangeAnswer,
@@ -41,7 +41,7 @@ export function StudentQuestionCard({
       description={question.intent}
     >
       <div className="voice-toolbar">
-        {speechSupported ? (
+        {voiceEnabled ? (
           <button
             type="button"
             onClick={() => onToggleListening(question.type)}
@@ -51,7 +51,7 @@ export function StudentQuestionCard({
           </button>
         ) : null}
         <div className="badge-row">
-          {speechSupported ? (
+          {voiceEnabled ? (
             <StatusBadge tone={isListening ? "accent" : "neutral"}>
               {isListening ? "음성 인식 중" : "음성 입력 가능"}
             </StatusBadge>
@@ -94,14 +94,14 @@ export function StudentQuestionCard({
 
       <Field
         label="답변"
-        helper="서두 문장으로 이유를 먼저 쓰고, 필요하면 조건이나 예외를 덧붙이세요."
+        helper="짧은 문장이라도 이유를 먼저 쓰고, 필요하면 조건이나 예외를 덧붙여 주세요."
       >
         <textarea
           value={answer}
           onChange={(event) => onChangeAnswer(question.type, event.target.value)}
           rows={5}
           className="form-textarea"
-          placeholder="답변을 입력하세요."
+          placeholder="답변을 입력해 주세요."
         />
       </Field>
     </SurfaceCard>

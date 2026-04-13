@@ -41,10 +41,10 @@ export const generateMockQuestionSet = (
     promptVersion: QUESTION_GENERATION_PROMPT_VERSION,
     modelVersion: "mock-engine",
     overallStrategy:
-      "제출물의 핵심 주장과 루브릭 개념을 기준으로 이유, 조건 변화, 반례를 각각 검증하도록 질문을 구성했습니다.",
+      "제출물의 핵심 주장과 루브릭 핵심 개념을 기준으로 이유, 조건 변화, 반례를 각각 검증하도록 질문을 구성했습니다.",
     cautionNotes: [
-      "현재는 데모용 mock 생성 결과입니다.",
-      "실제 모델 연결 시 질문 표현은 달라질 수 있습니다.",
+      "현재 결과는 mock 엔진으로 생성되었습니다.",
+      "실제 모델 연결 시 질문 문장과 근거 표현은 달라질 수 있습니다.",
       ...(options?.fallbackReason
         ? [`Mock fallback reason: ${options.fallbackReason}`]
         : []),
@@ -54,14 +54,14 @@ export const generateMockQuestionSet = (
         type: "why",
         question: `제출물에서 "${excerpt}"라고 설명했는데, 왜 그렇게 판단했는지 실험 근거를 중심으로 설명해 주세요.`,
         intent:
-          "학생이 제출물의 핵심 설명을 자기 언어로 근거화할 수 있는지 확인합니다.",
+          "학생이 제출물의 핵심 설명을 자기 언어로 다시 근거화할 수 있는지 확인합니다.",
         targetConcepts,
         riskSignals: input.rubricRiskPoints,
       },
       {
         type: "transfer",
         question:
-          "실험 조건이 달라져 공기 저항이 거의 없거나 측정 장비가 더 정밀해진다면, 결과 해석은 어떻게 달라져야 하나요?",
+          "실험 조건이 달라져 공기 저항이 거의 없거나 측정 장비가 더 정확해진다면, 결과 해석은 어떻게 달라져야 하나요?",
         intent:
           "조건 변화 상황에서 개념을 전이해 설명할 수 있는지 확인합니다.",
         targetConcepts,
@@ -70,9 +70,9 @@ export const generateMockQuestionSet = (
       {
         type: "counterexample",
         question:
-          "제출물의 설명이 항상 성립하지 않는 경우는 언제인지, 반례나 한계를 들어 설명해 주세요.",
+          "제출물의 설명이 항상 성립하지 않는 경우는 무엇인지, 반례나 적용 한계를 들어 설명해 주세요.",
         intent:
-          "설명의 적용 한계와 반례를 알고 있는지 확인합니다.",
+          "설명의 적용 범위와 반례를 구분할 수 있는지 확인합니다.",
         targetConcepts,
         riskSignals: input.rubricRiskPoints,
       },
@@ -128,13 +128,13 @@ export const analyzeMockUnderstanding = (
     includesAny(counterexample, ["한계", "아니", "반례", "경우", "성립하지"]);
 
   const misconceptionDetected = includesAny(combined, [
-    "중력가속도가 커진다",
+    "중력가속도가 커진",
     "중력가속도는 속도 자체",
     "공기 저항이 없으면 가속도가 0",
   ]);
 
   const contradictionFound =
-    input.submissionText.includes("낙하 시간은 짧을수록 가속도가 크다") &&
+    input.submissionText.includes("낙하 시간이 짧아질수록 가속도가 커진다") &&
     counterexample.includes("가속도 자체는 거의 일정");
 
   let classification: AnalysisReport["classification"] = "uncertain";
@@ -180,7 +180,7 @@ export const analyzeMockUnderstanding = (
       ? missingConcepts.map(
           (concept) => `${concept} 개념을 다시 확인할 필요가 있습니다.`,
         )
-      : ["조건 변화와 반례 설명을 연결하는 방식을 추가로 점검하면 좋습니다."];
+      : ["조건 변화와 반례 설명을 더 연결해 말하도록 유도하면 좋습니다."];
 
   return {
     analysisId: `ar_mock_${crypto.randomUUID()}`,
@@ -193,10 +193,10 @@ export const analyzeMockUnderstanding = (
       status:
         strongWhy || contradictionFound ? "partially_aligned" : "misaligned",
       evidence: [
-        "학생 답변이 제출물의 주장과 얼마나 일치하는지 확인했습니다.",
+        "학생 답변이 제출물의 주장과 얼마나 연결되는지 확인했습니다.",
         contradictionFound
-          ? "답변에서 제출물의 일부 설명을 수정하는 신호가 발견됐습니다."
-          : "자기 언어로 근거를 재설명하려는 시도가 관찰됐습니다.",
+          ? "답변이 제출물의 일부 설명을 수정하거나 뒤집는 신호가 보입니다."
+          : "자기 언어로 근거를 다시 설명하려는 시도가 관찰됩니다.",
       ],
     },
     conceptCoverage: {
@@ -217,10 +217,10 @@ export const analyzeMockUnderstanding = (
         ? [
             {
               submissionClaim:
-                "낙하 시간은 짧을수록 가속도가 크다고 보고 있습니다.",
+                "낙하 시간이 짧아질수록 가속도가 커진다고 보고 있습니다.",
               answerClaim: answers.counterexample,
               explanation:
-                "학생 답변이 제출물의 단정적 설명을 부분적으로 수정하고 있습니다.",
+                "학생 답변이 제출물의 기존 설명을 부분적으로 수정하고 있습니다.",
             },
           ]
         : [],
@@ -232,9 +232,9 @@ export const analyzeMockUnderstanding = (
         : classification === "core_misconception"
           ? "학생 답변에서 핵심 개념을 잘못 이해한 신호가 보여 추가 설명과 교사 확인이 필요합니다."
           : classification === "submission_dependency"
-            ? "제출물은 정리되어 있으나 답변에서 실제 이해를 뒷받침하는 설명 신호가 약합니다."
+            ? "제출물은 정리돼 있지만 답변에서 실제 이해를 뒷받침하는 설명 신호가 약합니다."
             : classification === "surface_memorization"
-              ? "용어는 사용하지만 전이 질문에서 설명 깊이가 부족해 표면 암기 가능성이 있습니다."
+              ? "표현은 사용하지만 전이 질문에서 설명 깊이가 부족해 표면 암기 가능성이 있습니다."
               : "답변 신호가 혼합되어 있어 교사의 추가 확인이 필요합니다.",
     reteachingPoints,
     riskFlags,

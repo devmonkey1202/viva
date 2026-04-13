@@ -38,6 +38,8 @@ export default async function TeacherVerificationDetailPage({
   }
 
   const role = readVivaRoleFromCookies(await cookies());
+  const preferredFormat = verification.sessionPreferences.preferredExportFormat;
+  const exportHref = `/api/export?format=${preferredFormat}&verificationId=${verification.verificationId}`;
 
   return (
     <main className="app-shell">
@@ -49,7 +51,7 @@ export default async function TeacherVerificationDetailPage({
         <PageIntro
           eyebrow="Verification Detail"
           title={verification.assignmentTitle}
-          description="세션 상세, 학생 답변, 분석 근거, 교사 판단, export를 한 화면에서 검토합니다."
+          description="세션 상세, 학생 답변, 분석 근거, 교사 판단, export를 한 화면에서 확인합니다."
           actions={
             <div className="button-row">
               <Link href="/teacher" className="button button--ghost">
@@ -62,11 +64,8 @@ export default async function TeacherVerificationDetailPage({
               >
                 학생 화면 열기
               </Link>
-              <Link
-                href="/api/export?format=json"
-                className="button button--primary"
-              >
-                JSON export
+              <Link href={exportHref} className="button button--primary">
+                세션 export
               </Link>
             </div>
           }
@@ -75,6 +74,11 @@ export default async function TeacherVerificationDetailPage({
               <StatusBadge tone="neutral">{verification.verificationId}</StatusBadge>
               <StatusBadge tone="info">
                 업데이트 {formatDateTime(verification.updatedAt)}
+              </StatusBadge>
+              <StatusBadge tone="neutral">
+                {verification.sessionPreferences.studentResponseMode === "voice_or_text"
+                  ? "텍스트 + 음성 응답"
+                  : "텍스트 응답만"}
               </StatusBadge>
               {verification.analysisReport ? (
                 <StatusBadge
@@ -111,12 +115,17 @@ export default async function TeacherVerificationDetailPage({
           <MetricCard
             label="질문 모델"
             value={verification.questionSet.modelVersion}
-            note="질문 생성에 사용된 모델"
+            note="질문 생성에 사용한 모델"
           />
           <MetricCard
             label="분석 모델"
             value={verification.analysisReport?.modelVersion ?? "없음"}
-            note="분석 실행 전이면 비어 있습니다."
+            note="아직 분석 전이면 비어 있습니다."
+          />
+          <MetricCard
+            label="기본 export"
+            value={verification.sessionPreferences.preferredExportFormat.toUpperCase()}
+            note="이 세션의 기본 export 형식"
           />
         </div>
 
@@ -125,7 +134,7 @@ export default async function TeacherVerificationDetailPage({
             <SurfaceCard
               eyebrow="Question Set"
               title="질문 세트"
-              description="세션에 저장된 학생 검증 질문입니다."
+              description="이 세션에 저장된 학생 검증 질문입니다."
             >
               <QuestionSetPreview questionSet={verification.questionSet} />
             </SurfaceCard>
@@ -133,7 +142,7 @@ export default async function TeacherVerificationDetailPage({
             <SurfaceCard
               eyebrow="Student Answers"
               title="학생 답변"
-              description="원문 답변과 음성 전사 메타를 함께 확인합니다."
+              description="서면 답변과 음성 전사 메타를 함께 확인합니다."
             >
               <StudentAnswerReview
                 questionSet={verification.questionSet}
@@ -144,7 +153,7 @@ export default async function TeacherVerificationDetailPage({
             <SurfaceCard
               eyebrow="Analysis"
               title="분석 근거"
-              description="AI 분류와 근거, 누락 개념, 충돌 지점을 검토합니다."
+              description="AI 분류, 근거, 누락 개념, 충돌 지점을 검토합니다."
             >
               <AnalysisEvidenceReview analysisReport={verification.analysisReport ?? null} />
             </SurfaceCard>
@@ -154,7 +163,7 @@ export default async function TeacherVerificationDetailPage({
             <SurfaceCard
               eyebrow="Teacher Decision"
               title="교사 최종 판단"
-              description="세션에 저장된 최종 판단 기록입니다."
+              description="이 세션에 저장된 최종 판단 기록입니다."
             >
               {verification.teacherDecision ? (
                 <div className="summary-box">
@@ -201,7 +210,7 @@ export default async function TeacherVerificationDetailPage({
                     ))}
                   </ul>
                 ) : (
-                  <p className="helper-text">추가 위험 신호는 기록되지 않았습니다.</p>
+                  <p className="helper-text">추가 위험 신호는 기록하지 않았습니다.</p>
                 )}
               </div>
             </SurfaceCard>
@@ -222,4 +231,3 @@ export default async function TeacherVerificationDetailPage({
     </main>
   );
 }
-

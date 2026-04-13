@@ -41,8 +41,8 @@ export default async function OperatorPage() {
       <div className="page-stack">
         <PageIntro
           eyebrow="Operator Dashboard"
-          title="반복되는 이해 붕괴 지점을 먼저 봅니다."
-          description="개별 세션보다 누적 패턴이 더 중요합니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 운영 화면에서 확인합니다."
+          title="반복되는 이해 붕괴 지점을 먼저 봅니다"
+          description="개별 세션보다 패턴 해석이 중요합니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 운영 화면에서 확인합니다."
           actions={
             <div className="button-row">
               <Link href="/teacher" className="button button--primary">
@@ -74,7 +74,7 @@ export default async function OperatorPage() {
             note="학생 답변과 분석이 저장된 세션 수"
           />
           <MetricCard
-            label="교사 판단 저장"
+            label="교사 판단 완료"
             value={summary.teacherDecisions}
             note="최종 판단까지 기록된 세션 수"
           />
@@ -84,7 +84,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Analysis Distribution"
             title="AI 분류 분포"
-            description="현재 세션이 어떤 이해 상태로 분류되고 있는지 확인합니다."
+            description="현재 세션이 어떤 이해 상태로 분류되는지 확인합니다."
           >
             {summary.classificationCounts.length > 0 ? (
               <div className="stack-grid">
@@ -145,7 +145,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Missing Concepts"
             title="자주 비는 핵심 개념"
-            description="학생 답변에서 반복적으로 누락되는 루브릭 개념입니다."
+            description="학생 답변에서 반복적으로 누락되는 루브릭 핵심 개념입니다."
           >
             {summary.topMissingConcepts.length > 0 ? (
               <div className="stack-grid">
@@ -166,7 +166,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Misconception Clusters"
             title="반복 오개념 묶음"
-            description="재설명 우선순위를 정할 때 먼저 보는 반복 오개념입니다."
+            description="재설명 우선순위를 정할 때 먼저 볼 반복 오개념입니다."
           >
             {summary.topMisconceptions.length > 0 ? (
               <div className="stack-grid">
@@ -188,7 +188,7 @@ export default async function OperatorPage() {
         <SurfaceCard
           eyebrow="Recent Sessions"
           title="최신 검증 세션"
-          description="최근에 업데이트된 세션을 순서대로 확인합니다."
+          description="최근 업데이트된 세션을 시간순으로 확인합니다."
         >
           {summary.recentVerifications.length > 0 ? (
             <div className="table-scroll">
@@ -242,8 +242,7 @@ export default async function OperatorPage() {
             </div>
           ) : (
             <div className="table-empty">
-              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면
-              여기에 누적됩니다.
+              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면 여기서 추적됩니다.
             </div>
           )}
         </SurfaceCard>

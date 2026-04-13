@@ -8,11 +8,13 @@ export default function SessionExpiredPage() {
       <AppHeader minimal />
       <div className="empty-page">
         <div className="empty-page__panel">
-          <p className="eyebrow">Session Expired</p>
-          <h1 className="intro-title">이 검증 세션은 더 이상 사용할 수 없습니다.</h1>
+          <p className="eyebrow">Session Closed</p>
+          <h1 className="intro-title">
+            이 검증 세션은 더 이상 학생 답변을 받지 않습니다.
+          </h1>
           <p className="intro-description">
-            링크가 만료되었거나 삭제된 세션일 수 있습니다. 교사에게 최신 링크를 다시
-            받아서 접속하세요.
+            링크가 만료됐거나 교사가 학생 링크를 잠근 상태입니다. 최신 링크가 필요하면
+            교사에게 다시 요청하세요.
           </p>
           <div className="empty-page__actions">
             <Link href="/" className="button button--primary">
@@ -27,4 +29,3 @@ export default function SessionExpiredPage() {
     </main>
   );
 }
-

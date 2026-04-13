@@ -24,6 +24,7 @@ type VerificationRow = {
   rubric_core_concepts_json: string;
   rubric_risk_points_json: string;
   submission_text: string;
+  session_preferences_json: string;
   question_set_json: string;
   student_answers_json: string | null;
   analysis_report_json: string | null;
@@ -38,7 +39,7 @@ const getSql = () => {
   const { databaseUrl } = getRuntimeConfig();
 
   if (!databaseUrl) {
-    throw new Error("DATABASE_URL이 설정되지 않았습니다.");
+    throw new Error("DATABASE_URL is not configured.");
   }
 
   return neon(databaseUrl);
@@ -62,6 +63,7 @@ const ensureSchema = async () => {
         rubric_core_concepts_json TEXT NOT NULL,
         rubric_risk_points_json TEXT NOT NULL,
         submission_text TEXT NOT NULL,
+        session_preferences_json TEXT NOT NULL DEFAULT '{}',
         question_set_json TEXT NOT NULL,
         student_answers_json TEXT,
         analysis_report_json TEXT,
@@ -76,6 +78,11 @@ const ensureSchema = async () => {
     await sql`
       ALTER TABLE verification_records
       ADD COLUMN IF NOT EXISTS student_access_state TEXT NOT NULL DEFAULT 'open'
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ADD COLUMN IF NOT EXISTS session_preferences_json TEXT NOT NULL DEFAULT '{}'
     `;
   })();
 
@@ -133,6 +140,7 @@ const rowToVerificationRecord = (row: VerificationRow) =>
     rubricCoreConcepts: JSON.parse(row.rubric_core_concepts_json),
     rubricRiskPoints: JSON.parse(row.rubric_risk_points_json),
     submissionText: row.submission_text,
+    sessionPreferences: JSON.parse(row.session_preferences_json || "{}"),
     questionSet: JSON.parse(row.question_set_json),
     studentAnswers: row.student_answers_json
       ? JSON.parse(row.student_answers_json)
@@ -161,6 +169,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       rubric_core_concepts_json,
       rubric_risk_points_json,
       submission_text,
+      session_preferences_json,
       question_set_json,
       student_answers_json,
       analysis_report_json,
@@ -176,6 +185,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       ${JSON.stringify(record.rubricCoreConcepts)},
       ${JSON.stringify(record.rubricRiskPoints)},
       ${record.submissionText},
+      ${JSON.stringify(record.sessionPreferences)},
       ${JSON.stringify(record.questionSet)},
       ${record.studentAnswers ? JSON.stringify(record.studentAnswers) : null},
       ${record.analysisReport ? JSON.stringify(record.analysisReport) : null},
@@ -192,6 +202,7 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       rubric_core_concepts_json = EXCLUDED.rubric_core_concepts_json,
       rubric_risk_points_json = EXCLUDED.rubric_risk_points_json,
       submission_text = EXCLUDED.submission_text,
+      session_preferences_json = EXCLUDED.session_preferences_json,
       question_set_json = EXCLUDED.question_set_json,
       student_answers_json = EXCLUDED.student_answers_json,
       analysis_report_json = EXCLUDED.analysis_report_json,
@@ -215,6 +226,7 @@ export const createVerificationRecordFromNeon = async (
     updatedAt: now,
     studentAccessState: "open",
     ...input,
+    sessionPreferences: input.sessionPreferences,
     questionSet,
     activity: [
       {
@@ -406,6 +418,8 @@ export const exportVerificationsAsCsvFromNeon = async (
     "assignment_title",
     "created_at",
     "updated_at",
+    "student_response_mode",
+    "preferred_export_format",
     "classification",
     "confidence_band",
     "teacher_decision",
@@ -419,6 +433,8 @@ export const exportVerificationsAsCsvFromNeon = async (
     record.assignmentTitle,
     record.createdAt,
     record.updatedAt,
+    record.sessionPreferences.studentResponseMode,
+    record.sessionPreferences.preferredExportFormat,
     record.analysisReport?.classification ?? "",
     record.analysisReport?.confidenceBand ?? "",
     record.teacherDecision?.decision ?? "",

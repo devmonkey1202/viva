@@ -25,7 +25,7 @@ export function StudentAnswerReview({
     return (
       <EmptyState
         title="질문 세트가 아직 없습니다."
-        description="질문 세트가 생성된 뒤 학생 응답을 이 영역에서 검토합니다."
+        description="질문 세트가 생성된 뒤에야 학생 답변을 이 영역에서 검토할 수 있습니다."
       />
     );
   }
@@ -36,7 +36,7 @@ export function StudentAnswerReview({
   if (!hasAnyAnswer) {
     return (
       <EmptyState
-        title="아직 제출된 학생 답변이 없습니다."
+        title="제출된 학생 답변이 아직 없습니다."
         description="학생 링크를 공유한 뒤 최신 결과를 불러오면 답변과 전사 메타를 여기서 확인할 수 있습니다."
       />
     );

@@ -50,16 +50,16 @@ export const uniqueNotes = (values: string[]) => [
 export const speechErrorMessage = (error: string) => {
   switch (error) {
     case "audio-capture":
-      return "마이크를 찾을 수 없습니다. 텍스트 입력으로 계속 진행할 수 있습니다.";
+      return "마이크를 찾을 수 없습니다. 텍스트 입력으로 계속 진행해 주세요.";
     case "not-allowed":
     case "service-not-allowed":
       return "마이크 권한이 없어 음성 입력을 사용할 수 없습니다.";
     case "network":
-      return "음성 인식 중 네트워크 오류가 발생했습니다. 텍스트 입력으로 계속 진행할 수 있습니다.";
+      return "음성 인식 중 네트워크 오류가 발생했습니다. 텍스트 입력으로 계속 진행해 주세요.";
     case "no-speech":
       return "음성이 감지되지 않았습니다. 다시 시도하거나 텍스트로 입력해 주세요.";
     default:
-      return "음성 인식 중 오류가 발생했습니다. 텍스트 입력으로 계속 진행할 수 있습니다.";
+      return "음성 인식 중 오류가 발생했습니다. 텍스트 입력으로 계속 진행해 주세요.";
   }
 };
 
@@ -107,6 +107,7 @@ export const buildAnalyzeRequest = (input: {
   rubricCoreConcepts: input.verification.rubricCoreConcepts,
   rubricRiskPoints: input.verification.rubricRiskPoints,
   submissionText: input.verification.submissionText,
+  sessionPreferences: input.verification.sessionPreferences,
   questionSet: input.questionSet,
   studentAnswers: input.questionSet.questions.map((question) => ({
     type: question.type,
