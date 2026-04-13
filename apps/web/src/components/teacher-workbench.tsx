@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { AnalysisEvidenceReview } from "@/components/analysis-evidence-review";
 import { AppHeader } from "@/components/app-header";
 import { AuthUtility } from "@/components/auth-utility";
+import { OnboardingGuide } from "@/components/onboarding-guide";
 import { QuestionSetPreview } from "@/components/question-set-preview";
 import { SessionTimeline } from "@/components/session-timeline";
 import { StatusBadge } from "@/components/status-badge";
@@ -773,6 +774,28 @@ export function TeacherWorkbench({
 
         {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
         {noticeMessage ? <div className="inline-notice">{noticeMessage}</div> : null}
+
+        <OnboardingGuide
+          storageKey="viva:onboarding:teacher"
+          tone="teacher"
+          eyebrow="첫 사용 안내"
+          title="교사는 다섯 단계만 따라가면 됩니다."
+          description="기준 입력, 질문 생성, 학생 링크 공유, 결과 확인, 최종 판단 순서만 지키면 흐름이 끊기지 않습니다."
+          steps={[
+            {
+              title: "기준 먼저 정리",
+              description: "과제 설명, 핵심 개념, 위험 신호를 먼저 적습니다.",
+            },
+            {
+              title: "학생 링크 발급",
+              description: "질문 생성 직후 링크를 복사해 학생에게 공유합니다.",
+            },
+            {
+              title: "근거 보고 판단",
+              description: "답변이 들어오면 분석 근거를 읽고 교사 판단을 저장합니다.",
+            },
+          ]}
+        />
 
         <TeacherFlowGuide
           steps={flowSteps.map((step) => ({

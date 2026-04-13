@@ -21,8 +21,8 @@ export default async function SettingsPage() {
         <PageIntro
           variant="settings"
           eyebrow="설정"
-          title="개인 작업 기본값과 현재 연결 상태를 확인합니다."
-          description="이 화면은 현재 브라우저에서 새 세션을 시작할 때 쓸 기본값을 저장합니다. 보관 정책이나 권한 정책을 서버에서 강제하는 관리자 화면은 아닙니다."
+          title="작업 기본값과 현재 연결 상태를 빠르게 확인합니다."
+          description="이 화면에서는 다음 세션의 기본값을 정리하고, 현재 AI와 저장소 연결 상태를 함께 봅니다."
           meta={
             <div className="badge-row">
               <StatusBadge tone={runtime.aiConfigured ? "success" : "warning"}>

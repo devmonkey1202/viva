@@ -74,6 +74,10 @@ select {
   font: inherit;
 }
 
+select {
+  appearance: none;
+}
+
 ::selection {
   background: rgba(43, 89, 255, 0.14);
 }
@@ -324,6 +328,7 @@ select {
   font-size: 14px;
   line-height: 1.72;
   color: var(--text-secondary);
+  max-width: 60ch;
 }
 
 .intro-description--landing {
@@ -619,6 +624,23 @@ select {
   gap: 8px;
 }
 
+.select-shell {
+  position: relative;
+}
+
+.select-shell::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: translateY(-62%) rotate(45deg);
+  pointer-events: none;
+}
+
 .field-block__label {
   font-size: 13px;
   font-weight: 800;
@@ -648,6 +670,12 @@ select {
 
 .form-input {
   min-height: 44px;
+}
+
+.form-select {
+  padding-right: 42px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
 }
 
 .form-textarea {
@@ -725,6 +753,7 @@ select {
   font-size: 14px;
   line-height: 1.68;
   color: var(--text);
+  max-width: 62ch;
 }
 
 .question-card__head {
@@ -1123,6 +1152,7 @@ select {
   padding: 18px;
   color: var(--text-secondary);
   line-height: 1.75;
+  max-width: 62ch;
 }
 
 .landing-hero {
@@ -1340,6 +1370,7 @@ select {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.7;
+  max-width: 38ch;
 }
 
 .landing-band {
@@ -1392,6 +1423,89 @@ select {
 .landing-preview__grid {
   display: grid;
   gap: 14px;
+}
+
+.onboarding-guide {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  padding: 18px;
+  box-shadow: var(--shadow-xs);
+}
+
+.onboarding-guide__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.onboarding-guide__copy {
+  display: grid;
+  gap: 8px;
+}
+
+.onboarding-guide__grid {
+  display: grid;
+  gap: 12px;
+}
+
+.onboarding-guide__step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 13px 14px;
+}
+
+.onboarding-guide__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.onboarding-guide__body {
+  display: grid;
+  gap: 4px;
+}
+
+.onboarding-guide__body strong {
+  font-size: 14px;
+  line-height: 1.28;
+  letter-spacing: -0.03em;
+}
+
+.onboarding-guide__body p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+  max-width: 46ch;
+}
+
+.onboarding-guide--teacher {
+  background: linear-gradient(180deg, rgba(238, 243, 255, 0.95) 0%, #ffffff 100%);
+}
+
+.onboarding-guide--operator {
+  background: linear-gradient(180deg, rgba(243, 246, 252, 0.96) 0%, #ffffff 100%);
+}
+
+.onboarding-guide--settings {
+  background: linear-gradient(180deg, rgba(255, 248, 244, 0.92) 0%, #ffffff 100%);
 }
 
 .landing-band__card {
@@ -1914,6 +2028,21 @@ select {
 
   .landing-preview-card__screen {
     min-height: 156px;
+  }
+
+  .onboarding-guide__head {
+    display: grid;
+  }
+
+  .onboarding-guide__step {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .onboarding-guide__index {
+    width: 28px;
+    height: 28px;
   }
 
   .empty-page__title {

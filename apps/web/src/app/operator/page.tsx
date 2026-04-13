@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppHeader } from "@/components/app-header";
 import { AuthUtility } from "@/components/auth-utility";
+import { OnboardingGuide } from "@/components/onboarding-guide";
 import { StatusBadge } from "@/components/status-badge";
 import { MetricCard, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import {
@@ -27,10 +28,10 @@ export default async function OperatorPage() {
         utility={
           <div className="button-row">
             <Link href="/api/export?format=csv" className="button button--ghost button--compact">
-              CSV export
+              CSV 내보내기
             </Link>
             <Link href="/api/export?format=json" className="button button--ghost button--compact">
-              JSON export
+              JSON 내보내기
             </Link>
             <AuthUtility role={session.role} />
           </div>
@@ -55,9 +56,33 @@ export default async function OperatorPage() {
               <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
                 {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}
               </StatusBadge>
-              <StatusBadge tone="neutral">갱신 {formatDateTime(summary.generatedAt)}</StatusBadge>
+              <StatusBadge tone="neutral">
+                갱신 {formatDateTime(summary.generatedAt)}
+              </StatusBadge>
             </div>
           }
+        />
+
+        <OnboardingGuide
+          storageKey="viva:onboarding:operator"
+          tone="operator"
+          eyebrow="운영 화면 가이드"
+          title="운영자는 숫자보다 패턴을 먼저 읽으면 됩니다."
+          description="분류 분포, 누락 개념, 최근 세션을 순서대로 보면 어떤 수업을 손봐야 하는지 더 빨리 보입니다."
+          steps={[
+            {
+              title: "분류 분포 먼저 확인",
+              description: "uncertain과 misconception이 많은 구간부터 먼저 봅니다.",
+            },
+            {
+              title: "누락 개념과 오개념 비교",
+              description: "같이 반복되는 개념 묶음을 보면 보완 포인트가 보입니다.",
+            },
+            {
+              title: "최근 세션으로 내려가기",
+              description: "이상 징후가 보이면 최신 세션 상세로 내려가 근거를 확인합니다.",
+            },
+          ]}
         />
 
         <div className="metric-grid">
@@ -69,12 +94,12 @@ export default async function OperatorPage() {
           <MetricCard
             label="분석 완료"
             value={summary.analyzedVerifications}
-            note="학생 응답과 분석이 저장된 세션 수"
+            note="학생 답변과 분석이 저장된 세션 수"
           />
           <MetricCard
             label="교사 판단 완료"
             value={summary.teacherDecisions}
-            note="최종 판단까지 기록된 세션 수"
+            note="최종 판단까지 저장된 세션 수"
           />
         </div>
 
@@ -141,7 +166,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="누락 개념"
             title="자주 비는 핵심 개념"
-            description="학생 답변에서 반복적으로 누락되는 루브릭 개념입니다."
+            description="학생 답변에서 반복적으로 빠지는 루브릭 개념입니다."
           >
             {summary.topMissingConcepts.length > 0 ? (
               <div className="stack-grid">
@@ -160,8 +185,8 @@ export default async function OperatorPage() {
           </SurfaceCard>
 
           <SurfaceCard
-            eyebrow="오개념 묶음"
-            title="반복 오개념 묶음"
+            eyebrow="오개념"
+            title="반복되는 오개념"
             description="수업 보완 우선순위를 정할 때 먼저 보는 반복 오개념입니다."
           >
             {summary.topMisconceptions.length > 0 ? (
@@ -184,7 +209,7 @@ export default async function OperatorPage() {
         <SurfaceCard
           eyebrow="최근 세션"
           title="최신 검증 세션"
-          description="최근 업데이트된 세션을 시간순으로 확인합니다."
+          description="최신 업데이트 순서대로 세션을 확인합니다."
         >
           {summary.recentVerifications.length > 0 ? (
             <div className="table-scroll">
@@ -238,7 +263,8 @@ export default async function OperatorPage() {
             </div>
           ) : (
             <div className="table-empty">
-              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면 여기서 추적할 수 있습니다.
+              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면
+              여기로 이어집니다.
             </div>
           )}
         </SurfaceCard>
