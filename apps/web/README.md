@@ -40,11 +40,16 @@ AI_FAST_MODEL=gpt-5.2
 AI_REASONING_MODEL=gpt-5.2
 AI_REQUEST_TIMEOUT_MS=20000
 AI_MAX_RETRIES=1
+VIVA_SESSION_SECRET=
+VIVA_TEACHER_ACCESS_CODE=
+VIVA_OPERATOR_ACCESS_CODE=
 DATABASE_URL=
 VERIFICATION_STORE_PATH=
 ```
 
 - `AI_API_KEY`가 없으면 앱은 자동으로 mock fallback 모드로 동작합니다.
+- `VIVA_SESSION_SECRET`은 서명된 세션 쿠키에 사용합니다. 배포에서는 반드시 설정하는 편이 안전합니다.
+- `VIVA_TEACHER_ACCESS_CODE`, `VIVA_OPERATOR_ACCESS_CODE`를 설정하면 역할별 접속 코드가 필요합니다.
 - `DATABASE_URL`이 없으면 질문 생성, 분석, 교사 판단 결과는 로컬 저장소에 기록됩니다.
 - `DATABASE_URL`이 있으면 Neon/Postgres 저장소를 사용합니다.
 - 현재 저장 어댑터는 Neon REST/Data API 주소가 아니라 Postgres 연결 문자열(`DATABASE_URL`)을 기대합니다.

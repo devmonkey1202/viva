@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { createApiErrorResponse } from "@/lib/api-error-response";
+import { requireApiRole } from "@/lib/server-auth";
+import {
+  buildTraceHeaders,
+  createRequestTrace,
+  getTraceDurationMs,
+  logServerEvent,
+} from "@/lib/server-observability";
 import { ListVerificationsResponseSchema } from "@/lib/schemas";
 import { filterVerificationList } from "@/lib/verification-list";
 import { listVerificationRecords } from "@/lib/verification-store";
@@ -8,7 +15,10 @@ import { listVerificationRecords } from "@/lib/verification-store";
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  const trace = createRequestTrace(request, "/api/verifications");
+
   try {
+    const session = await requireApiRole(["teacher", "operator"]);
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("query") ?? "";
     const limit = Number(searchParams.get("limit") ?? "8");
@@ -19,11 +29,20 @@ export async function GET(request: Request) {
     const items = filterVerificationList(records, query, safeLimit);
     const response = ListVerificationsResponseSchema.parse({ items });
 
-    return NextResponse.json(response);
+    logServerEvent("info", "verification-list.loaded", {
+      requestId: trace.requestId,
+      actorRole: session.role,
+      durationMs: getTraceDurationMs(trace),
+      query,
+      itemCount: items.length,
+    });
+
+    return NextResponse.json(response, { headers: buildTraceHeaders(trace) });
   } catch (error) {
     return createApiErrorResponse(error, {
       validationMessage: "검증 세션 목록 요청 형식이 올바르지 않습니다.",
       fallbackMessage: "검증 세션 목록 조회 중 오류가 발생했습니다.",
+      trace,
     });
   }
 }

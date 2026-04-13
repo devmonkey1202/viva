@@ -16,9 +16,9 @@ export function TeacherSessionPolicyCard({
 }: TeacherSessionPolicyCardProps) {
   return (
     <SurfaceCard
-      eyebrow="Session Policy"
+      eyebrow="세션 기본값"
       title="학생 응답 방식과 export 기본값"
-      description="설정 페이지의 기본값이 새 세션 생성 시 반영됩니다. 기존 세션은 저장된 정책을 그대로 유지합니다."
+      description="설정 페이지에 저장한 개인 작업 기본값이 새 세션 생성 시 반영됩니다. 기존 세션은 저장된 값을 그대로 유지합니다."
     >
       <div className="badge-row">
         <StatusBadge

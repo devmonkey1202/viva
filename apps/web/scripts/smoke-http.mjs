@@ -82,18 +82,58 @@ const fetchJson = async (url, init) => {
   return { response, data, text };
 };
 
+const readSetCookies = (response) => {
+  if (typeof response.headers.getSetCookie === "function") {
+    return response.headers.getSetCookie();
+  }
+
+  const combined = response.headers.get("set-cookie");
+  return combined ? combined.split(/,(?=[^;]+=[^;]+)/) : [];
+};
+
 const loginAsRole = async (role, nextPath) => {
   const { response, text } = await fetchJson(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role, nextPath }),
+    body: JSON.stringify({
+      role,
+      nextPath,
+      accessCode:
+        process.env[
+          role === "teacher" ? "VIVA_TEACHER_ACCESS_CODE" : "VIVA_OPERATOR_ACCESS_CODE"
+        ] ?? envFileEntries[role === "teacher" ? "VIVA_TEACHER_ACCESS_CODE" : "VIVA_OPERATOR_ACCESS_CODE"],
+    }),
   });
 
   assert.equal(response.status, 200, text);
-  const cookieHeader = response.headers.get("set-cookie");
-  assert.match(cookieHeader ?? "", /viva_role=/);
+  const cookies = readSetCookies(response);
+  const joined = cookies.join(";");
+  assert.match(joined, /viva_role=/);
+  assert.match(joined, /viva_session=/);
 
-  return cookieHeader.split(";")[0];
+  return cookies.map((item) => item.split(";")[0]).join("; ");
+};
+
+const assertLoginDeniedWithWrongCode = async (role) => {
+  const envKey =
+    role === "teacher" ? "VIVA_TEACHER_ACCESS_CODE" : "VIVA_OPERATOR_ACCESS_CODE";
+  const configuredCode = process.env[envKey] ?? envFileEntries[envKey];
+
+  if (!configuredCode) {
+    return;
+  }
+
+  const { response } = await fetchJson(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      role,
+      nextPath: role === "teacher" ? "/teacher" : "/operator",
+      accessCode: `${configuredCode}-wrong`,
+    }),
+  });
+
+  assert.equal(response.status, 401);
 };
 
 const tempDir = await mkdtemp(path.join(os.tmpdir(), "viva-smoke-"));
@@ -142,9 +182,10 @@ try {
   const health = await fetchJson(`${baseUrl}/api/health`);
   assert.equal(health.response.status, 200);
   assert.equal(health.data.status, "ok");
-  if (!useRemoteServer) {
-    assert.equal(health.data.runtime.storeMode, useManagedDb ? "managed" : "file");
-  }
+  assert.equal(health.data.service, "viva");
+
+  await assertLoginDeniedWithWrongCode("teacher");
+  await assertLoginDeniedWithWrongCode("operator");
 
   const teacherCookie = await loginAsRole("teacher", "/teacher");
   const operatorCookie = await loginAsRole("operator", "/operator");
@@ -185,9 +226,37 @@ try {
       "이진 탐색은 정렬된 배열에서 가운데 값을 기준으로 절반씩 탐색 범위를 줄여 목표 값을 찾는다. 각 단계에서 탐색 범위가 절반으로 줄기 때문에 시간 복잡도는 O(log n)이다.",
   };
 
-  const questions = await fetchJson(`${baseUrl}/api/questions`, {
+  const unauthQuestions = await fetchJson(`${baseUrl}/api/questions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(questionBody),
+  });
+  assert.equal(unauthQuestions.response.status, 401);
+
+  const unauthExport = await fetchWithTimeout(`${baseUrl}/api/export?format=json`);
+  assert.equal(unauthExport.status, 401);
+
+  const teacherSummaryForbidden = await fetchWithTimeout(`${baseUrl}/api/summary`, {
+    headers: { Cookie: teacherCookie },
+  });
+  assert.equal(teacherSummaryForbidden.status, 403);
+
+  const operatorQuestionForbidden = await fetchJson(`${baseUrl}/api/questions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: operatorCookie,
+    },
+    body: JSON.stringify(questionBody),
+  });
+  assert.equal(operatorQuestionForbidden.response.status, 403);
+
+  const questions = await fetchJson(`${baseUrl}/api/questions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: teacherCookie,
+    },
     body: JSON.stringify(questionBody),
   });
   assert.equal(questions.response.status, 200, questions.text);
@@ -209,15 +278,25 @@ try {
   assert.equal(studentPage.status, 200);
   assert.equal(teacherDetail.status, 200);
 
-  const verification = await fetchJson(`${baseUrl}/api/verifications/${verificationId}`);
+  const verification = await fetchJson(`${baseUrl}/api/verifications/${verificationId}`, {
+    headers: { Cookie: teacherCookie },
+  });
   assert.equal(verification.response.status, 200);
   assert.equal(verification.data.verification.verificationId, verificationId);
+
+  const unauthVerification = await fetchWithTimeout(
+    `${baseUrl}/api/verifications/${verificationId}`,
+  );
+  assert.equal(unauthVerification.status, 401);
 
   const lockStudentAccess = await fetchJson(
     `${baseUrl}/api/verifications/${verificationId}/student-access`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: teacherCookie,
+      },
       body: JSON.stringify({ state: "locked" }),
     },
   );
@@ -234,7 +313,10 @@ try {
     `${baseUrl}/api/verifications/${verificationId}/student-access`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: teacherCookie,
+      },
       body: JSON.stringify({ state: "open" }),
     },
   );
@@ -243,6 +325,9 @@ try {
 
   const verificationList = await fetchJson(
     `${baseUrl}/api/verifications?limit=5&query=${encodeURIComponent("이진 탐색")}`,
+    {
+      headers: { Cookie: teacherCookie },
+    },
   );
   assert.equal(verificationList.response.status, 200);
   assert.ok(verificationList.data.items.length >= 1);
@@ -285,7 +370,10 @@ try {
 
   const decision = await fetchJson(`${baseUrl}/api/teacher-decisions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: teacherCookie,
+    },
     body: JSON.stringify({
       verificationId,
       decision: {
@@ -297,15 +385,24 @@ try {
   assert.equal(decision.response.status, 200, decision.text);
   assert.equal(decision.data.teacherDecision.decision, "approved_understanding");
 
-  const summary = await fetchJson(`${baseUrl}/api/summary`);
+  const summary = await fetchJson(`${baseUrl}/api/summary`, {
+    headers: { Cookie: operatorCookie },
+  });
   assert.equal(summary.response.status, 200);
   assert.ok(summary.data.totalVerifications >= 1);
   assert.ok(summary.data.teacherDecisions >= 1);
 
-  const exportJson = await fetchWithTimeout(`${baseUrl}/api/export?format=json`);
-  const exportCsv = await fetchWithTimeout(`${baseUrl}/api/export?format=csv`);
+  const exportJson = await fetchWithTimeout(`${baseUrl}/api/export?format=json`, {
+    headers: { Cookie: operatorCookie },
+  });
+  const exportCsv = await fetchWithTimeout(`${baseUrl}/api/export?format=csv`, {
+    headers: { Cookie: operatorCookie },
+  });
   const sessionExportJson = await fetchWithTimeout(
     `${baseUrl}/api/export?format=json&verificationId=${verificationId}`,
+    {
+      headers: { Cookie: teacherCookie },
+    },
   );
   const exportJsonText = await exportJson.text();
   const exportCsvText = await exportCsv.text();

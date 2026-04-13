@@ -6,7 +6,7 @@ import { neon } from "@neondatabase/serverless";
 
 import type {
   AnalysisReport,
-  AnalyzeUnderstandingStoredRequest,
+  AnalyzeSubmissionRequest,
   GenerateQuestionSetRequest,
   OperatorSummary,
   StudentAccessState,
@@ -21,18 +21,18 @@ type VerificationRow = {
   verification_id: string;
   assignment_title: string;
   assignment_description: string;
-  rubric_core_concepts_json: string;
-  rubric_risk_points_json: string;
+  rubric_core_concepts_json: unknown;
+  rubric_risk_points_json: unknown;
   submission_text: string;
-  session_preferences_json: string;
-  question_set_json: string;
-  student_answers_json: string | null;
-  analysis_report_json: string | null;
-  teacher_decision_json: string | null;
-  activity_json: string;
+  session_preferences_json: unknown;
+  question_set_json: unknown;
+  student_answers_json: unknown | null;
+  analysis_report_json: unknown | null;
+  teacher_decision_json: unknown | null;
+  activity_json: unknown;
   student_access_state: string;
-  created_at: string;
-  updated_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
 };
 
 const getSql = () => {
@@ -60,18 +60,18 @@ const ensureSchema = async () => {
         verification_id TEXT PRIMARY KEY,
         assignment_title TEXT NOT NULL,
         assignment_description TEXT NOT NULL,
-        rubric_core_concepts_json TEXT NOT NULL,
-        rubric_risk_points_json TEXT NOT NULL,
+        rubric_core_concepts_json JSONB NOT NULL,
+        rubric_risk_points_json JSONB NOT NULL,
         submission_text TEXT NOT NULL,
-        session_preferences_json TEXT NOT NULL DEFAULT '{}',
-        question_set_json TEXT NOT NULL,
-        student_answers_json TEXT,
-        analysis_report_json TEXT,
-        teacher_decision_json TEXT,
-        activity_json TEXT NOT NULL,
+        session_preferences_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+        question_set_json JSONB NOT NULL,
+        student_answers_json JSONB,
+        analysis_report_json JSONB,
+        teacher_decision_json JSONB,
+        activity_json JSONB NOT NULL,
         student_access_state TEXT NOT NULL DEFAULT 'open',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL
       )
     `;
 
@@ -82,26 +82,95 @@ const ensureSchema = async () => {
 
     await sql`
       ALTER TABLE verification_records
-      ADD COLUMN IF NOT EXISTS session_preferences_json TEXT NOT NULL DEFAULT '{}'
+      ADD COLUMN IF NOT EXISTS session_preferences_json JSONB NOT NULL DEFAULT '{}'::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN rubric_core_concepts_json TYPE JSONB
+      USING rubric_core_concepts_json::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN rubric_risk_points_json TYPE JSONB
+      USING rubric_risk_points_json::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN session_preferences_json TYPE JSONB
+      USING session_preferences_json::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN question_set_json TYPE JSONB
+      USING question_set_json::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN student_answers_json TYPE JSONB
+      USING CASE
+        WHEN student_answers_json IS NULL THEN NULL
+        ELSE student_answers_json::jsonb
+      END
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN analysis_report_json TYPE JSONB
+      USING CASE
+        WHEN analysis_report_json IS NULL THEN NULL
+        ELSE analysis_report_json::jsonb
+      END
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN teacher_decision_json TYPE JSONB
+      USING CASE
+        WHEN teacher_decision_json IS NULL THEN NULL
+        ELSE teacher_decision_json::jsonb
+      END
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN activity_json TYPE JSONB
+      USING activity_json::jsonb
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN created_at TYPE TIMESTAMPTZ
+      USING created_at::timestamptz
+    `;
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN updated_at TYPE TIMESTAMPTZ
+      USING updated_at::timestamptz
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS verification_records_updated_at_idx
+      ON verification_records (updated_at DESC)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS verification_records_student_access_state_idx
+      ON verification_records (student_access_state)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS verification_records_created_at_idx
+      ON verification_records (created_at DESC)
     `;
   })();
 
   return schemaReady;
-};
-
-const requireVerification = (
-  records: VerificationRecord[],
-  verificationId: string,
-) => {
-  const verification = records.find(
-    (item) => item.verificationId === verificationId,
-  );
-
-  if (!verification) {
-    throw new Error("해당 검증 세션을 찾을 수 없습니다.");
-  }
-
-  return verification;
 };
 
 const sortByUpdatedAtDesc = (records: VerificationRecord[]) =>
@@ -132,29 +201,44 @@ const incrementBucket = (counts: Map<string, number>, value: string) => {
   counts.set(label, (counts.get(label) ?? 0) + 1);
 };
 
+const parseJsonColumn = <T>(value: unknown, fallback: T): T => {
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value === "string") {
+    return JSON.parse(value) as T;
+  }
+
+  return value as T;
+};
+
+const normalizeTimestamp = (value: string | Date) =>
+  value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+
 const rowToVerificationRecord = (row: VerificationRow) =>
   VerificationRecordSchema.parse({
     verificationId: row.verification_id,
     assignmentTitle: row.assignment_title,
     assignmentDescription: row.assignment_description,
-    rubricCoreConcepts: JSON.parse(row.rubric_core_concepts_json),
-    rubricRiskPoints: JSON.parse(row.rubric_risk_points_json),
+    rubricCoreConcepts: parseJsonColumn<string[]>(row.rubric_core_concepts_json, []),
+    rubricRiskPoints: parseJsonColumn<string[]>(row.rubric_risk_points_json, []),
     submissionText: row.submission_text,
-    sessionPreferences: JSON.parse(row.session_preferences_json || "{}"),
-    questionSet: JSON.parse(row.question_set_json),
+    sessionPreferences: parseJsonColumn(row.session_preferences_json, {}),
+    questionSet: parseJsonColumn(row.question_set_json, null),
     studentAnswers: row.student_answers_json
-      ? JSON.parse(row.student_answers_json)
+      ? parseJsonColumn(row.student_answers_json, undefined)
       : undefined,
     analysisReport: row.analysis_report_json
-      ? JSON.parse(row.analysis_report_json)
+      ? parseJsonColumn(row.analysis_report_json, undefined)
       : undefined,
     teacherDecision: row.teacher_decision_json
-      ? JSON.parse(row.teacher_decision_json)
+      ? parseJsonColumn(row.teacher_decision_json, undefined)
       : undefined,
-    activity: JSON.parse(row.activity_json),
+    activity: parseJsonColumn(row.activity_json, []),
     studentAccessState: row.student_access_state,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: normalizeTimestamp(row.created_at),
+    updatedAt: normalizeTimestamp(row.updated_at),
   });
 
 const persistVerificationRecord = async (record: VerificationRecord) => {
@@ -182,15 +266,15 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       ${record.verificationId},
       ${record.assignmentTitle},
       ${record.assignmentDescription},
-      ${JSON.stringify(record.rubricCoreConcepts)},
-      ${JSON.stringify(record.rubricRiskPoints)},
+      ${JSON.stringify(record.rubricCoreConcepts)}::jsonb,
+      ${JSON.stringify(record.rubricRiskPoints)}::jsonb,
       ${record.submissionText},
-      ${JSON.stringify(record.sessionPreferences)},
-      ${JSON.stringify(record.questionSet)},
-      ${record.studentAnswers ? JSON.stringify(record.studentAnswers) : null},
-      ${record.analysisReport ? JSON.stringify(record.analysisReport) : null},
-      ${record.teacherDecision ? JSON.stringify(record.teacherDecision) : null},
-      ${JSON.stringify(record.activity)},
+      ${JSON.stringify(record.sessionPreferences)}::jsonb,
+      ${JSON.stringify(record.questionSet)}::jsonb,
+      ${record.studentAnswers ? JSON.stringify(record.studentAnswers) : null}::jsonb,
+      ${record.analysisReport ? JSON.stringify(record.analysisReport) : null}::jsonb,
+      ${record.teacherDecision ? JSON.stringify(record.teacherDecision) : null}::jsonb,
+      ${JSON.stringify(record.activity)}::jsonb,
       ${record.studentAccessState},
       ${record.createdAt},
       ${record.updatedAt}
@@ -272,11 +356,14 @@ export const getVerificationRecordFromNeon = async (verificationId: string) => {
 };
 
 export const saveAnalysisForVerificationFromNeon = async (
-  input: AnalyzeUnderstandingStoredRequest,
+  input: AnalyzeSubmissionRequest,
   analysisReport: AnalysisReport,
 ) => {
-  const records = await listVerificationRecordsFromNeon();
-  const verification = requireVerification(records, input.verificationId);
+  const verification = await getVerificationRecordFromNeon(input.verificationId);
+
+  if (!verification) {
+    throw new Error("해당 검증 세션을 찾을 수 없습니다.");
+  }
   const now = new Date().toISOString();
 
   verification.updatedAt = now;
@@ -299,8 +386,11 @@ export const saveTeacherDecisionForVerificationFromNeon = async (
   verificationId: string,
   decisionInput: TeacherDecisionInput,
 ) => {
-  const records = await listVerificationRecordsFromNeon();
-  const verification = requireVerification(records, verificationId);
+  const verification = await getVerificationRecordFromNeon(verificationId);
+
+  if (!verification) {
+    throw new Error("해당 검증 세션을 찾을 수 없습니다.");
+  }
   const now = new Date().toISOString();
 
   const teacherDecision: TeacherDecision = {
@@ -326,8 +416,11 @@ export const setStudentAccessForVerificationFromNeon = async (
   verificationId: string,
   state: StudentAccessState,
 ) => {
-  const records = await listVerificationRecordsFromNeon();
-  const verification = requireVerification(records, verificationId);
+  const verification = await getVerificationRecordFromNeon(verificationId);
+
+  if (!verification) {
+    throw new Error("해당 검증 세션을 찾을 수 없습니다.");
+  }
   const now = new Date().toISOString();
 
   verification.updatedAt = now;

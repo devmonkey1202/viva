@@ -166,6 +166,16 @@ export type AnalyzeUnderstandingRequest = z.infer<
   typeof AnalyzeUnderstandingRequestSchema
 >;
 
+export const AnalyzeSubmissionRequestSchema = z.object({
+  verificationId: z.string().min(1),
+  questionSet: QuestionSetSchema,
+  studentAnswers: z.array(StudentAnswerSchema).length(3),
+});
+
+export type AnalyzeSubmissionRequest = z.infer<
+  typeof AnalyzeSubmissionRequestSchema
+>;
+
 export const AnalyzeUnderstandingStoredRequestSchema =
   AnalyzeUnderstandingRequestSchema.extend({
     verificationId: z.string().min(1),
@@ -242,6 +252,22 @@ export const VerificationRecordSchema = VerificationInputSchema.extend({
 });
 
 export type VerificationRecord = z.infer<typeof VerificationRecordSchema>;
+
+export const StudentVerificationSessionSchema = z.object({
+  verificationId: z.string().min(1),
+  assignmentTitle: z.string().min(1),
+  assignmentDescription: z.string().min(1),
+  rubricCoreConcepts: z.array(z.string().min(1)).min(1),
+  sessionPreferences: VerificationSessionPreferencesSchema,
+  questionSet: QuestionSetSchema,
+  studentAnswers: z.array(StudentAnswerSchema).length(3).optional(),
+  studentAccessState: StudentAccessStateSchema,
+  hasSubmitted: z.boolean(),
+});
+
+export type StudentVerificationSession = z.infer<
+  typeof StudentVerificationSessionSchema
+>;
 
 export const GetVerificationResponseSchema = z.object({
   verification: VerificationRecordSchema,

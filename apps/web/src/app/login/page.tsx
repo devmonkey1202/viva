@@ -6,10 +6,10 @@ import { AppHeader } from "@/components/app-header";
 import { LoginForm } from "@/components/login-form";
 import {
   isRoleAllowedForPath,
-  readVivaRoleFromCookies,
   sanitizeNextPath,
   vivaRoleMeta,
 } from "@/lib/auth";
+import { readVivaRoleFromSessionCookies } from "@/lib/server-auth";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -18,7 +18,7 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const role = readVivaRoleFromCookies(await cookies());
+  const role = readVivaRoleFromSessionCookies(await cookies());
   const next = sanitizeNextPath((await searchParams)?.next);
 
   if (role) {
@@ -33,7 +33,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="page-stack page-stack--auth">
         <section className="auth-shell">
           <div className="auth-shell__copy">
-            <p className="eyebrow">Workspace Access</p>
+            <p className="eyebrow">워크스페이스 접속</p>
             <h1 className="auth-shell__title">
               역할을 고르고
               <br />
@@ -45,21 +45,22 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </p>
             <div className="auth-shell__notes">
               <div className="auth-shell__note">
-                <strong>Teacher</strong>
+                <strong>교사</strong>
                 <span>과제 입력, 질문 생성, 학생 링크 공유, 근거 검토, 최종 판단</span>
               </div>
               <div className="auth-shell__note">
-                <strong>Operator</strong>
+                <strong>운영자</strong>
                 <span>분포 확인, 반복 오개념 추적, 최근 세션 모니터링</span>
               </div>
             </div>
           </div>
 
           <div className="auth-shell__panel">
-            <p className="eyebrow">Choose Role</p>
+            <p className="eyebrow">역할 선택</p>
             <h2 className="section-title">어떤 흐름으로 시작할지 선택합니다.</h2>
             <p className="section-description">
-              로그인 절차는 단순하게 두고, 진입 이후에 각 역할에 맞는 화면과 기능으로 분리합니다.
+              데모 배포에서는 간단한 역할 기반 진입으로 시작하고, 접속 코드가 설정된 배포에서는 역할별 코드가
+              함께 적용됩니다.
             </p>
             <Suspense fallback={<div className="table-empty">접속 역할을 불러오는 중입니다.</div>}>
               <LoginForm />

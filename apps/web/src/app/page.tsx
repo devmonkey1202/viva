@@ -66,7 +66,7 @@ const flow = [
 
 const rolePanels = [
   {
-    label: "Teacher",
+    label: "교사",
     title: "질문 생성부터 최종 판단까지 한 흐름으로 관리합니다.",
     body: "입력, 질문 생성, 학생 링크, 분석, 최종 판단, 세션 재열람까지 교사용 워크벤치에서 이어집니다.",
     note: "과제 기준을 잡고, 링크를 배포하고, 근거를 확인한 뒤 판단합니다.",
@@ -75,7 +75,7 @@ const rolePanels = [
     tone: "teacher",
   },
   {
-    label: "Student",
+    label: "학생",
     title: "학생은 부담 없이 짧고 분명하게 설명합니다.",
     body: "학생 화면은 로그인 없이 링크로 열리고, 질문 세 개만 답하면 흐름이 끝납니다.",
     note: "모바일 우선, 음성 fallback 지원, 제출 완료 상태까지 한 화면에서 처리합니다.",
@@ -84,7 +84,7 @@ const rolePanels = [
     tone: "student",
   },
   {
-    label: "Operator",
+    label: "운영자",
     title: "운영자는 반복되는 오개념과 누락 패턴을 먼저 봅니다.",
     body: "개별 학생보다 분포와 패턴을 읽어 수업 보완 포인트를 빠르게 찾게 합니다.",
     note: "분류 분포, 교사 판단, 누락 개념, 최근 세션을 같은 맥락에서 읽습니다.",
@@ -96,21 +96,21 @@ const rolePanels = [
 
 const previewPanels = [
   {
-    label: "Teacher View",
+    label: "교사 화면",
     title: "입력, 질문, 링크, 근거, 판단",
     body: "좌측은 기준 입력, 우측은 세션 제어와 결과 검토가 이어지는 워크벤치입니다.",
     lines: ["질문 생성", "학생 링크 공유", "근거 비교", "최종 판단"],
     tone: "teacher",
   },
   {
-    label: "Student View",
+    label: "학생 화면",
     title: "질문 3개만 답하는 모바일 플로우",
     body: "학생은 길게 배우지 않습니다. 지금 이해한 내용을 짧게 설명하는 데 집중합니다.",
     lines: ["진행률 표시", "음성 입력", "텍스트 fallback", "제출 완료"],
     tone: "student",
   },
   {
-    label: "Operator View",
+    label: "운영자 화면",
     title: "패턴과 반복을 읽는 운영 화면",
     body: "수치 카드보다 분포, 누락 개념, 최근 세션을 먼저 보여주는 운영 surface입니다.",
     lines: ["분류 분포", "교사 판단", "누락 개념", "최근 세션"],
@@ -133,7 +133,7 @@ export default function Home() {
       <div className="page-stack page-stack--landing">
         <section className="landing-hero">
           <div className="landing-hero__copy">
-            <p className="eyebrow">Post-submission verification layer</p>
+            <p className="eyebrow">제출 이후 이해 검증 레이어</p>
             <h1 className="landing-hero__title">
               제출은 끝났고,
               <br />
@@ -165,7 +165,7 @@ export default function Home() {
             <div className="landing-stage__halo landing-stage__halo--mint" />
             <div className="landing-stage__halo landing-stage__halo--peach" />
             <div className="landing-stage__plane landing-stage__plane--main">
-              <span>Verification Session</span>
+              <span>검증 세션</span>
               <strong>질문, 답변, 근거, 판단이 한 surface 안에 정렬됩니다.</strong>
               <div className="landing-stage__line-grid">
                 <i />
@@ -175,11 +175,11 @@ export default function Home() {
               </div>
             </div>
             <div className="landing-stage__plane landing-stage__plane--top">
-              <span>Teacher</span>
+              <span>교사</span>
               <strong>질문 생성</strong>
             </div>
             <div className="landing-stage__plane landing-stage__plane--side">
-              <span>Operator</span>
+              <span>운영자</span>
               <strong>패턴 읽기</strong>
             </div>
             <div className="landing-stage__metric landing-stage__metric--left">
@@ -228,7 +228,7 @@ export default function Home() {
 
         <section className="landing-flow">
           <div className="section-block__heading">
-            <p className="eyebrow">Flow</p>
+            <p className="eyebrow">실사용 흐름</p>
             <h2 className="section-headline">실사용 흐름은 다섯 단계로 끝납니다.</h2>
           </div>
           <div className="landing-flow__grid">
@@ -262,7 +262,7 @@ export default function Home() {
 
         <section className="landing-preview">
           <div className="section-block__heading">
-            <p className="eyebrow">Surfaces</p>
+            <p className="eyebrow">화면 구조</p>
             <h2 className="section-headline">같은 브랜드 안에서 목적이 다른 화면으로 나뉩니다.</h2>
           </div>
           <div className="landing-preview__grid">

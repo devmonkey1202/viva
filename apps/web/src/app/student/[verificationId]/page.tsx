@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { StudentAnswerFlow } from "@/components/student-answer-flow";
+import { StudentVerificationSessionSchema } from "@/lib/schemas";
 import { getVerificationRecord } from "@/lib/verification-store";
 
 export const dynamic = "force-dynamic";
@@ -23,5 +24,17 @@ export default async function StudentPage({ params }: StudentPageProps) {
     redirect("/session-expired");
   }
 
-  return <StudentAnswerFlow verification={verification} />;
+  const studentVerification = StudentVerificationSessionSchema.parse({
+    verificationId: verification.verificationId,
+    assignmentTitle: verification.assignmentTitle,
+    assignmentDescription: verification.assignmentDescription,
+    rubricCoreConcepts: verification.rubricCoreConcepts,
+    sessionPreferences: verification.sessionPreferences,
+    questionSet: verification.questionSet,
+    studentAnswers: verification.studentAnswers,
+    studentAccessState: verification.studentAccessState,
+    hasSubmitted: Boolean(verification.analysisReport),
+  });
+
+  return <StudentAnswerFlow verification={studentVerification} />;
 }

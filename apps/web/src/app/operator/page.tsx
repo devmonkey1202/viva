@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/app-header";
 import { AuthUtility } from "@/components/auth-utility";
@@ -10,16 +9,16 @@ import {
   formatDateTime,
   teacherDecisionMeta,
 } from "@/lib/presentation";
-import { readVivaRoleFromCookies } from "@/lib/auth";
+import { requirePageRole } from "@/lib/server-auth";
 import { getRuntimeStatus } from "@/lib/runtime-config";
 import { getOperatorSummary } from "@/lib/verification-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function OperatorPage() {
+  const session = await requirePageRole("/operator", "operator");
   const summary = await getOperatorSummary();
   const runtime = getRuntimeStatus();
-  const role = readVivaRoleFromCookies(await cookies());
 
   return (
     <main className="app-shell app-shell--operator">
@@ -33,7 +32,7 @@ export default async function OperatorPage() {
             <Link href="/api/export?format=json" className="button button--ghost button--compact">
               JSON export
             </Link>
-            {role ? <AuthUtility role={role} /> : null}
+            <AuthUtility role={session.role} />
           </div>
         }
       />
@@ -41,7 +40,7 @@ export default async function OperatorPage() {
       <div className="page-stack page-stack--operator">
         <PageIntro
           variant="operator"
-          eyebrow="Operator Dashboard"
+          eyebrow="운영 대시보드"
           title="반복되는 오개념과 누락 지점을 먼저 읽습니다."
           description="개별 세션보다 패턴 해석이 중요한 화면입니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 한 번에 확인합니다."
           actions={
@@ -54,7 +53,7 @@ export default async function OperatorPage() {
           meta={
             <div className="badge-row">
               <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
-                {runtime.managedDatabase ? "Managed DB" : "Local store"}
+                {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}
               </StatusBadge>
               <StatusBadge tone="neutral">갱신 {formatDateTime(summary.generatedAt)}</StatusBadge>
             </div>
@@ -81,7 +80,7 @@ export default async function OperatorPage() {
 
         <div className="operator-grid">
           <SurfaceCard
-            eyebrow="Analysis Distribution"
+            eyebrow="AI 분포"
             title="AI 분류 분포"
             description="현재 세션이 어떤 이해 상태로 분류되는지 먼저 확인합니다."
           >
@@ -112,7 +111,7 @@ export default async function OperatorPage() {
           </SurfaceCard>
 
           <SurfaceCard
-            eyebrow="Teacher Override"
+            eyebrow="교사 판단"
             title="교사 최종 판단 분포"
             description="AI 결과와 별도로 교사가 어떤 결정을 내렸는지 봅니다."
           >
@@ -140,7 +139,7 @@ export default async function OperatorPage() {
 
         <div className="operator-grid">
           <SurfaceCard
-            eyebrow="Missing Concepts"
+            eyebrow="누락 개념"
             title="자주 비는 핵심 개념"
             description="학생 답변에서 반복적으로 누락되는 루브릭 개념입니다."
           >
@@ -161,7 +160,7 @@ export default async function OperatorPage() {
           </SurfaceCard>
 
           <SurfaceCard
-            eyebrow="Misconception Clusters"
+            eyebrow="오개념 묶음"
             title="반복 오개념 묶음"
             description="수업 보완 우선순위를 정할 때 먼저 보는 반복 오개념입니다."
           >
@@ -183,7 +182,7 @@ export default async function OperatorPage() {
         </div>
 
         <SurfaceCard
-          eyebrow="Recent Sessions"
+          eyebrow="최근 세션"
           title="최신 검증 세션"
           description="최근 업데이트된 세션을 시간순으로 확인합니다."
         >

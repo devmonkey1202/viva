@@ -1,20 +1,28 @@
 import { NextResponse } from "next/server";
 
-import { vivaRoleCookieName } from "@/lib/auth";
+import { clearSessionCookies } from "@/lib/server-auth";
+import {
+  buildTraceHeaders,
+  createRequestTrace,
+  getTraceDurationMs,
+  logServerEvent,
+} from "@/lib/server-observability";
 
 export const runtime = "nodejs";
 
-export async function POST() {
-  const response = NextResponse.json({ ok: true });
+export async function POST(request: Request) {
+  const trace = createRequestTrace(request, "/api/auth/logout");
+  const response = NextResponse.json(
+    { ok: true },
+    { headers: buildTraceHeaders(trace) },
+  );
 
-  response.cookies.set(vivaRoleCookieName, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
+  clearSessionCookies(response);
+
+  logServerEvent("info", "auth.logout_completed", {
+    requestId: trace.requestId,
+    durationMs: getTraceDurationMs(trace),
   });
 
   return response;
 }
-

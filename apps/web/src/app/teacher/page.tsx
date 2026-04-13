@@ -1,18 +1,16 @@
-import { cookies } from "next/headers";
-
 import { TeacherWorkbench } from "@/components/teacher-workbench";
-import { readVivaRoleFromCookies } from "@/lib/auth";
+import { requirePageRole } from "@/lib/server-auth";
 import { getRuntimeStatus } from "@/lib/runtime-config";
 
 export default async function TeacherPage() {
   const runtime = getRuntimeStatus();
-  const role = readVivaRoleFromCookies(await cookies());
+  const session = await requirePageRole("/teacher", ["teacher", "operator"]);
 
   return (
     <TeacherWorkbench
       aiConfigured={runtime.aiConfigured}
       managedDatabase={runtime.managedDatabase}
-      role={role}
+      role={session.role}
     />
   );
 }

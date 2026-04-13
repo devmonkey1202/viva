@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-
-import { getRuntimeStatus } from "@/lib/runtime-config";
+import { createRequestTrace, buildTraceHeaders } from "@/lib/server-observability";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const trace = createRequestTrace(request, "/api/health");
+
   return NextResponse.json({
     status: "ok",
     checkedAt: new Date().toISOString(),
-    runtime: getRuntimeStatus(),
+    service: "viva",
+  }, {
+    headers: buildTraceHeaders(trace),
   });
 }

@@ -26,7 +26,7 @@ export function TeacherStudentLinkCard({
 }: TeacherStudentLinkCardProps) {
   return (
     <SurfaceCard
-      eyebrow="Student Link"
+      eyebrow="학생 링크"
       title="학생 응답 링크를 공유합니다."
       description="학생은 별도 화면에서 답하고, 교사는 여기서 최신 결과를 다시 불러옵니다."
     >

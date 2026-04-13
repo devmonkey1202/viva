@@ -9,17 +9,20 @@ import {
   speechErrorMessage,
   uniqueNotes,
 } from "@/lib/student-answer-flow";
-import type { VerificationRecord } from "@/lib/schemas";
+import type { StudentVerificationSession } from "@/lib/schemas";
 
-const verificationFixture: VerificationRecord = {
+const verificationFixture: StudentVerificationSession = {
   verificationId: "verification-1",
   assignmentTitle: "이진 탐색 설명",
   assignmentDescription: "학생이 이진 탐색을 설명한다.",
   rubricCoreConcepts: ["정렬", "탐색 범위 축소"],
-  rubricRiskPoints: ["정렬 전제 누락"],
-  submissionText: "이진 탐색은 정렬된 배열에서 중간값으로 범위를 줄인다.",
-  createdAt: "2026-04-13T12:00:00.000Z",
-  updatedAt: "2026-04-13T12:00:00.000Z",
+  sessionPreferences: {
+    studentResponseMode: "voice_or_text",
+    preferredExportFormat: "csv",
+    allowMockFallback: true,
+  },
+  studentAccessState: "open",
+  hasSubmitted: false,
   questionSet: {
     questionSetId: "question-set-1",
     generatedAt: "2026-04-13T12:00:00.000Z",
@@ -51,7 +54,6 @@ const verificationFixture: VerificationRecord = {
       },
     ],
   },
-  activity: [],
 };
 
 test("normalizeTranscript trims spacing and records normalization notes", () => {
@@ -151,4 +153,5 @@ test("buildAnalyzeRequest serializes answer artifacts into the analyze payload",
   assert.deepEqual(payload.studentAnswers[0].normalizationNotes, [
     "구두점 앞 공백을 정리했습니다.",
   ]);
+  assert.equal(payload.verificationId, "verification-1");
 });

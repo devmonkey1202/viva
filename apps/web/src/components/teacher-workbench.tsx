@@ -32,16 +32,20 @@ import {
 import type {
   AnalysisReport,
   AnalyzeUnderstandingStoredRequest,
-  GenerateQuestionSetResponse,
-  GetVerificationResponse,
   QuestionSet,
-  SaveTeacherDecisionResponse,
   StudentAccessState,
   TeacherDecision,
   TeacherDecisionInput,
   VerificationActivity,
   VerificationSessionPreferences,
 } from "@/lib/schemas";
+import {
+  analyzeTeacherVerification,
+  fetchTeacherVerification,
+  generateTeacherQuestionSet,
+  saveTeacherDecisionRequest,
+  updateTeacherStudentAccess,
+} from "@/lib/teacher-workbench-api";
 import {
   type AnswerArtifacts,
   type AnswerDraft,
@@ -313,7 +317,9 @@ export function TeacherWorkbench({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedLocalChanges]);
 
-  const applyVerificationPayload = (payload: GetVerificationResponse) => {
+  const applyVerificationPayload = (
+    payload: Awaited<ReturnType<typeof fetchTeacherVerification>>,
+  ) => {
     const verification = payload.verification;
     const nextDraft = buildTeacherDraftPayload({
       assignmentTitle: verification.assignmentTitle,
@@ -356,17 +362,7 @@ export function TeacherWorkbench({
     targetVerificationId: string,
     successMessage?: string,
   ) => {
-    const response = await fetch(`/api/verifications/${targetVerificationId}`, {
-      cache: "no-store",
-    });
-
-    const payload = (await response.json()) as GetVerificationResponse & {
-      message?: string;
-    };
-
-    if (!response.ok) {
-      throw new Error(payload.message ?? "세션을 불러오지 못했습니다.");
-    }
+    const payload = await fetchTeacherVerification(targetVerificationId);
 
     applyVerificationPayload(payload);
     setErrorMessage(null);
@@ -431,19 +427,7 @@ export function TeacherWorkbench({
     startTransition(() => {
       void (async () => {
         try {
-          const response = await fetch("/api/questions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(questionRequest),
-          });
-
-          const payload = (await response.json()) as GenerateQuestionSetResponse & {
-            message?: string;
-          };
-
-          if (!response.ok) {
-            throw new Error(payload.message ?? "질문 생성 중 오류가 발생했습니다.");
-          }
+          const payload = await generateTeacherQuestionSet(questionRequest);
 
           setQuestionSet(payload.questionSet);
           setVerificationId(payload.verificationId);
@@ -555,20 +539,7 @@ export function TeacherWorkbench({
               answerArtifacts,
             ),
           };
-
-          const response = await fetch("/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          const result = (await response.json()) as {
-            message?: string;
-          };
-
-          if (!response.ok) {
-            throw new Error(result.message ?? "분석 중 오류가 발생했습니다.");
-          }
+          await analyzeTeacherVerification(payload);
 
           await fetchVerification(
             verificationId,
@@ -605,24 +576,10 @@ export function TeacherWorkbench({
     startTransition(() => {
       void (async () => {
         try {
-          const response = await fetch("/api/teacher-decisions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              verificationId,
-              decision: decisionDraft,
-            }),
-          });
-
-          const payload = (await response.json()) as SaveTeacherDecisionResponse & {
-            message?: string;
-          };
-
-          if (!response.ok) {
-            throw new Error(
-              payload.message ?? "교사 판단 저장 중 오류가 발생했습니다.",
-            );
-          }
+          const payload = await saveTeacherDecisionRequest(
+            verificationId,
+            decisionDraft,
+          );
 
           setTeacherDecision(payload.teacherDecision);
           await fetchVerification(
@@ -654,22 +611,10 @@ export function TeacherWorkbench({
     startTransition(() => {
       void (async () => {
         try {
-          const response = await fetch(
-            `/api/verifications/${verificationId}/student-access`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                state: accessOpen ? "locked" : "open",
-              }),
-            },
+          await updateTeacherStudentAccess(
+            verificationId,
+            accessOpen ? "locked" : "open",
           );
-
-          const payload = (await response.json()) as { message?: string };
-
-          if (!response.ok) {
-            throw new Error(payload.message ?? "학생 링크 상태를 바꾸지 못했습니다.");
-          }
 
           await fetchVerification(
             verificationId,
@@ -775,7 +720,7 @@ export function TeacherWorkbench({
       <div className="page-stack page-stack--teacher">
         <PageIntro
           variant="tool"
-          eyebrow="Teacher Workbench"
+          eyebrow="교사 워크벤치"
           title="질문 생성부터 최종 판단까지 한 흐름으로 이어갑니다"
           description="교사는 입력, 학생 링크 공유, 분석 검토, 최종 판단을 같은 작업 공간에서 처리합니다. 최근 세션과 제어 기능도 이 화면에서 바로 이어집니다."
           actions={
@@ -809,10 +754,10 @@ export function TeacherWorkbench({
           meta={
             <div className="badge-row">
               <StatusBadge tone={aiConfigured ? "success" : "warning"}>
-                {aiConfigured ? "AI configured" : "AI key not configured"}
+                {aiConfigured ? "AI 연결됨" : "AI 키 없음"}
               </StatusBadge>
               <StatusBadge tone={managedDatabase ? "success" : "warning"}>
-                {managedDatabase ? "Managed DB" : "Local store"}
+                {managedDatabase ? "관리형 DB" : "로컬 저장소"}
               </StatusBadge>
               <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
               {draftSavedAt ? (
@@ -862,7 +807,7 @@ export function TeacherWorkbench({
         <div className="teacher-layout">
           <div className="teacher-layout__main">
             <SurfaceCard
-              eyebrow="1. Session Setup"
+              eyebrow="1. 세션 준비"
               title="과제 기준과 제출물을 먼저 정리합니다"
               description="교사 기준이 정확해야 이후 질문과 분석도 일관됩니다."
               action={
@@ -946,7 +891,7 @@ export function TeacherWorkbench({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="2. Question Set"
+              eyebrow="2. 질문 세트"
               title="학생별 검증 질문"
               description="질문은 제출물과 루브릭을 바탕으로 생성됩니다."
               action={
@@ -965,7 +910,7 @@ export function TeacherWorkbench({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="3. Student Answers"
+              eyebrow="3. 학생 답변"
               title="학생 답변과 전사 메타"
               description="학생 링크로 제출된 답변 또는 데모 답변을 검토합니다."
             >
@@ -976,7 +921,7 @@ export function TeacherWorkbench({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="4. Analysis Evidence"
+              eyebrow="4. 분석 근거"
               title="분석 근거"
               description="누락 개념, 논리 충돌, 재설명 포인트를 먼저 확인합니다."
             >
@@ -984,7 +929,7 @@ export function TeacherWorkbench({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="5. Teacher Decision"
+              eyebrow="5. 교사 판단"
               title="교사 최종 판단"
               description="AI 결과를 그대로 통과시키지 말고, 교사 메모와 함께 최종 판단을 저장합니다."
               action={

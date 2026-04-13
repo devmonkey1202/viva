@@ -2,7 +2,7 @@ import "server-only";
 
 import type {
   AnalysisReport,
-  AnalyzeUnderstandingStoredRequest,
+  AnalyzeSubmissionRequest,
   GenerateQuestionSetRequest,
   TeacherDecisionInput,
   StudentAccessState,
@@ -43,7 +43,7 @@ const createVerificationRecordImpl = (
     : createVerificationRecordFromFile(input, questionSet);
 
 const saveAnalysisForVerificationImpl = (
-  input: AnalyzeUnderstandingStoredRequest,
+  input: AnalyzeSubmissionRequest,
   analysisReport: AnalysisReport,
 ) =>
   hasDatabaseUrl()

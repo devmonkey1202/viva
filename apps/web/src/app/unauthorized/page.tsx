@@ -8,7 +8,7 @@ export default function UnauthorizedPage() {
       <AppHeader minimal />
       <div className="empty-page">
         <div className="empty-page__panel">
-          <p className="eyebrow">Unauthorized</p>
+          <p className="eyebrow">권한 없음</p>
           <h1 className="intro-title">현재 역할로는 이 화면에 접근할 수 없습니다.</h1>
           <p className="intro-description">
             교사용 워크스페이스와 운영 대시보드는 권한이 분리되어 있습니다. 다른 역할로 다시 로그인하거나

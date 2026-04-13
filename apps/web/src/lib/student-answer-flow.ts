@@ -1,9 +1,9 @@
 import type {
-  AnalyzeUnderstandingStoredRequest,
+  AnalyzeSubmissionRequest,
   QuestionSet,
   QuestionType,
   StudentAnswer,
-  VerificationRecord,
+  StudentVerificationSession,
 } from "@/lib/schemas";
 
 export type StudentAnswerArtifact = {
@@ -63,7 +63,7 @@ export const speechErrorMessage = (error: string) => {
   }
 };
 
-export const buildInitialAnswers = (verification: VerificationRecord) => ({
+export const buildInitialAnswers = (verification: StudentVerificationSession) => ({
   why: verification.studentAnswers?.find((item) => item.type === "why")?.answer ?? "",
   transfer:
     verification.studentAnswers?.find((item) => item.type === "transfer")
@@ -74,7 +74,7 @@ export const buildInitialAnswers = (verification: VerificationRecord) => ({
 });
 
 export const buildInitialArtifacts = (
-  verification: VerificationRecord,
+  verification: StudentVerificationSession,
 ): Record<QuestionType, StudentAnswerArtifact> => {
   const byType = (type: QuestionType) =>
     verification.studentAnswers?.find((item) => item.type === type);
@@ -96,18 +96,12 @@ export const buildInitialArtifacts = (
 };
 
 export const buildAnalyzeRequest = (input: {
-  verification: VerificationRecord;
+  verification: StudentVerificationSession;
   questionSet: QuestionSet;
   answers: Record<QuestionType, string>;
   answerArtifacts: Record<QuestionType, StudentAnswerArtifact>;
-}): AnalyzeUnderstandingStoredRequest => ({
+}): AnalyzeSubmissionRequest => ({
   verificationId: input.verification.verificationId,
-  assignmentTitle: input.verification.assignmentTitle,
-  assignmentDescription: input.verification.assignmentDescription,
-  rubricCoreConcepts: input.verification.rubricCoreConcepts,
-  rubricRiskPoints: input.verification.rubricRiskPoints,
-  submissionText: input.verification.submissionText,
-  sessionPreferences: input.verification.sessionPreferences,
   questionSet: input.questionSet,
   studentAnswers: input.questionSet.questions.map((question) => ({
     type: question.type,

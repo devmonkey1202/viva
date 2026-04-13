@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import type {
   AnalysisReport,
-  AnalyzeUnderstandingStoredRequest,
+  AnalyzeSubmissionRequest,
   GenerateQuestionSetRequest,
   OperatorSummary,
   StudentAccessState,
@@ -139,7 +139,7 @@ export const createVerificationRecordFromFile = async (
   });
 
 export const saveAnalysisForVerificationFromFile = async (
-  input: AnalyzeUnderstandingStoredRequest,
+  input: AnalyzeSubmissionRequest,
   analysisReport: AnalysisReport,
 ) =>
   queueStoreOperation(async () => {

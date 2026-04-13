@@ -22,17 +22,10 @@ export const vivaRoleMeta: Record<
   },
 };
 
-type CookieReader = {
-  get: (name: string) => { value: string } | undefined;
-};
-
 export const parseVivaRole = (
   value: string | undefined | null,
 ): VivaRole | null =>
   value === "teacher" || value === "operator" ? value : null;
-
-export const readVivaRoleFromCookies = (cookies: CookieReader) =>
-  parseVivaRole(cookies.get(vivaRoleCookieName)?.value);
 
 export const isProtectedAppPath = (pathname: string) =>
   pathname.startsWith("/teacher") ||

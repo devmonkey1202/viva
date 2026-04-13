@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { AnalysisEvidenceReview } from "@/components/analysis-evidence-review";
@@ -16,7 +15,7 @@ import {
   formatDateTime,
   teacherDecisionMeta,
 } from "@/lib/presentation";
-import { readVivaRoleFromCookies } from "@/lib/auth";
+import { requirePageRole } from "@/lib/server-auth";
 import { getVerificationRecord } from "@/lib/verification-store";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +29,10 @@ type TeacherVerificationDetailPageProps = {
 export default async function TeacherVerificationDetailPage({
   params,
 }: TeacherVerificationDetailPageProps) {
+  const session = await requirePageRole(
+    "/teacher/verifications/detail",
+    ["teacher", "operator"],
+  );
   const { verificationId } = await params;
   const verification = await getVerificationRecord(verificationId);
 
@@ -37,7 +40,6 @@ export default async function TeacherVerificationDetailPage({
     notFound();
   }
 
-  const role = readVivaRoleFromCookies(await cookies());
   const preferredFormat = verification.sessionPreferences.preferredExportFormat;
   const exportHref = `/api/export?format=${preferredFormat}&verificationId=${verification.verificationId}`;
 
@@ -45,11 +47,11 @@ export default async function TeacherVerificationDetailPage({
     <main className="app-shell app-shell--teacher">
       <AppHeader
         current="teacher"
-        utility={role ? <AuthUtility role={role} /> : undefined}
+        utility={<AuthUtility role={session.role} />}
       />
       <div className="page-stack page-stack--teacher">
         <PageIntro
-          eyebrow="Verification Detail"
+          eyebrow="세션 상세"
           title={verification.assignmentTitle}
           description="세션 상세, 학생 답변, 분석 근거, 교사 판단, export를 한 화면에서 확인합니다."
           actions={
@@ -132,7 +134,7 @@ export default async function TeacherVerificationDetailPage({
         <div className="teacher-layout">
           <div className="teacher-layout__main">
             <SurfaceCard
-              eyebrow="Question Set"
+              eyebrow="질문 세트"
               title="질문 세트"
               description="이 세션에 저장된 학생 검증 질문입니다."
             >
@@ -140,7 +142,7 @@ export default async function TeacherVerificationDetailPage({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="Student Answers"
+              eyebrow="학생 답변"
               title="학생 답변"
               description="서면 답변과 음성 전사 메타를 함께 확인합니다."
             >
@@ -151,7 +153,7 @@ export default async function TeacherVerificationDetailPage({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="Analysis"
+              eyebrow="분석 근거"
               title="분석 근거"
               description="AI 분류, 근거, 누락 개념, 충돌 지점을 검토합니다."
             >
@@ -161,7 +163,7 @@ export default async function TeacherVerificationDetailPage({
 
           <div className="teacher-layout__side">
             <SurfaceCard
-              eyebrow="Teacher Decision"
+              eyebrow="교사 판단"
               title="교사 최종 판단"
               description="이 세션에 저장된 최종 판단 기록입니다."
             >
@@ -185,7 +187,7 @@ export default async function TeacherVerificationDetailPage({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="Assignment Summary"
+              eyebrow="과제 기준"
               title="과제와 루브릭"
               description="검증의 기준이 되는 과제 정보입니다."
             >
@@ -216,7 +218,7 @@ export default async function TeacherVerificationDetailPage({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="Activity"
+              eyebrow="세션 기록"
               title="세션 기록"
               description="질문 생성, 분석, 판단 흐름을 시간순으로 봅니다."
             >

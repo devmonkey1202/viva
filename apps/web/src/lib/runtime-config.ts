@@ -59,6 +59,5 @@ export const getRuntimeStatus = () => {
     storeMode: config.managedDatabase ? "managed" : "file",
     aiFastModel: config.aiFastModel,
     aiReasoningModel: config.aiReasoningModel,
-    verificationStorePath: config.verificationStorePath,
   };
 };

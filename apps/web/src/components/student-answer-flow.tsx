@@ -8,14 +8,13 @@ import { StatusBadge } from "@/components/status-badge";
 import { StudentQuestionCard } from "@/components/student-question-card";
 import { EmptyState, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import {
-  analysisClassificationMeta,
   formatQuestionType,
   questionTypeMeta,
 } from "@/lib/presentation";
 import type {
   AnalyzeUnderstandingResponse,
   QuestionType,
-  VerificationRecord,
+  StudentVerificationSession,
 } from "@/lib/schemas";
 import {
   type StudentAnswerArtifact,
@@ -30,7 +29,7 @@ import {
 } from "@/lib/student-answer-flow";
 
 type StudentAnswerFlowProps = {
-  verification: VerificationRecord;
+  verification: StudentVerificationSession;
 };
 
 type SpeechRecognitionAlternativeLike = {
@@ -86,14 +85,12 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sttMessage, setSttMessage] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(
-    Boolean(verification.analysisReport),
-  );
+  const [isSubmitted, setIsSubmitted] = useState(verification.hasSubmitted);
   const [isPending, startTransition] = useTransition();
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
 
   const questionSet = verification.questionSet;
-  const alreadyAnalyzed = Boolean(verification.analysisReport);
+  const alreadyAnalyzed = verification.hasSubmitted;
   const voiceAllowedByPolicy =
     verification.sessionPreferences.studentResponseMode === "voice_or_text";
   const voiceEnabled = voiceAllowedByPolicy && speechSupported;
@@ -322,7 +319,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
       <div className="student-layout">
         <PageIntro
           variant="student"
-          eyebrow="Student Answer Flow"
+          eyebrow="학생 응답"
           title="질문을 읽고 짧고 분명하게 답해 주세요"
           description="정답을 길게 쓰는 것보다 왜 그렇게 이해했는지 드러나는 답변이 중요합니다. 학생 답변은 교사 검토 자료로만 사용됩니다."
           meta={
@@ -331,7 +328,14 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
                 <span>{completionCount}</span>
                 <span>/ {questionSet.questions.length} 문항 작성</span>
               </div>
-              <div className="student-progress__track">
+              <div
+                className="student-progress__track"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={questionSet.questions.length}
+                aria-valuenow={completionCount}
+                aria-label="답변 작성 진행률"
+              >
                 <div
                   className="student-progress__value"
                   style={{
@@ -345,7 +349,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
 
         <SurfaceCard
           tone="muted"
-          eyebrow="Assignment"
+          eyebrow="과제 안내"
           title={verification.assignmentTitle}
           description={verification.assignmentDescription}
         >
@@ -367,13 +371,21 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
           </div>
         </SurfaceCard>
 
-        {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
-        {sttMessage ? <div className="inline-notice">{sttMessage}</div> : null}
+        {errorMessage ? (
+          <div className="inline-alert" role="alert" aria-live="assertive">
+            {errorMessage}
+          </div>
+        ) : null}
+        {sttMessage ? (
+          <div className="inline-notice" role="status" aria-live="polite">
+            {sttMessage}
+          </div>
+        ) : null}
 
         {isSubmitted ? (
           <SurfaceCard
             tone="accent"
-            eyebrow="Submitted"
+            eyebrow="제출 완료"
             title="답변 제출이 완료되었습니다"
             description="학생 화면에서는 분석 결과를 직접 보여주지 않습니다. 교사가 제출물과 답변을 함께 검토한 뒤 최종 판단합니다."
           >
@@ -382,16 +394,9 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
               <p className="completion-card__body">
                 교사가 제출물, 질문, 답변, 루브릭을 함께 검토합니다.
               </p>
-              {verification.analysisReport ? (
-                <p className="completion-card__hint">
-                  현재 분석 상태:{" "}
-                  {
-                    analysisClassificationMeta[
-                      verification.analysisReport.classification
-                    ].label
-                  }
-                </p>
-              ) : null}
+              <p className="completion-card__hint">
+                학생 화면에는 분석 결과와 교사 판단이 직접 노출되지 않습니다.
+              </p>
             </div>
           </SurfaceCard>
         ) : (

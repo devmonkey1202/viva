@@ -59,9 +59,9 @@ export function SettingsPanel({
   return (
     <div className="section-stack">
       <SurfaceCard
-        eyebrow="Workspace Defaults"
-        title="새 검증 세션의 기본 정책"
-        description="여기서 바꾼 값은 교사 워크벤치에서 다음 세션을 만들 때 기본값으로 반영됩니다."
+        eyebrow="작업 기본값"
+        title="새 검증 세션의 개인 기본값"
+        description="여기서 바꾼 값은 현재 브라우저의 교사 워크벤치에서 다음 세션을 만들 때 기본값으로 반영됩니다."
       >
         <div className="split-grid">
           <Field label="음성 답변 허용">
@@ -133,7 +133,7 @@ export function SettingsPanel({
           </Field>
         </div>
 
-        <Field label="세션 보관 기간(일)" helper="로컬 작업 공간 기준 기본값입니다.">
+        <Field label="세션 보관 기간(일)" helper="현재 브라우저에서 새 세션을 시작할 때 참고하는 기본값입니다.">
           <input
             type="number"
             min="1"
@@ -160,17 +160,15 @@ export function SettingsPanel({
       </SurfaceCard>
 
       <SurfaceCard
-        eyebrow="Runtime"
+        eyebrow="런타임 상태"
         title="현재 배포 환경 상태"
-        description="배포 환경의 AI와 저장소 연결 상태를 한 번에 확인합니다."
+        description="배포 환경의 AI와 저장소 연결 상태를 요약해 보여줍니다."
       >
         <div className="metric-grid">
           <div className="metric-card">
-            <p className="metric-card__label">AI 연결</p>
-            <p className="metric-card__value">
-              {runtime.aiConfigured ? "Configured" : "Fallback"}
-            </p>
-            <p className="metric-card__note">{runtime.aiFastModel}</p>
+              <p className="metric-card__label">AI 연결</p>
+              <p className="metric-card__value">{runtime.aiConfigured ? "연결됨" : "대체 경로 사용"}</p>
+              <p className="metric-card__note">{runtime.aiFastModel}</p>
           </div>
           <div className="metric-card">
             <p className="metric-card__label">분석 모델</p>
@@ -178,10 +176,10 @@ export function SettingsPanel({
             <p className="metric-card__note">질문 생성과 분석 단계에 사용합니다.</p>
           </div>
           <div className="metric-card">
-            <p className="metric-card__label">저장 방식</p>
-            <p className="metric-card__value">
-              {runtime.managedDatabase ? "Managed DB" : "Local store"}
-            </p>
+              <p className="metric-card__label">저장 방식</p>
+              <p className="metric-card__value">
+                {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}
+              </p>
             <p className="metric-card__note">{runtime.storeMode}</p>
           </div>
         </div>

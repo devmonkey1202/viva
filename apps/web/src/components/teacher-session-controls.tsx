@@ -28,7 +28,7 @@ export function TeacherSessionControls({
 }: TeacherSessionControlsProps) {
   return (
     <SurfaceCard
-      eyebrow="Session Controls"
+      eyebrow="세션 제어"
       title="세션 제어와 재검증"
       description="학생 링크를 잠그거나, 최신 결과를 다시 불러오거나, 현재 응답으로 재분석할 수 있습니다."
     >
