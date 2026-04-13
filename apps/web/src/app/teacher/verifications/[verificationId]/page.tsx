@@ -42,12 +42,12 @@ export default async function TeacherVerificationDetailPage({
   const exportHref = `/api/export?format=${preferredFormat}&verificationId=${verification.verificationId}`;
 
   return (
-    <main className="app-shell">
+    <main className="app-shell app-shell--teacher">
       <AppHeader
         current="teacher"
         utility={role ? <AuthUtility role={role} /> : undefined}
       />
-      <div className="page-stack">
+      <div className="page-stack page-stack--teacher">
         <PageIntro
           eyebrow="Verification Detail"
           title={verification.assignmentTitle}

@@ -50,10 +50,10 @@ export function SettingsPanel({
 
   const policySummary = useMemo(() => {
     if (settingsState.textOnly || !settingsState.voiceEnabled) {
-      return "새 검증 세션은 학생 텍스트 응답만 받도록 시작합니다.";
+      return "새 검증 세션은 학생 텍스트 답변만 받도록 시작합니다.";
     }
 
-    return "새 검증 세션은 텍스트와 음성(STT) 응답을 모두 허용합니다.";
+    return "새 검증 세션은 텍스트와 음성(STT) 답변을 모두 허용합니다.";
   }, [settingsState.textOnly, settingsState.voiceEnabled]);
 
   return (
@@ -64,7 +64,7 @@ export function SettingsPanel({
         description="여기서 바꾼 값은 교사 워크벤치에서 다음 세션을 만들 때 기본값으로 반영됩니다."
       >
         <div className="split-grid">
-          <Field label="음성 응답 허용">
+          <Field label="음성 답변 허용">
             <label className="toggle-row">
               <input
                 type="checkbox"
@@ -77,7 +77,7 @@ export function SettingsPanel({
                   }))
                 }
               />
-              <span>학생이 브라우저 STT로 답변할 수 있게 합니다.</span>
+              <span>학생이 브라우저 STT로 답하도록 허용합니다.</span>
             </label>
           </Field>
           <Field label="텍스트만 허용">
@@ -95,7 +95,7 @@ export function SettingsPanel({
                   }))
                 }
               />
-              <span>학생 세션을 텍스트 응답 전용으로 시작합니다.</span>
+              <span>학생 세션을 텍스트 답변 전용으로 시작합니다.</span>
             </label>
           </Field>
         </div>
@@ -113,9 +113,7 @@ export function SettingsPanel({
                   }))
                 }
               />
-              <span>
-                실제 AI 호출이 실패하면 mock 엔진으로 이어서 흐름을 유지합니다.
-              </span>
+              <span>실제 AI 호출이 실패하면 mock 엔진으로 흐름을 이어갑니다.</span>
             </label>
           </Field>
           <Field label="기본 export 형식">
@@ -135,7 +133,7 @@ export function SettingsPanel({
           </Field>
         </div>
 
-        <Field label="세션 보관 기간(일)" helper="로컬 작업 공간 기본값입니다.">
+        <Field label="세션 보관 기간(일)" helper="로컬 작업 공간 기준 기본값입니다.">
           <input
             type="number"
             min="1"
@@ -155,7 +153,7 @@ export function SettingsPanel({
           <p className="summary-box__body">{policySummary}</p>
           <p className="helper-text">
             {settingsState.savedAt
-              ? `마지막 저장: ${new Date(settingsState.savedAt).toLocaleString("ko-KR")}`
+              ? `마지막 저장 ${new Date(settingsState.savedAt).toLocaleString("ko-KR")}`
               : "아직 저장 기록이 없습니다."}
           </p>
         </div>
@@ -164,20 +162,20 @@ export function SettingsPanel({
       <SurfaceCard
         eyebrow="Runtime"
         title="현재 배포 환경 상태"
-        description="배포 환경의 AI와 저장소 연결 상태를 요약해 보여줍니다."
+        description="배포 환경의 AI와 저장소 연결 상태를 한 번에 확인합니다."
       >
         <div className="metric-grid">
           <div className="metric-card">
             <p className="metric-card__label">AI 연결</p>
             <p className="metric-card__value">
-              {runtime.aiConfigured ? "Configured" : "Not configured"}
+              {runtime.aiConfigured ? "Configured" : "Fallback"}
             </p>
             <p className="metric-card__note">{runtime.aiFastModel}</p>
           </div>
           <div className="metric-card">
             <p className="metric-card__label">분석 모델</p>
             <p className="metric-card__value">{runtime.aiReasoningModel}</p>
-            <p className="metric-card__note">질문 생성과 분석에 사용합니다.</p>
+            <p className="metric-card__note">질문 생성과 분석 단계에 사용합니다.</p>
           </div>
           <div className="metric-card">
             <p className="metric-card__label">저장 방식</p>

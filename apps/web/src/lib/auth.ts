@@ -12,12 +12,12 @@ export const vivaRoleMeta: Record<
 > = {
   teacher: {
     label: "교사",
-    description: "과제 입력, 질문 생성, 학생 답변 검토, 최종 판단",
+    description: "과제 입력, 질문 생성, 학생 응답 검토, 최종 판단",
     defaultPath: "/teacher",
   },
   operator: {
     label: "운영자",
-    description: "분포 확인, 반복 오개념 점검, 최근 세션 모니터링",
+    description: "분포 확인, 반복 오개념 추적, 최근 세션 모니터링",
     defaultPath: "/operator",
   },
 };

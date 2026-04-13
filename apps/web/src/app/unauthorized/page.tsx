@@ -11,12 +11,12 @@ export default function UnauthorizedPage() {
           <p className="eyebrow">Unauthorized</p>
           <h1 className="intro-title">현재 역할로는 이 화면에 접근할 수 없습니다.</h1>
           <p className="intro-description">
-            교사 워크벤치와 운영 요약 화면은 권한이 분리되어 있습니다. 다른 역할로 다시 로그인하거나 공개 소개
-            화면으로 돌아가세요.
+            교사용 워크스페이스와 운영 대시보드는 권한이 분리되어 있습니다. 다른 역할로 다시 로그인하거나
+            공개 소개 화면으로 돌아가세요.
           </p>
           <div className="empty-page__actions">
             <Link href="/login" className="button button--primary">
-              로그인으로 이동
+              다시 로그인
             </Link>
             <Link href="/" className="button button--secondary">
               소개 페이지

@@ -11,7 +11,7 @@ export default function NotFound() {
           <p className="eyebrow">Not Found</p>
           <h1 className="intro-title">요청한 화면을 찾을 수 없습니다.</h1>
           <p className="intro-description">
-            잘못된 링크이거나 만료된 검증 세션일 수 있습니다. 교사 화면에서 최신 세션 링크를 다시 확인해 주세요.
+            잘못된 링크이거나 만료된 검증 세션일 수 있습니다. 교사 화면에서 최신 세션 링크를 다시 확인하세요.
           </p>
           <div className="empty-page__actions">
             <Link href="/" className="button button--primary">
