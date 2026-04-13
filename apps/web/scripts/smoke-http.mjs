@@ -108,7 +108,6 @@ const loginAsRole = async (role, nextPath) => {
   assert.equal(response.status, 200, text);
   const cookies = readSetCookies(response);
   const joined = cookies.join(";");
-  assert.match(joined, /viva_role=/);
   assert.match(joined, /viva_session=/);
 
   return cookies.map((item) => item.split(";")[0]).join("; ");
@@ -157,6 +156,10 @@ const serverEnv = {
   AI_REASONING_MODEL: useRealAi
     ? process.env.AI_REASONING_MODEL ?? envFileEntries.AI_REASONING_MODEL ?? ""
     : process.env.AI_REASONING_MODEL ?? "",
+  VIVA_SESSION_SECRET:
+    process.env.VIVA_SESSION_SECRET ??
+    envFileEntries.VIVA_SESSION_SECRET ??
+    "viva-smoke-session-secret",
   VERIFICATION_STORE_PATH: storePath,
 };
 
@@ -289,6 +292,9 @@ try {
   );
   assert.equal(unauthVerification.status, 401);
 
+  const unauthVerificationList = await fetchWithTimeout(`${baseUrl}/api/verifications`);
+  assert.equal(unauthVerificationList.status, 401);
+
   const lockStudentAccess = await fetchJson(
     `${baseUrl}/api/verifications/${verificationId}/student-access`,
     {
@@ -302,6 +308,19 @@ try {
   );
   assert.equal(lockStudentAccess.response.status, 200, lockStudentAccess.text);
   assert.equal(lockStudentAccess.data.studentAccessState, "locked");
+
+  const operatorLockForbidden = await fetchJson(
+    `${baseUrl}/api/verifications/${verificationId}/student-access`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: operatorCookie,
+      },
+      body: JSON.stringify({ state: "locked" }),
+    },
+  );
+  assert.equal(operatorLockForbidden.response.status, 403);
 
   const lockedStudentPage = await fetchWithTimeout(
     `${baseUrl}/student/${verificationId}`,
@@ -368,6 +387,21 @@ try {
   assert.equal(analyze.response.status, 200, analyze.text);
   assert.ok(analyze.data.analysisReport.classification);
 
+  const unauthDecision = await fetchJson(`${baseUrl}/api/teacher-decisions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      verificationId,
+      decision: {
+        decision: "approved_understanding",
+        notes: "unauthorized",
+      },
+    }),
+  });
+  assert.equal(unauthDecision.response.status, 401);
+
   const decision = await fetchJson(`${baseUrl}/api/teacher-decisions`, {
     method: "POST",
     headers: {
@@ -384,6 +418,22 @@ try {
   });
   assert.equal(decision.response.status, 200, decision.text);
   assert.equal(decision.data.teacherDecision.decision, "approved_understanding");
+
+  const operatorDecisionForbidden = await fetchJson(`${baseUrl}/api/teacher-decisions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: operatorCookie,
+    },
+    body: JSON.stringify({
+      verificationId,
+      decision: {
+        decision: "approved_understanding",
+        notes: "operator-forbidden",
+      },
+    }),
+  });
+  assert.equal(operatorDecisionForbidden.response.status, 403);
 
   const summary = await fetchJson(`${baseUrl}/api/summary`, {
     headers: { Cookie: operatorCookie },

@@ -224,7 +224,7 @@ export function TeacherWorkbench({
     window.addEventListener("focus", applyWorkspaceSettings);
 
     try {
-      const rawDraft = window.localStorage.getItem(teacherDraftStorageKey);
+      const rawDraft = window.sessionStorage.getItem(teacherDraftStorageKey);
 
       if (!rawDraft) {
         setDraftReady(true);
@@ -267,7 +267,7 @@ export function TeacherWorkbench({
         setNoticeMessage("저장된 초안을 복원했습니다.");
       }
     } catch {
-      window.localStorage.removeItem(teacherDraftStorageKey);
+      window.sessionStorage.removeItem(teacherDraftStorageKey);
       setNoticeMessage("저장된 초안을 읽지 못해 새 세션으로 시작합니다.");
     } finally {
       setDraftReady(true);
@@ -284,7 +284,7 @@ export function TeacherWorkbench({
     }
 
     if (!hasTeacherDraftContent(teacherDraftPayload)) {
-      window.localStorage.removeItem(teacherDraftStorageKey);
+      window.sessionStorage.removeItem(teacherDraftStorageKey);
       setPersistedDraft(null);
       setDraftSavedAt(null);
       return;
@@ -292,7 +292,7 @@ export function TeacherWorkbench({
 
     const timeoutId = window.setTimeout(() => {
       const nextSnapshot = createTeacherDraftSnapshot(teacherDraftPayload);
-      window.localStorage.setItem(
+      window.sessionStorage.setItem(
         teacherDraftStorageKey,
         JSON.stringify(nextSnapshot),
       );
@@ -397,7 +397,7 @@ export function TeacherWorkbench({
   };
 
   const clearDraftAndReset = () => {
-    window.localStorage.removeItem(teacherDraftStorageKey);
+    window.sessionStorage.removeItem(teacherDraftStorageKey);
     setPersistedDraft(null);
     setDraftSavedAt(null);
     resetToDemo();
@@ -656,8 +656,8 @@ export function TeacherWorkbench({
       description: "과제 설명, 루브릭 핵심 개념, 제출물을 입력합니다.",
       status: questionSet ? "complete" : "current",
       note: draftSavedAt
-        ? `초안 자동 저장: ${formatDateTime(draftSavedAt)}`
-        : "입력 초안은 브라우저에 자동 저장됩니다.",
+        ? `초안 임시 저장: ${formatDateTime(draftSavedAt)}`
+        : "입력 초안은 현재 탭에 임시 저장됩니다.",
     },
     {
       key: "questions",
@@ -764,7 +764,7 @@ export function TeacherWorkbench({
                 <StatusBadge tone={hasUnsavedLocalChanges ? "warning" : "neutral"}>
                   {hasUnsavedLocalChanges
                     ? "저장 대기"
-                    : `자동 저장 ${formatDateTime(draftSavedAt)}`}
+                    : `임시 저장 ${formatDateTime(draftSavedAt)}`}
                 </StatusBadge>
               ) : null}
             </div>

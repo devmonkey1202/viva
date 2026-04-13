@@ -1,6 +1,7 @@
 export type VivaRole = "teacher" | "operator";
 
 export const vivaRoleCookieName = "viva_role";
+export const vivaSessionCookieName = "viva_session";
 
 export const vivaRoleMeta: Record<
   VivaRole,
@@ -66,3 +67,39 @@ export const sanitizeNextPath = (value: string | null | undefined) => {
 
   return value;
 };
+
+const base64UrlDecode = (value: string) => {
+  const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return Buffer.from(padded, "base64").toString("utf8");
+};
+
+export const readRoleFromSessionTokenHint = (
+  token: string | undefined | null,
+): VivaRole | null => {
+  if (!token) {
+    return null;
+  }
+
+  const [encodedPayload] = token.split(".");
+
+  if (!encodedPayload) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(base64UrlDecode(encodedPayload)) as {
+      role?: string;
+    };
+
+    return parseVivaRole(parsed.role);
+  } catch {
+    return null;
+  }
+};
+
+export const resolveRoleFromCookieValues = ({
+  sessionToken,
+}: {
+  sessionToken?: string | null;
+}) => readRoleFromSessionTokenHint(sessionToken);

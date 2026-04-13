@@ -75,3 +75,30 @@ test("validateAccessCode enforces configured role codes", () => {
     }
   }
 });
+
+test("createVivaSessionToken requires explicit session secret in production", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousSessionSecret = process.env.VIVA_SESSION_SECRET;
+
+  delete process.env.VIVA_SESSION_SECRET;
+  process.env.NODE_ENV = "production";
+
+  try {
+    assert.throws(
+      () => createVivaSessionToken("teacher", "demo"),
+      /VIVA_SESSION_SECRET must be configured in production/,
+    );
+  } finally {
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+
+    if (previousSessionSecret === undefined) {
+      delete process.env.VIVA_SESSION_SECRET;
+    } else {
+      process.env.VIVA_SESSION_SECRET = previousSessionSecret;
+    }
+  }
+});

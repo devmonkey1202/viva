@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "node --import tsx --test src/lib/student-answer-flow.test.ts src/lib/teacher-workbench.test.ts src/lib/verification-list.test.ts src/lib/workspace-settings.test.ts src/lib/server-auth.test.ts",
+    "test:unit": "node --import tsx --test src/lib/auth.test.ts src/lib/student-answer-flow.test.ts src/lib/teacher-workbench.test.ts src/lib/verification-list.test.ts src/lib/workspace-settings.test.ts src/lib/server-auth.test.ts",
     "smoke:http": "node ./scripts/smoke-http.mjs",
     "smoke:live": "node ./scripts/smoke-http.mjs --live",
     "smoke:url": "node ./scripts/smoke-http.mjs",

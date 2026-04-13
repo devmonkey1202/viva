@@ -4,9 +4,9 @@ import type { NextRequest } from "next/server";
 import {
   isProtectedAppPath,
   isRoleAllowedForPath,
-  parseVivaRole,
+  resolveRoleFromCookieValues,
+  vivaSessionCookieName,
   sanitizeNextPath,
-  vivaRoleCookieName,
 } from "@/lib/auth";
 
 export function proxy(request: NextRequest) {
@@ -16,7 +16,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const role = parseVivaRole(request.cookies.get(vivaRoleCookieName)?.value);
+  const role = resolveRoleFromCookieValues({
+    sessionToken: request.cookies.get(vivaSessionCookieName)?.value,
+  });
 
   if (!role) {
     const loginUrl = new URL("/login", request.url);

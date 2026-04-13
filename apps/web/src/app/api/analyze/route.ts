@@ -93,16 +93,26 @@ export async function POST(request: Request) {
       rubricRiskPoints: verification.rubricRiskPoints,
       submissionText: verification.submissionText,
       sessionPreferences: verification.sessionPreferences,
-      questionSet: input.questionSet,
+      questionSet: verification.questionSet,
       studentAnswers: input.studentAnswers,
     };
+
+    const persistedAnalyzeInput = {
+      verificationId: verification.verificationId,
+      questionSet: verification.questionSet,
+      studentAnswers: input.studentAnswers,
+    };
+
     const report = await analyzeUnderstanding(hydratedInput, {
       requestId: trace.requestId,
       route: trace.path,
       actorRole: session?.role ?? "student_link",
       verificationId: verification.verificationId,
     });
-    const savedVerification = await saveAnalysisForVerification(input, report);
+    const savedVerification = await saveAnalysisForVerification(
+      persistedAnalyzeInput,
+      report,
+    );
     const response = AnalyzeUnderstandingResponseSchema.parse({
       verificationId: savedVerification.verificationId,
       analysisReport: savedVerification.analysisReport,

@@ -47,6 +47,20 @@ const getSql = () => {
 
 let schemaReady: Promise<void> | null = null;
 
+const getColumnTypeMap = async () => {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT column_name, data_type
+    FROM information_schema.columns
+    WHERE table_name = 'verification_records'
+  `) as Array<{
+    column_name: string;
+    data_type: string;
+  }>;
+
+  return new Map(rows.map((row) => [row.column_name, row.data_type]));
+};
+
 const ensureSchema = async () => {
   if (schemaReady) {
     return schemaReady;
@@ -84,6 +98,107 @@ const ensureSchema = async () => {
       ALTER TABLE verification_records
       ADD COLUMN IF NOT EXISTS session_preferences_json JSONB NOT NULL DEFAULT '{}'::jsonb
     `;
+
+    const columnTypeMap = await getColumnTypeMap();
+
+    if (columnTypeMap.get("rubric_core_concepts_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN rubric_core_concepts_json TYPE JSONB
+        USING rubric_core_concepts_json::jsonb
+      `;
+    }
+
+    if (columnTypeMap.get("rubric_risk_points_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN rubric_risk_points_json TYPE JSONB
+        USING rubric_risk_points_json::jsonb
+      `;
+    }
+
+    if (columnTypeMap.get("session_preferences_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN session_preferences_json DROP DEFAULT
+      `;
+
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN session_preferences_json TYPE JSONB
+        USING session_preferences_json::jsonb
+      `;
+    }
+
+    await sql`
+      ALTER TABLE verification_records
+      ALTER COLUMN session_preferences_json SET DEFAULT '{}'::jsonb
+    `;
+
+    if (columnTypeMap.get("question_set_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN question_set_json TYPE JSONB
+        USING question_set_json::jsonb
+      `;
+    }
+
+    if (columnTypeMap.get("student_answers_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN student_answers_json TYPE JSONB
+        USING CASE
+          WHEN student_answers_json IS NULL THEN NULL
+          ELSE student_answers_json::jsonb
+        END
+      `;
+    }
+
+    if (columnTypeMap.get("analysis_report_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN analysis_report_json TYPE JSONB
+        USING CASE
+          WHEN analysis_report_json IS NULL THEN NULL
+          ELSE analysis_report_json::jsonb
+        END
+      `;
+    }
+
+    if (columnTypeMap.get("teacher_decision_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN teacher_decision_json TYPE JSONB
+        USING CASE
+          WHEN teacher_decision_json IS NULL THEN NULL
+          ELSE teacher_decision_json::jsonb
+        END
+      `;
+    }
+
+    if (columnTypeMap.get("activity_json") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN activity_json TYPE JSONB
+        USING activity_json::jsonb
+      `;
+    }
+
+    if (columnTypeMap.get("created_at") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN created_at TYPE TIMESTAMPTZ
+        USING created_at::timestamptz
+      `;
+    }
+
+    if (columnTypeMap.get("updated_at") === "text") {
+      await sql`
+        ALTER TABLE verification_records
+        ALTER COLUMN updated_at TYPE TIMESTAMPTZ
+        USING updated_at::timestamptz
+      `;
+    }
 
     await sql`
       CREATE INDEX IF NOT EXISTS verification_records_updated_at_idx
@@ -197,15 +312,15 @@ const persistVerificationRecord = async (record: VerificationRecord) => {
       ${record.verificationId},
       ${record.assignmentTitle},
       ${record.assignmentDescription},
-      ${JSON.stringify(record.rubricCoreConcepts)},
-      ${JSON.stringify(record.rubricRiskPoints)},
+      ${JSON.stringify(record.rubricCoreConcepts)}::jsonb,
+      ${JSON.stringify(record.rubricRiskPoints)}::jsonb,
       ${record.submissionText},
-      ${JSON.stringify(record.sessionPreferences)},
-      ${JSON.stringify(record.questionSet)},
-      ${record.studentAnswers ? JSON.stringify(record.studentAnswers) : null},
-      ${record.analysisReport ? JSON.stringify(record.analysisReport) : null},
-      ${record.teacherDecision ? JSON.stringify(record.teacherDecision) : null},
-      ${JSON.stringify(record.activity)},
+      ${JSON.stringify(record.sessionPreferences)}::jsonb,
+      ${JSON.stringify(record.questionSet)}::jsonb,
+      ${record.studentAnswers ? JSON.stringify(record.studentAnswers) : null}::jsonb,
+      ${record.analysisReport ? JSON.stringify(record.analysisReport) : null}::jsonb,
+      ${record.teacherDecision ? JSON.stringify(record.teacherDecision) : null}::jsonb,
+      ${JSON.stringify(record.activity)}::jsonb,
       ${record.studentAccessState},
       ${record.createdAt},
       ${record.updatedAt}
@@ -298,7 +413,6 @@ export const saveAnalysisForVerificationFromNeon = async (
   const now = new Date().toISOString();
 
   verification.updatedAt = now;
-  verification.questionSet = input.questionSet;
   verification.studentAnswers = input.studentAnswers;
   verification.analysisReport = analysisReport;
   verification.teacherDecision = undefined;

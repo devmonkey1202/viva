@@ -148,7 +148,6 @@ export const saveAnalysisForVerificationFromFile = async (
     const now = new Date().toISOString();
 
     verification.updatedAt = now;
-    verification.questionSet = input.questionSet;
     verification.studentAnswers = input.studentAnswers;
     verification.analysisReport = analysisReport;
     verification.teacherDecision = undefined;

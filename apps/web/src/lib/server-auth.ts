@@ -32,12 +32,19 @@ const sessionMaxAgeSeconds = 60 * 60 * 12;
 
 const readTrimmedEnv = (value: string | undefined) => value?.trim() ?? "";
 
-const getSessionSecret = () =>
-  readTrimmedEnv(process.env.VIVA_SESSION_SECRET) ||
-  readTrimmedEnv(process.env.DATABASE_URL) ||
-  readTrimmedEnv(process.env.AI_API_KEY) ||
-  readTrimmedEnv(process.env.OPENAI_API_KEY) ||
-  "viva-local-dev-session-secret";
+const getSessionSecret = () => {
+  const configuredSecret = readTrimmedEnv(process.env.VIVA_SESSION_SECRET);
+
+  if (configuredSecret) {
+    return configuredSecret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("VIVA_SESSION_SECRET must be configured in production.");
+  }
+
+  return "viva-local-dev-session-secret";
+};
 
 const getRoleAccessCode = (role: VivaRole) =>
   role === "teacher"
@@ -193,10 +200,9 @@ export const attachSessionCookies = (
 ) => {
   response.cookies.set(
     vivaSessionCookieName,
-    createVivaSessionToken(role, authMode),
-    buildCookieOptions(sessionMaxAgeSeconds),
-  );
-  response.cookies.set(vivaRoleCookieName, role, buildCookieOptions(sessionMaxAgeSeconds));
+      createVivaSessionToken(role, authMode),
+      buildCookieOptions(sessionMaxAgeSeconds),
+    );
 };
 
 export const clearSessionCookies = (response: NextResponse) => {
