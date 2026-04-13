@@ -204,6 +204,22 @@ select {
   color: var(--text);
 }
 
+.app-nav__item::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color var(--motion-fast) var(--easing);
+}
+
+.app-nav__item--active::after {
+  background: var(--accent);
+}
+
 .app-header__utility {
   display: flex;
   flex-wrap: wrap;
@@ -219,6 +235,18 @@ select {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.eyebrow,
+.intro-title,
+.auth-shell__title,
+.section-title,
+.section-headline,
+.landing-hero__title,
+.landing-band__title,
+.landing-cta__title,
+.empty-page__title {
+  text-wrap: balance;
 }
 
 .intro-block {
@@ -271,10 +299,21 @@ select {
 .intro-title,
 .auth-shell__title {
   margin: 0;
-  font-size: clamp(1.85rem, 3.2vw, 3.2rem);
-  line-height: 1.02;
+  font-size: clamp(1.36rem, 1.72vw, 1.96rem);
+  line-height: 1.06;
   letter-spacing: -0.07em;
   font-weight: 900;
+  max-width: 14ch;
+}
+
+.intro-title--landing {
+  font-size: clamp(1.58rem, 2.4vw, 2.42rem);
+  line-height: 1;
+  max-width: 16ch;
+}
+
+.intro-title--compact {
+  max-width: 14ch;
 }
 
 .intro-description,
@@ -285,6 +324,10 @@ select {
   font-size: 14px;
   line-height: 1.72;
   color: var(--text-secondary);
+}
+
+.intro-description--landing {
+  max-width: 58ch;
 }
 
 .intro-block__actions,
@@ -320,6 +363,10 @@ select {
   transform: translateY(-1px);
 }
 
+.button:active {
+  transform: translateY(0);
+}
+
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
@@ -334,6 +381,7 @@ select {
 
 .button--primary:hover {
   background: #2348d2;
+  box-shadow: 0 14px 30px rgba(43, 89, 255, 0.2);
 }
 
 .button--secondary {
@@ -345,6 +393,7 @@ select {
 .button--secondary:hover {
   background: #16213a;
   border-color: #16213a;
+  box-shadow: 0 12px 24px rgba(15, 23, 43, 0.12);
 }
 
 .button--ghost {
@@ -386,6 +435,17 @@ select {
   inset: 0 0 auto;
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(43, 89, 255, 0.16) 50%, transparent 100%);
+}
+
+.surface-card::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(43, 89, 255, 0.08);
 }
 
 .surface-card--muted {
@@ -435,18 +495,19 @@ select {
 
 .section-title {
   margin: 0;
-  font-size: clamp(1.22rem, 1.5vw, 1.68rem);
-  line-height: 1.24;
+  font-size: clamp(1.12rem, 1.24vw, 1.48rem);
+  line-height: 1.26;
   letter-spacing: -0.05em;
   font-weight: 900;
 }
 
 .section-headline {
   margin: 0;
-  font-size: clamp(1.6rem, 2.2vw, 2.3rem);
-  line-height: 1.12;
+  font-size: clamp(1.18rem, 1.42vw, 1.62rem);
+  line-height: 1.18;
   letter-spacing: -0.06em;
   font-weight: 900;
+  max-width: 18ch;
 }
 
 .metric-grid,
@@ -467,11 +528,11 @@ select {
 .metric-card {
   display: grid;
   gap: 8px;
-  min-height: 124px;
+  min-height: 112px;
   border: 1px solid var(--line);
   border-radius: 20px;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
-  padding: 18px;
+  padding: 16px;
   box-shadow: var(--shadow-xs);
 }
 
@@ -486,7 +547,7 @@ select {
 
 .metric-card__value {
   margin: 0;
-  font-size: clamp(1.45rem, 2vw, 1.9rem);
+  font-size: clamp(1.24rem, 1.58vw, 1.68rem);
   line-height: 1;
   letter-spacing: -0.06em;
   font-weight: 900;
@@ -1077,10 +1138,11 @@ select {
 
 .landing-hero__title {
   margin: 0;
-  font-size: clamp(2.25rem, 5vw, 4.8rem);
-  line-height: 0.94;
+  font-size: clamp(1.74rem, 3.15vw, 3.06rem);
+  line-height: 0.98;
   letter-spacing: -0.075em;
   font-weight: 900;
+  max-width: 9.5ch;
 }
 
 .landing-hero__description {
@@ -1112,6 +1174,7 @@ select {
   position: absolute;
   border-radius: 999px;
   filter: blur(10px);
+  animation: landingHaloFloat 12s ease-in-out infinite alternate;
 }
 
 .landing-stage__halo--blue {
@@ -1169,6 +1232,7 @@ select {
   padding: 22px;
   background: rgba(255, 255, 255, 0.8);
   transform: rotate(-10deg);
+  animation: landingPlaneMain 14s ease-in-out infinite alternate;
 }
 
 .landing-stage__plane--top {
@@ -1191,6 +1255,7 @@ select {
   padding: 15px;
   background: rgba(238, 243, 255, 0.94);
   transform: rotate(-4deg);
+  animation: landingPlaneSide 11s ease-in-out infinite alternate;
 }
 
 .landing-stage__metric--left {
@@ -1199,6 +1264,7 @@ select {
   min-width: 140px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.88);
+  animation: landingMetricFloat 10s ease-in-out infinite alternate;
 }
 
 .landing-stage__metric--right {
@@ -1207,6 +1273,7 @@ select {
   min-width: 144px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.88);
+  animation: landingMetricFloat 13s ease-in-out infinite alternate-reverse;
 }
 
 .landing-stage__line-grid {
@@ -1293,14 +1360,30 @@ select {
 .landing-band__title,
 .landing-cta__title {
   margin: 0;
-  font-size: clamp(1.7rem, 3vw, 2.6rem);
-  line-height: 1.08;
+  font-size: clamp(1.24rem, 1.82vw, 1.78rem);
+  line-height: 1.14;
   letter-spacing: -0.07em;
   font-weight: 900;
+  max-width: 18ch;
 }
 
 .landing-band__description {
   color: rgba(255, 255, 255, 0.74);
+}
+
+.landing-band__intro {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.section-block__heading::after,
+.landing-band__intro::after {
+  content: "";
+  width: 72px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(43, 89, 255, 0.08) 100%);
 }
 
 .landing-band__grid,
@@ -1512,15 +1595,60 @@ select {
 }
 
 .empty-page__panel {
-  width: min(760px, 100%);
+  width: min(860px, 100%);
   display: grid;
-  gap: 16px;
+  gap: 14px;
   border: 1px solid var(--line);
   border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(246, 249, 255, 0.98) 0%, rgba(255, 255, 255, 1) 100%);
-  padding: 22px;
+  padding: 24px;
   box-shadow: var(--shadow-sm);
+}
+
+.empty-page__title {
+  margin: 0;
+  font-size: clamp(1.28rem, 1.72vw, 1.84rem);
+  line-height: 1.14;
+  letter-spacing: -0.065em;
+  font-weight: 900;
+  max-width: 18ch;
+}
+
+@keyframes landingHaloFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(10px, -12px, 0) scale(1.04);
+  }
+}
+
+@keyframes landingPlaneMain {
+  0% {
+    transform: rotate(-10deg) translateY(0);
+  }
+  100% {
+    transform: rotate(-8deg) translateY(-6px);
+  }
+}
+
+@keyframes landingPlaneSide {
+  0% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  100% {
+    transform: rotate(-2deg) translateY(5px);
+  }
+}
+
+@keyframes landingMetricFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
 }
 
 .page-stack--teacher .teacher-layout__side,
@@ -1705,17 +1833,17 @@ select {
 
   .intro-title,
   .auth-shell__title {
-    font-size: 1.7rem;
-    line-height: 1.06;
+    font-size: 1.46rem;
+    line-height: 1.08;
   }
 
   .section-headline {
-    font-size: 1.45rem;
+    font-size: 1.22rem;
   }
 
   .landing-hero__title {
-    font-size: clamp(2rem, 10vw, 3rem);
-    line-height: 0.96;
+    font-size: clamp(1.78rem, 9vw, 2.52rem);
+    line-height: 1;
   }
 
   .landing-hero__description,
@@ -1769,8 +1897,8 @@ select {
 
   .landing-band__title,
   .landing-cta__title {
-    font-size: 1.55rem;
-    line-height: 1.12;
+    font-size: 1.28rem;
+    line-height: 1.18;
   }
 
   .landing-band__card h3,
@@ -1781,11 +1909,20 @@ select {
   }
 
   .landing-proof-card__value {
-    font-size: 1.3rem;
+    font-size: 1.16rem;
   }
 
   .landing-preview-card__screen {
     min-height: 156px;
+  }
+
+  .empty-page__title {
+    font-size: 1.34rem;
+    max-width: 16ch;
+  }
+
+  .metric-card__value {
+    font-size: 1.16rem;
   }
 
   .landing-preview-card__screen-body {

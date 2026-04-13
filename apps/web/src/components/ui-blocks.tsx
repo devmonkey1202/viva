@@ -19,12 +19,21 @@ export function PageIntro({
   variant = "default",
   className,
 }: PageIntroProps) {
+  const titleClassName = cx(
+    "intro-title",
+    variant === "landing" ? "intro-title--landing" : "intro-title--compact",
+  );
+  const descriptionClassName = cx(
+    "intro-description",
+    variant === "landing" && "intro-description--landing",
+  );
+
   return (
     <section className={cx("intro-block", `intro-block--${variant}`, className)}>
       <div className="intro-block__body">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="intro-title">{title}</h1>
-        <p className="intro-description">{description}</p>
+        <h1 className={titleClassName}>{title}</h1>
+        <p className={descriptionClassName}>{description}</p>
       </div>
       {(actions || meta) && (
         <div className="intro-block__aside">
