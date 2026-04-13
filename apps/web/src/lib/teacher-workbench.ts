@@ -20,6 +20,18 @@ export type AnswerArtifacts = Record<
   }
 >;
 
+export type TeacherDraftPayload = {
+  assignmentTitle: string;
+  assignmentDescription: string;
+  rubricConcepts: string;
+  riskPoints: string;
+  submissionText: string;
+};
+
+export type TeacherDraftSnapshot = TeacherDraftPayload & {
+  savedAt: string;
+};
+
 export const initialAnswerState: AnswerDraft = {
   why: "",
   transfer: "",
@@ -43,19 +55,46 @@ export const parseMultilineInput = (value: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-export const buildVerificationInput = (input: {
-  assignmentTitle: string;
-  assignmentDescription: string;
-  rubricConcepts: string;
-  riskPoints: string;
-  submissionText: string;
-}): VerificationInput => ({
+export const buildVerificationInput = (
+  input: TeacherDraftPayload,
+): VerificationInput => ({
   assignmentTitle: input.assignmentTitle,
   assignmentDescription: input.assignmentDescription,
   rubricCoreConcepts: parseMultilineInput(input.rubricConcepts),
   rubricRiskPoints: parseMultilineInput(input.riskPoints),
   submissionText: input.submissionText,
 });
+
+export const buildTeacherDraftPayload = (
+  input: TeacherDraftPayload,
+): TeacherDraftPayload => ({
+  assignmentTitle: input.assignmentTitle,
+  assignmentDescription: input.assignmentDescription,
+  rubricConcepts: input.rubricConcepts,
+  riskPoints: input.riskPoints,
+  submissionText: input.submissionText,
+});
+
+export const createTeacherDraftSnapshot = (
+  input: TeacherDraftPayload,
+  savedAt: string = new Date().toISOString(),
+): TeacherDraftSnapshot => ({
+  ...buildTeacherDraftPayload(input),
+  savedAt,
+});
+
+export const hasTeacherDraftContent = (input: TeacherDraftPayload) =>
+  Object.values(input).some((value) => value.trim().length > 0);
+
+export const equalTeacherDraftPayload = (
+  left: TeacherDraftPayload | null,
+  right: TeacherDraftPayload | null,
+) =>
+  left?.assignmentTitle === right?.assignmentTitle &&
+  left?.assignmentDescription === right?.assignmentDescription &&
+  left?.rubricConcepts === right?.rubricConcepts &&
+  left?.riskPoints === right?.riskPoints &&
+  left?.submissionText === right?.submissionText;
 
 export const answersFromStoredAnswers = (
   answers?: StudentAnswer[],
@@ -80,7 +119,8 @@ export const artifactsFromStoredAnswers = (
   transfer: {
     inputMethod:
       answers?.find((item) => item.type === "transfer")?.inputMethod ?? "text",
-    rawTranscript: answers?.find((item) => item.type === "transfer")?.rawTranscript,
+    rawTranscript:
+      answers?.find((item) => item.type === "transfer")?.rawTranscript,
     normalizationNotes:
       answers?.find((item) => item.type === "transfer")?.normalizationNotes ??
       [],
@@ -141,3 +181,4 @@ export const buildSessionStatus = (input: {
 
   return "세션 준비 중";
 };
+

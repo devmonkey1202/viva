@@ -752,6 +752,32 @@ textarea {
   font-size: 12px;
 }
 
+.session-browser-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.session-browser-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-browser-filters .button[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.session-browser-summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .inline-alert,
 .inline-notice {
   border: 1px solid var(--line);

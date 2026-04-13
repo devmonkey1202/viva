@@ -6,7 +6,11 @@ import {
   artifactsFromStoredAnswers,
   buildSessionStatus,
   buildStudentAnswers,
+  buildTeacherDraftPayload,
   buildVerificationInput,
+  createTeacherDraftSnapshot,
+  equalTeacherDraftPayload,
+  hasTeacherDraftContent,
   parseMultilineInput,
 } from "@/lib/teacher-workbench";
 import type { QuestionSet } from "@/lib/schemas";
@@ -16,74 +20,125 @@ const questionSetFixture: QuestionSet = {
   generatedAt: "2026-04-13T12:00:00.000Z",
   promptVersion: "prompt.v1",
   modelVersion: "model.v1",
-  overallStrategy: "핵심 개념과 반례를 동시에 확인한다.",
+  overallStrategy: "Check explanation structure and transfer ability.",
   cautionNotes: [],
   questions: [
     {
       type: "why",
-      question: "왜 그런가요?",
-      intent: "이유를 확인한다.",
-      targetConcepts: ["정렬"],
+      question: "Why does the approach work?",
+      intent: "Check first-principles understanding.",
+      targetConcepts: ["sorted array"],
       riskSignals: [],
     },
     {
       type: "transfer",
-      question: "조건이 바뀌면 어떻게 되나요?",
-      intent: "전이를 확인한다.",
-      targetConcepts: ["탐색 범위 축소"],
+      question: "What changes if the condition changes?",
+      intent: "Check transfer ability.",
+      targetConcepts: ["search range reduction"],
       riskSignals: [],
     },
     {
       type: "counterexample",
-      question: "언제 성립하지 않나요?",
-      intent: "반례를 확인한다.",
-      targetConcepts: ["정렬"],
+      question: "When would this explanation stop holding?",
+      intent: "Check limits and failure conditions.",
+      targetConcepts: ["sorted array"],
       riskSignals: [],
     },
   ],
 };
 
 test("parseMultilineInput removes blank lines and trims each item", () => {
-  assert.deepEqual(parseMultilineInput(" 정렬 \n\n 탐색 범위 축소 \n"), [
-    "정렬",
-    "탐색 범위 축소",
+  assert.deepEqual(parseMultilineInput(" sorted array \n\n binary search \n"), [
+    "sorted array",
+    "binary search",
   ]);
 });
 
 test("buildVerificationInput creates schema-ready teacher input", () => {
   const input = buildVerificationInput({
-    assignmentTitle: "이진 탐색 설명",
-    assignmentDescription: "설명 과제",
-    rubricConcepts: "정렬\n탐색 범위 축소",
-    riskPoints: "정렬 전제 누락\n시간 복잡도 누락",
-    submissionText: "제출물 본문",
+    assignmentTitle: "Explain binary search",
+    assignmentDescription: "Explain how binary search works.",
+    rubricConcepts: "sorted array\nsearch range reduction",
+    riskPoints: "missing sorted-array prerequisite\nwrong time complexity",
+    submissionText: "Binary search repeatedly cuts the search range in half.",
   });
 
-  assert.deepEqual(input.rubricCoreConcepts, ["정렬", "탐색 범위 축소"]);
-  assert.deepEqual(input.rubricRiskPoints, [
-    "정렬 전제 누락",
-    "시간 복잡도 누락",
+  assert.deepEqual(input.rubricCoreConcepts, [
+    "sorted array",
+    "search range reduction",
   ]);
+  assert.deepEqual(input.rubricRiskPoints, [
+    "missing sorted-array prerequisite",
+    "wrong time complexity",
+  ]);
+});
+
+test("teacher draft helpers preserve payload shape and detect content", () => {
+  const payload = buildTeacherDraftPayload({
+    assignmentTitle: "Explain binary search",
+    assignmentDescription: "Explain how binary search works.",
+    rubricConcepts: "sorted array",
+    riskPoints: "",
+    submissionText: "Binary search repeatedly cuts the search range in half.",
+  });
+
+  const snapshot = createTeacherDraftSnapshot(
+    payload,
+    "2026-04-13T12:40:00.000Z",
+  );
+
+  assert.equal(snapshot.assignmentTitle, payload.assignmentTitle);
+  assert.equal(snapshot.savedAt, "2026-04-13T12:40:00.000Z");
+  assert.equal(hasTeacherDraftContent(payload), true);
+  assert.equal(
+    hasTeacherDraftContent({
+      assignmentTitle: "",
+      assignmentDescription: " ",
+      rubricConcepts: "\n",
+      riskPoints: "",
+      submissionText: "",
+    }),
+    false,
+  );
+});
+
+test("equalTeacherDraftPayload compares teacher input payloads without savedAt", () => {
+  const left = {
+    assignmentTitle: "Explain binary search",
+    assignmentDescription: "Explain how binary search works.",
+    rubricConcepts: "sorted array",
+    riskPoints: "wrong time complexity",
+    submissionText: "Binary search repeatedly cuts the search range in half.",
+  };
+
+  assert.equal(equalTeacherDraftPayload(left, { ...left }), true);
+  assert.equal(
+    equalTeacherDraftPayload(left, {
+      ...left,
+      submissionText: "A different submission body",
+    }),
+    false,
+  );
 });
 
 test("answersFromStoredAnswers and artifactsFromStoredAnswers map saved answers by type", () => {
   const answers = [
     {
       type: "why" as const,
-      answer: "정렬되어 있어야 합니다.",
+      answer: "Because the array is sorted.",
       inputMethod: "voice" as const,
-      rawTranscript: "정렬되어 있어야 합니다",
-      normalizationNotes: ["구두점 앞 공백을 정리했습니다."],
+      rawTranscript: "Because the array is sorted",
+      normalizationNotes: ["trimmed punctuation"],
       editedAfterTranscription: true,
     },
     {
       type: "transfer" as const,
-      answer: "조건에 따라 규칙이 달라집니다.",
+      answer: "The decision rule changes with the condition.",
       inputMethod: "text" as const,
     },
     {
       type: "counterexample" as const,
-      answer: "정렬되지 않으면 성립하지 않습니다.",
+      answer: "It fails when the array is not sorted.",
       inputMethod: "text" as const,
     },
   ];
@@ -91,7 +146,7 @@ test("answersFromStoredAnswers and artifactsFromStoredAnswers map saved answers 
   const mappedAnswers = answersFromStoredAnswers(answers);
   const mappedArtifacts = artifactsFromStoredAnswers(answers);
 
-  assert.equal(mappedAnswers.why, "정렬되어 있어야 합니다.");
+  assert.equal(mappedAnswers.why, "Because the array is sorted.");
   assert.equal(mappedArtifacts.why.inputMethod, "voice");
   assert.equal(mappedArtifacts.why.editedAfterTranscription, true);
 });
@@ -100,15 +155,15 @@ test("buildStudentAnswers trims answers and carries metadata into request payloa
   const studentAnswers = buildStudentAnswers(
     questionSetFixture,
     {
-      why: " 정렬되어 있어야 합니다. ",
-      transfer: "조건이 바뀌면 기준도 달라집니다.",
-      counterexample: "정렬되지 않으면 성립하지 않습니다.",
+      why: " Because the array is sorted. ",
+      transfer: "The decision rule changes with the condition.",
+      counterexample: "It fails when the array is not sorted.",
     },
     {
       why: {
         inputMethod: "voice",
-        rawTranscript: "정렬되어 있어야 합니다",
-        normalizationNotes: ["구두점 앞 공백을 정리했습니다."],
+        rawTranscript: "Because the array is sorted",
+        normalizationNotes: ["trimmed punctuation"],
         editedAfterTranscription: true,
       },
       transfer: {
@@ -122,7 +177,7 @@ test("buildStudentAnswers trims answers and carries metadata into request payloa
     },
   );
 
-  assert.equal(studentAnswers[0].answer, "정렬되어 있어야 합니다.");
+  assert.equal(studentAnswers[0].answer, "Because the array is sorted.");
   assert.equal(studentAnswers[0].inputMethod, "voice");
   assert.equal(studentAnswers[0].editedAfterTranscription, true);
 });
@@ -132,7 +187,7 @@ test("buildSessionStatus reflects the latest teacher-visible state", () => {
     buildSessionStatus({
       teacherDecision: {
         decision: "approved_understanding",
-        notes: "충분히 이해했다.",
+        notes: "Teacher approved the explanation.",
         decidedAt: "2026-04-13T12:00:00.000Z",
       },
       analysisReport: null,
@@ -156,7 +211,7 @@ test("buildSessionStatus reflects the latest teacher-visible state", () => {
         transferAbility: { status: "partial", evidence: [] },
         contradictionCheck: { status: "none", contradictions: [] },
         misconceptionLabels: [],
-        teacherSummary: "추가 검토가 필요하다.",
+        teacherSummary: "Needs another pass.",
         reteachingPoints: [],
         riskFlags: [],
       },
@@ -164,4 +219,23 @@ test("buildSessionStatus reflects the latest teacher-visible state", () => {
     }),
     "근거 검토 가능",
   );
+
+  assert.equal(
+    buildSessionStatus({
+      teacherDecision: null,
+      analysisReport: null,
+      questionSet: questionSetFixture,
+    }),
+    "학생 응답 대기",
+  );
+
+  assert.equal(
+    buildSessionStatus({
+      teacherDecision: null,
+      analysisReport: null,
+      questionSet: null,
+    }),
+    "세션 준비 중",
+  );
 });
+

@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 
 import { AnalysisEvidenceReview } from "@/components/analysis-evidence-review";
 import { AppHeader } from "@/components/app-header";
@@ -44,7 +50,11 @@ import {
   artifactsFromStoredAnswers,
   buildSessionStatus,
   buildStudentAnswers,
+  buildTeacherDraftPayload,
   buildVerificationInput,
+  createTeacherDraftSnapshot,
+  equalTeacherDraftPayload,
+  hasTeacherDraftContent,
   initialAnswerArtifacts,
   initialAnswerState,
   initialDecisionState,
@@ -61,6 +71,8 @@ const teacherDecisionOptions = Object.entries(teacherDecisionMeta) as Array<
     (typeof teacherDecisionMeta)[TeacherDecision["decision"]],
   ]
 >;
+
+const teacherDraftStorageKey = "viva:teacher-workbench-draft";
 
 export function TeacherWorkbench({
   aiConfigured,
@@ -96,26 +108,40 @@ export function TeacherWorkbench({
     useState<AnswerArtifacts>(initialAnswerArtifacts);
   const [activity, setActivity] = useState<VerificationActivity[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [clientOrigin, setClientOrigin] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [persistedDraft, setPersistedDraft] = useState<ReturnType<
+    typeof buildTeacherDraftPayload
+  > | null>(null);
   const [activeAction, setActiveAction] = useState<
     "questions" | "analysis" | "decision" | "sync" | null
   >(null);
   const [isPending, startTransition] = useTransition();
   const deferredSubmissionText = useDeferredValue(submissionText);
 
-  useEffect(() => {
-    setClientOrigin(window.location.origin);
-  }, []);
-
-  const verificationInput = buildVerificationInput({
-    assignmentTitle,
-    assignmentDescription,
-    rubricConcepts,
-    riskPoints,
-    submissionText,
-  });
-
+  const teacherDraftPayload = useMemo(
+    () =>
+      buildTeacherDraftPayload({
+        assignmentTitle,
+        assignmentDescription,
+        rubricConcepts,
+        riskPoints,
+        submissionText,
+      }),
+    [
+      assignmentDescription,
+      assignmentTitle,
+      riskPoints,
+      rubricConcepts,
+      submissionText,
+    ],
+  );
+  const verificationInput = useMemo(
+    () => buildVerificationInput(teacherDraftPayload),
+    [teacherDraftPayload],
+  );
   const studentPath = verificationId
     ? buildStudentVerificationPath(verificationId)
     : null;
@@ -134,20 +160,134 @@ export function TeacherWorkbench({
     analysisReport,
     questionSet,
   });
+  const hasUnsavedLocalChanges =
+    draftReady && !equalTeacherDraftPayload(teacherDraftPayload, persistedDraft);
+
+  useEffect(() => {
+    setClientOrigin(window.location.origin);
+
+    try {
+      const rawDraft = window.localStorage.getItem(teacherDraftStorageKey);
+
+      if (!rawDraft) {
+        setDraftReady(true);
+        return;
+      }
+
+      const parsedDraft = JSON.parse(rawDraft) as Partial<{
+        assignmentTitle: string;
+        assignmentDescription: string;
+        rubricConcepts: string;
+        riskPoints: string;
+        submissionText: string;
+        savedAt: string;
+      }>;
+
+      if (
+        typeof parsedDraft.assignmentTitle === "string" &&
+        typeof parsedDraft.assignmentDescription === "string" &&
+        typeof parsedDraft.rubricConcepts === "string" &&
+        typeof parsedDraft.riskPoints === "string" &&
+        typeof parsedDraft.submissionText === "string"
+      ) {
+        const restoredDraft = buildTeacherDraftPayload({
+          assignmentTitle: parsedDraft.assignmentTitle,
+          assignmentDescription: parsedDraft.assignmentDescription,
+          rubricConcepts: parsedDraft.rubricConcepts,
+          riskPoints: parsedDraft.riskPoints,
+          submissionText: parsedDraft.submissionText,
+        });
+
+        setAssignmentTitle(restoredDraft.assignmentTitle);
+        setAssignmentDescription(restoredDraft.assignmentDescription);
+        setRubricConcepts(restoredDraft.rubricConcepts);
+        setRiskPoints(restoredDraft.riskPoints);
+        setSubmissionText(restoredDraft.submissionText);
+        setPersistedDraft(restoredDraft);
+        setDraftSavedAt(
+          typeof parsedDraft.savedAt === "string" ? parsedDraft.savedAt : null,
+        );
+        setNoticeMessage("저장된 초안을 복원했습니다.");
+      }
+    } catch {
+      window.localStorage.removeItem(teacherDraftStorageKey);
+      setNoticeMessage("저장된 초안을 읽지 못해 새 세션으로 시작합니다.");
+    } finally {
+      setDraftReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    if (!hasTeacherDraftContent(teacherDraftPayload)) {
+      window.localStorage.removeItem(teacherDraftStorageKey);
+      setPersistedDraft(null);
+      setDraftSavedAt(null);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const nextSnapshot = createTeacherDraftSnapshot(teacherDraftPayload);
+      window.localStorage.setItem(
+        teacherDraftStorageKey,
+        JSON.stringify(nextSnapshot),
+      );
+      setPersistedDraft(teacherDraftPayload);
+      setDraftSavedAt(nextSnapshot.savedAt);
+    }, 700);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    assignmentDescription,
+    assignmentTitle,
+    draftReady,
+    riskPoints,
+    rubricConcepts,
+    submissionText,
+    teacherDraftPayload,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedLocalChanges) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedLocalChanges]);
 
   const applyVerificationPayload = (payload: GetVerificationResponse) => {
     const verification = payload.verification;
-    setAssignmentTitle(verification.assignmentTitle);
-    setAssignmentDescription(verification.assignmentDescription);
-    setRubricConcepts(verification.rubricCoreConcepts.join("\n"));
-    setRiskPoints(verification.rubricRiskPoints.join("\n"));
-    setSubmissionText(verification.submissionText);
+    const nextDraft = buildTeacherDraftPayload({
+      assignmentTitle: verification.assignmentTitle,
+      assignmentDescription: verification.assignmentDescription,
+      rubricConcepts: verification.rubricCoreConcepts.join("\n"),
+      riskPoints: verification.rubricRiskPoints.join("\n"),
+      submissionText: verification.submissionText,
+    });
+
+    setAssignmentTitle(nextDraft.assignmentTitle);
+    setAssignmentDescription(nextDraft.assignmentDescription);
+    setRubricConcepts(nextDraft.rubricConcepts);
+    setRiskPoints(nextDraft.riskPoints);
+    setSubmissionText(nextDraft.submissionText);
     setQuestionSet(verification.questionSet);
     setAnalysisReport(verification.analysisReport ?? null);
     setTeacherDecision(verification.teacherDecision ?? null);
     setAnswers(answersFromStoredAnswers(verification.studentAnswers));
     setAnswerArtifacts(artifactsFromStoredAnswers(verification.studentAnswers));
     setActivity(verification.activity);
+    setPersistedDraft(nextDraft);
+    setDraftSavedAt(verification.updatedAt);
     setDecisionDraft(
       verification.teacherDecision
         ? {
@@ -176,12 +316,20 @@ export function TeacherWorkbench({
     setAnswerArtifacts(initialAnswerArtifacts);
     setActivity([]);
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
+  };
+
+  const clearDraftAndReset = () => {
+    window.localStorage.removeItem(teacherDraftStorageKey);
+    setPersistedDraft(null);
+    setDraftSavedAt(null);
+    resetToDemo();
+    setNoticeMessage("로컬 초안을 비우고 데모 입력으로 초기화했습니다.");
   };
 
   const generateQuestions = () => {
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
     setActiveAction("questions");
 
     startTransition(() => {
@@ -210,8 +358,7 @@ export function TeacherWorkbench({
             {
               type: "question_generated",
               recordedAt: payload.questionSet.generatedAt,
-              message:
-                "질문 세트를 생성하고 학생 응답 링크를 준비했습니다.",
+              message: "질문 세트를 생성하고 학생 응답 링크를 준비했습니다.",
             },
           ]);
         } catch (error) {
@@ -233,7 +380,7 @@ export function TeacherWorkbench({
     }
 
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
     setActiveAction("sync");
 
     startTransition(() => {
@@ -272,7 +419,7 @@ export function TeacherWorkbench({
     }
 
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
     setActiveAction("analysis");
 
     startTransition(() => {
@@ -308,7 +455,7 @@ export function TeacherWorkbench({
             {
               type: "analysis_saved",
               recordedAt: payload.analysisReport.generatedAt,
-              message: `학생 답변을 분석했습니다. 분류: ${
+              message: `학생 응답을 분석했습니다. 분류: ${
                 analysisClassificationMeta[payload.analysisReport.classification]
                   .label
               }`,
@@ -352,7 +499,7 @@ export function TeacherWorkbench({
     }
 
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
     setActiveAction("decision");
 
     startTransition(() => {
@@ -401,16 +548,23 @@ export function TeacherWorkbench({
 
     try {
       await navigator.clipboard.writeText(studentUrl);
-      setCopyMessage("학생 링크를 복사했습니다.");
+      setNoticeMessage("학생 링크를 복사했습니다.");
     } catch {
-      setCopyMessage("링크 복사에 실패했습니다. 직접 복사해 주세요.");
+      setNoticeMessage("링크 복사에 실패했습니다. 직접 복사해 주세요.");
     }
   };
 
   const selectVerification = (nextVerificationId: string) => {
+    if (
+      hasUnsavedLocalChanges &&
+      !window.confirm("현재 입력 중인 내용이 있습니다. 다른 세션으로 이동할까요?")
+    ) {
+      return;
+    }
+
     setVerificationId(nextVerificationId);
     setErrorMessage(null);
-    setCopyMessage(null);
+    setNoticeMessage(null);
     setActiveAction("sync");
 
     startTransition(() => {
@@ -466,7 +620,7 @@ export function TeacherWorkbench({
         <PageIntro
           eyebrow="Teacher Workbench"
           title="과제 기준을 정리하고 학생 이해를 검증합니다."
-          description="교사는 과제와 루브릭을 정리하고 학생별 질문을 만든 뒤 학생 답변과 분석 근거를 검토해 최종 판단을 내립니다."
+          description="교사는 과제와 루브릭을 정리하고 학생별 질문을 만든 뒤, 학생 답변과 분석 근거를 검토해 최종 판단을 내립니다."
           actions={
             <div className="button-row">
               <button
@@ -475,6 +629,13 @@ export function TeacherWorkbench({
                 className="button button--ghost"
               >
                 데모 입력 불러오기
+              </button>
+              <button
+                type="button"
+                onClick={clearDraftAndReset}
+                className="button button--ghost"
+              >
+                초안 비우기
               </button>
               <button
                 type="button"
@@ -489,12 +650,15 @@ export function TeacherWorkbench({
           meta={
             <div className="badge-row">
               <StatusBadge tone={aiConfigured ? "success" : "warning"}>
-                {aiConfigured ? "실제 AI 연결" : "Mock fallback"}
+                {aiConfigured ? "AI 연결 가능" : "Mock fallback"}
               </StatusBadge>
               <StatusBadge tone={managedDatabase ? "success" : "warning"}>
                 {managedDatabase ? "Managed DB" : "Local store"}
               </StatusBadge>
               <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
+              <StatusBadge tone={hasUnsavedLocalChanges ? "warning" : "info"}>
+                {hasUnsavedLocalChanges ? "저장 대기" : "자동 저장"}
+              </StatusBadge>
             </div>
           }
         />
@@ -503,7 +667,7 @@ export function TeacherWorkbench({
           <MetricCard
             label="세션 상태"
             value={sessionStatus}
-            note="질문 생성부터 교사 판단까지"
+            note="질문 생성부터 교사 판단까지의 현재 단계"
           />
           <MetricCard
             label="질문 세트"
@@ -515,10 +679,19 @@ export function TeacherWorkbench({
             value={`${completionCount}/3`}
             note="실제 답변 또는 데모 답변 기준"
           />
+          <MetricCard
+            label="초안 저장"
+            value={draftSavedAt ? formatDateTime(draftSavedAt) : "없음"}
+            note={
+              hasUnsavedLocalChanges
+                ? "로컬 변경사항이 저장 대기 중입니다."
+                : "입력값을 브라우저에 자동 저장합니다."
+            }
+          />
         </div>
 
         {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
-        {copyMessage ? <div className="inline-notice">{copyMessage}</div> : null}
+        {noticeMessage ? <div className="inline-notice">{noticeMessage}</div> : null}
 
         <div className="teacher-layout">
           <div className="teacher-layout__main">
@@ -556,7 +729,7 @@ export function TeacherWorkbench({
                   </Field>
                   <Field
                     label="위험 신호"
-                    helper="학생이 흔히 놓치거나 오해하는 지점을 적습니다."
+                    helper="학생이 놓치거나 오해할 수 있는 지점을 적습니다."
                   >
                     <textarea
                       value={riskPoints}
@@ -606,7 +779,7 @@ export function TeacherWorkbench({
               {verificationId ? (
                 <div className="stack-grid">
                   <div className="field-block">
-                    <span className="field-block__label">학생용 경로</span>
+                    <span className="field-block__label">학생용 링크</span>
                     <input
                       readOnly
                       value={studentUrl || studentPath || ""}
@@ -643,15 +816,15 @@ export function TeacherWorkbench({
               ) : (
                 <EmptyState
                   title="학생 링크는 질문 생성 후 활성화됩니다."
-                  description="질문 세트를 먼저 생성해야 학생용 링크가 만들어집니다."
+                  description="질문 세트를 먼저 생성해야 학생용 링크를 만들 수 있습니다."
                 />
               )}
             </SurfaceCard>
 
             <SurfaceCard
               eyebrow="Demo Run"
-              title="시연용 자동 응답을 바로 돌릴 수 있습니다."
-              description="실제 학생 답변이 없을 때 제품 흐름을 빠르게 검증하는 용도입니다."
+              title="데모 응답으로 바로 검증할 수 있습니다."
+              description="실제 학생 답변이 없을 때도 제품 흐름을 빠르게 검증할 수 있습니다."
             >
               <div className="button-row">
                 <button
@@ -661,7 +834,7 @@ export function TeacherWorkbench({
                   className="button button--secondary"
                 >
                   {activeAction === "analysis"
-                    ? "시연 분석 중..."
+                    ? "데모 분석 중..."
                     : "샘플 답변으로 분석"}
                 </button>
               </div>
@@ -674,7 +847,7 @@ export function TeacherWorkbench({
             <SurfaceCard
               eyebrow="5. Student Answers"
               title="학생 답변과 입력 메타를 먼저 확인합니다."
-              description="실제 답변, 음성 전사 여부, 전사 후 수정 여부를 먼저 확인합니다."
+              description="실제 답변, 음성 전사 여부, 전사 후 수정 여부를 먼저 봅니다."
             >
               <StudentAnswerReview
                 questionSet={questionSet}
@@ -685,7 +858,7 @@ export function TeacherWorkbench({
             <SurfaceCard
               eyebrow="6. Evidence Review"
               title="AI 분석 결과와 근거를 검토합니다."
-              description="분류 정보와 함께 누락 개념, 충돌 지점, 재설명 포인트를 확인합니다."
+              description="분류, 누락 개념, 충돌 지점, 재설명 포인트를 확인합니다."
               action={
                 analysisReport ? (
                   <StatusBadge
@@ -783,10 +956,11 @@ export function TeacherWorkbench({
                 activity={activity}
               />
             </SurfaceCard>
+
             <SurfaceCard
               eyebrow="Session Browser"
               title="최근 세션 다시 불러오기"
-              description="과제명이나 세션 ID로 이전 검증 기록을 다시 열 수 있습니다."
+              description="과제명, verificationId, 상태 기준으로 이전 검증 기록을 다시 엽니다."
             >
               <VerificationSessionBrowser
                 activeVerificationId={verificationId}

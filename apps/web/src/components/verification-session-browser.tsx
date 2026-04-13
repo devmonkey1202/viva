@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState, Field } from "@/components/ui-blocks";
@@ -10,10 +10,34 @@ import {
   teacherDecisionMeta,
 } from "@/lib/presentation";
 import type { ListVerificationsResponse, VerificationListItem } from "@/lib/schemas";
+import {
+  type VerificationSessionFilter,
+  getVerificationSessionFilter,
+  matchesVerificationSessionFilter,
+} from "@/lib/verification-list";
 
 type VerificationSessionBrowserProps = {
   activeVerificationId: string | null;
   onSelectVerification: (verificationId: string) => void;
+};
+
+const sessionFilterMeta: Array<{
+  value: VerificationSessionFilter;
+  label: string;
+}> = [
+  { value: "all", label: "전체" },
+  { value: "awaiting_answers", label: "학생 응답 대기" },
+  { value: "analysis_ready", label: "분석 완료" },
+  { value: "decision_complete", label: "교사 판단 완료" },
+];
+
+const sessionFilterLabel: Record<
+  Exclude<VerificationSessionFilter, "all">,
+  string
+> = {
+  awaiting_answers: "학생 응답 대기",
+  analysis_ready: "분석 완료",
+  decision_complete: "교사 판단 완료",
 };
 
 export function VerificationSessionBrowser({
@@ -21,6 +45,7 @@ export function VerificationSessionBrowser({
   onSelectVerification,
 }: VerificationSessionBrowserProps) {
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<VerificationSessionFilter>("all");
   const [items, setItems] = useState<VerificationListItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -64,11 +89,16 @@ export function VerificationSessionBrowser({
     return () => controller.abort();
   }, [query]);
 
+  const filteredItems = useMemo(
+    () => items.filter((item) => matchesVerificationSessionFilter(item, filter)),
+    [filter, items],
+  );
+
   return (
     <div className="stack-grid">
       <Field
         label="세션 검색"
-        helper="과제명, 개념, 세션 ID 일부로 최근 세션을 찾습니다."
+        helper="과제명, 개념, verificationId로 최근 세션을 찾습니다."
       >
         <input
           value={query}
@@ -78,51 +108,76 @@ export function VerificationSessionBrowser({
         />
       </Field>
 
-      {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
-
-      {items.length > 0 ? (
-        <div className="stack-grid">
-          {items.map((item) => (
+      <div className="session-browser-toolbar">
+        <div className="session-browser-filters">
+          {sessionFilterMeta.map((item) => (
             <button
-              key={item.verificationId}
+              key={item.value}
               type="button"
-              className="session-browser-item"
-              data-active={item.verificationId === activeVerificationId}
-              onClick={() => onSelectVerification(item.verificationId)}
-              disabled={isPending}
+              className="button button--ghost button--compact"
+              data-active={filter === item.value}
+              onClick={() => setFilter(item.value)}
             >
-              <div className="session-browser-item__head">
-                <strong>{item.assignmentTitle}</strong>
-                <div className="badge-row">
-                  {item.classification ? (
-                    <StatusBadge
-                      tone={analysisClassificationMeta[item.classification].tone}
-                    >
-                      {analysisClassificationMeta[item.classification].label}
-                    </StatusBadge>
-                  ) : (
-                    <StatusBadge tone="neutral">분석 전</StatusBadge>
-                  )}
-                  {item.teacherDecision ? (
-                    <StatusBadge tone={teacherDecisionMeta[item.teacherDecision].tone}>
-                      {teacherDecisionMeta[item.teacherDecision].label}
-                    </StatusBadge>
-                  ) : null}
-                </div>
-              </div>
-              <div className="session-browser-item__meta">
-                <span>{formatDateTime(item.updatedAt)}</span>
-                <span className="mono-text">{item.verificationId}</span>
-              </div>
+              {item.label}
             </button>
           ))}
+        </div>
+        <p className="session-browser-summary">
+          {filteredItems.length}개 세션
+        </p>
+      </div>
+
+      {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
+
+      {filteredItems.length > 0 ? (
+        <div className="stack-grid">
+          {filteredItems.map((item) => {
+            const sessionFilter = getVerificationSessionFilter(item);
+
+            return (
+              <button
+                key={item.verificationId}
+                type="button"
+                className="session-browser-item"
+                data-active={item.verificationId === activeVerificationId}
+                onClick={() => onSelectVerification(item.verificationId)}
+                disabled={isPending}
+              >
+                <div className="session-browser-item__head">
+                  <strong>{item.assignmentTitle}</strong>
+                  <div className="badge-row">
+                    <StatusBadge tone="neutral">
+                      {sessionFilterLabel[sessionFilter]}
+                    </StatusBadge>
+                    {item.classification ? (
+                      <StatusBadge
+                        tone={analysisClassificationMeta[item.classification].tone}
+                      >
+                        {analysisClassificationMeta[item.classification].label}
+                      </StatusBadge>
+                    ) : null}
+                    {item.teacherDecision ? (
+                      <StatusBadge tone={teacherDecisionMeta[item.teacherDecision].tone}>
+                        {teacherDecisionMeta[item.teacherDecision].label}
+                      </StatusBadge>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="session-browser-item__meta">
+                  <span>{formatDateTime(item.updatedAt)}</span>
+                  <span className="mono-text">{item.verificationId}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <EmptyState
           title="조건에 맞는 세션이 없습니다."
-          description="질문 생성 이후 세션이 누적되면 여기서 최근 기록을 다시 불러올 수 있습니다."
+          description="검색어나 상태 필터를 바꿔 보거나, 새 세션을 생성해 흐름을 다시 시작하세요."
         />
       )}
     </div>
   );
 }
+
