@@ -11,8 +11,7 @@ const sans = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: "VIVA",
-  description:
-    "제출 이후 학생의 실제 이해를 검증하는 교육 평가 레이어, VIVA.",
+  description: "제출 이후 학생의 실제 이해를 검증하는 교육용 평가 레이어 VIVA.",
 };
 
 export default function RootLayout({

@@ -26,9 +26,9 @@ export function TeacherStudentLinkCard({
 }: TeacherStudentLinkCardProps) {
   return (
     <SurfaceCard
-      eyebrow="4. Student Link"
-      title="학생 응답 링크를 공유합니다"
-      description="학생은 별도 화면에서 답변하고, 교사는 이 화면에서 최신 결과를 다시 불러옵니다."
+      eyebrow="Student Link"
+      title="학생 응답 링크를 공유합니다."
+      description="학생은 별도 화면에서 답하고, 교사는 여기서 최신 결과를 다시 불러옵니다."
     >
       {verificationId ? (
         <div className="stack-grid">
@@ -42,7 +42,7 @@ export function TeacherStudentLinkCard({
           </div>
           <div className="badge-row">
             <StatusBadge tone={studentAccessOpen ? "success" : "warning"}>
-              {studentAccessOpen ? "응답 링크 사용 가능" : "응답 링크 잠금 상태"}
+              {studentAccessOpen ? "응답 링크 사용 가능" : "응답 링크 잠금"}
             </StatusBadge>
           </div>
           <div className="button-row">
@@ -73,7 +73,7 @@ export function TeacherStudentLinkCard({
       ) : (
         <EmptyState
           title="학생 링크는 질문 생성 후 열립니다."
-          description="질문 세트를 먼저 만들어야 학생 링크를 생성할 수 있습니다."
+          description="질문 세트를 먼저 만들어야 학생 세션 링크를 생성할 수 있습니다."
         />
       )}
     </SurfaceCard>

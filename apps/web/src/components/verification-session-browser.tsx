@@ -26,7 +26,7 @@ const sessionFilterMeta: Array<{
   label: string;
 }> = [
   { value: "all", label: "전체" },
-  { value: "awaiting_answers", label: "학생 답변 대기" },
+  { value: "awaiting_answers", label: "학생 응답 대기" },
   { value: "analysis_ready", label: "분석 완료" },
   { value: "decision_complete", label: "교사 판단 완료" },
 ];
@@ -35,7 +35,7 @@ const sessionFilterLabel: Record<
   Exclude<VerificationSessionFilter, "all">,
   string
 > = {
-  awaiting_answers: "학생 답변 대기",
+  awaiting_answers: "학생 응답 대기",
   analysis_ready: "분석 완료",
   decision_complete: "교사 판단 완료",
 };
@@ -66,9 +66,7 @@ export function VerificationSessionBrowser({
 
           if (!response.ok) {
             const error = (await response.json()) as { message?: string };
-            throw new Error(
-              error.message ?? "세션 목록을 불러오지 못했습니다.",
-            );
+            throw new Error(error.message ?? "세션 목록을 불러오지 못했습니다.");
           }
 
           const payload = (await response.json()) as ListVerificationsResponse;
@@ -106,7 +104,7 @@ export function VerificationSessionBrowser({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           className="form-input"
-          placeholder="예: 자유낙하 실험, verificationId"
+          placeholder="예: 수요 함수, verificationId"
         />
       </Field>
 

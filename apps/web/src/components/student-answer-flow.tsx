@@ -316,11 +316,12 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
   };
 
   return (
-    <main className="student-shell">
+    <main className="student-shell app-shell--student">
       <AppHeader current="student" minimal />
 
       <div className="student-layout">
         <PageIntro
+          variant="student"
           eyebrow="Student Answer Flow"
           title="질문을 읽고 짧고 분명하게 답해 주세요"
           description="정답을 길게 쓰는 것보다 왜 그렇게 이해했는지 드러나는 답변이 중요합니다. 학생 답변은 교사 검토 자료로만 사용됩니다."

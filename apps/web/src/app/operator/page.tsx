@@ -22,7 +22,7 @@ export default async function OperatorPage() {
   const role = readVivaRoleFromCookies(await cookies());
 
   return (
-    <main className="app-shell">
+    <main className="app-shell app-shell--operator">
       <AppHeader
         current="operator"
         utility={
@@ -38,11 +38,12 @@ export default async function OperatorPage() {
         }
       />
 
-      <div className="page-stack">
+      <div className="page-stack page-stack--operator">
         <PageIntro
+          variant="operator"
           eyebrow="Operator Dashboard"
-          title="반복되는 이해 붕괴 지점을 먼저 봅니다"
-          description="개별 세션보다 패턴 해석이 중요합니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 운영 화면에서 확인합니다."
+          title="반복되는 오개념과 누락 지점을 먼저 읽습니다."
+          description="개별 세션보다 패턴 해석이 중요한 화면입니다. 어떤 개념이 자주 비고, 어떤 오개념이 반복되는지 한 번에 확인합니다."
           actions={
             <div className="button-row">
               <Link href="/teacher" className="button button--primary">
@@ -55,9 +56,7 @@ export default async function OperatorPage() {
               <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
                 {runtime.managedDatabase ? "Managed DB" : "Local store"}
               </StatusBadge>
-              <StatusBadge tone="neutral">
-                갱신 {formatDateTime(summary.generatedAt)}
-              </StatusBadge>
+              <StatusBadge tone="neutral">갱신 {formatDateTime(summary.generatedAt)}</StatusBadge>
             </div>
           }
         />
@@ -71,7 +70,7 @@ export default async function OperatorPage() {
           <MetricCard
             label="분석 완료"
             value={summary.analyzedVerifications}
-            note="학생 답변과 분석이 저장된 세션 수"
+            note="학생 응답과 분석이 저장된 세션 수"
           />
           <MetricCard
             label="교사 판단 완료"
@@ -84,7 +83,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Analysis Distribution"
             title="AI 분류 분포"
-            description="현재 세션이 어떤 이해 상태로 분류되는지 확인합니다."
+            description="현재 세션이 어떤 이해 상태로 분류되는지 먼저 확인합니다."
           >
             {summary.classificationCounts.length > 0 ? (
               <div className="stack-grid">
@@ -115,15 +114,13 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Teacher Override"
             title="교사 최종 판단 분포"
-            description="AI 분류와 별도로 교사가 어떤 결정을 내렸는지 확인합니다."
+            description="AI 결과와 별도로 교사가 어떤 결정을 내렸는지 봅니다."
           >
             {summary.teacherDecisionCounts.length > 0 ? (
               <div className="stack-grid">
                 {summary.teacherDecisionCounts.map((item) => {
                   const meta =
-                    teacherDecisionMeta[
-                      item.label as keyof typeof teacherDecisionMeta
-                    ];
+                    teacherDecisionMeta[item.label as keyof typeof teacherDecisionMeta];
 
                   return (
                     <div key={item.label} className="list-row">
@@ -145,7 +142,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Missing Concepts"
             title="자주 비는 핵심 개념"
-            description="학생 답변에서 반복적으로 누락되는 루브릭 핵심 개념입니다."
+            description="학생 답변에서 반복적으로 누락되는 루브릭 개념입니다."
           >
             {summary.topMissingConcepts.length > 0 ? (
               <div className="stack-grid">
@@ -166,7 +163,7 @@ export default async function OperatorPage() {
           <SurfaceCard
             eyebrow="Misconception Clusters"
             title="반복 오개념 묶음"
-            description="재설명 우선순위를 정할 때 먼저 볼 반복 오개념입니다."
+            description="수업 보완 우선순위를 정할 때 먼저 보는 반복 오개념입니다."
           >
             {summary.topMisconceptions.length > 0 ? (
               <div className="stack-grid">
@@ -242,7 +239,7 @@ export default async function OperatorPage() {
             </div>
           ) : (
             <div className="table-empty">
-              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면 여기서 추적됩니다.
+              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면 여기서 추적할 수 있습니다.
             </div>
           )}
         </SurfaceCard>

@@ -30,11 +30,11 @@ export function TeacherSessionControls({
     <SurfaceCard
       eyebrow="Session Controls"
       title="세션 제어와 재검증"
-      description="학생 링크를 잠그거나, 최신 결과를 다시 불러오거나, 현재 답변으로 재분석할 수 있습니다."
+      description="학생 링크를 잠그거나, 최신 결과를 다시 불러오거나, 현재 응답으로 재분석할 수 있습니다."
     >
       <div className="button-row">
         <StatusBadge tone={studentAccessOpen ? "success" : "warning"}>
-          {studentAccessOpen ? "응답 링크 사용 가능" : "응답 링크 잠금 상태"}
+          {studentAccessOpen ? "응답 링크 사용 가능" : "응답 링크 잠금"}
         </StatusBadge>
         {verificationId ? (
           <>
@@ -64,7 +64,7 @@ export function TeacherSessionControls({
               disabled={!canAnalyze || isPending}
               className="button button--ghost"
             >
-              {activeAction === "analysis" ? "분석 중..." : "현재 답변 재분석"}
+              {activeAction === "analysis" ? "분석 중..." : "현재 응답 재분석"}
             </button>
             <Link href={currentExportHref} className="button button--secondary">
               세션 export

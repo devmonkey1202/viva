@@ -6,6 +6,8 @@ type PageIntroProps = {
   description: string;
   actions?: React.ReactNode;
   meta?: React.ReactNode;
+  variant?: "default" | "landing" | "tool" | "operator" | "student" | "settings";
+  className?: string;
 };
 
 export function PageIntro({
@@ -14,9 +16,11 @@ export function PageIntro({
   description,
   actions,
   meta,
+  variant = "default",
+  className,
 }: PageIntroProps) {
   return (
-    <section className="intro-block">
+    <section className={cx("intro-block", `intro-block--${variant}`, className)}>
       <div className="intro-block__body">
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="intro-title">{title}</h1>

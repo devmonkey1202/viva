@@ -766,14 +766,15 @@ export function TeacherWorkbench({
   ] as const;
 
   return (
-    <main className="app-shell">
+    <main className="app-shell app-shell--teacher">
       <AppHeader
         current="teacher"
         utility={role ? <AuthUtility role={role} /> : undefined}
       />
 
-      <div className="page-stack">
+      <div className="page-stack page-stack--teacher">
         <PageIntro
+          variant="tool"
           eyebrow="Teacher Workbench"
           title="질문 생성부터 최종 판단까지 한 흐름으로 이어갑니다"
           description="교사는 입력, 학생 링크 공유, 분석 검토, 최종 판단을 같은 작업 공간에서 처리합니다. 최근 세션과 제어 기능도 이 화면에서 바로 이어집니다."
