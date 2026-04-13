@@ -32,7 +32,7 @@ const roles = [
     label: "교사용",
     title: "질문 생성과 최종 판단을 맡습니다.",
     body: "과제 기준을 입력하고 학생별 질문을 생성한 뒤, 근거와 충돌 지점을 검토해 최종 판단을 남깁니다.",
-    action: { href: "/teacher", label: "교사용 워크벤치" },
+    action: { href: "/login?next=/teacher", label: "교사용 워크벤치" },
   },
   {
     label: "학생용",
@@ -43,7 +43,7 @@ const roles = [
     label: "운영자용",
     title: "반복되는 오개념과 취약 개념을 봅니다.",
     body: "분석 분포, 교사 판단, 누락 개념, 반복 오개념을 운영 화면에서 모아 확인합니다.",
-    action: { href: "/operator", label: "운영 요약" },
+    action: { href: "/login?next=/operator", label: "운영 요약" },
   },
 ];
 
@@ -53,8 +53,8 @@ export default function Home() {
       <AppHeader
         current="landing"
         utility={
-          <Link href="/teacher" className="button button--ghost button--compact">
-            교사용 화면
+          <Link href="/login" className="button button--ghost button--compact">
+            워크스페이스 로그인
           </Link>
         }
       />
@@ -66,10 +66,10 @@ export default function Home() {
           description="VIVA는 제출 이후 학생이 실제로 이해했는지 검증하는 교육 평가 레이어입니다. LMS도, AI 튜터도, AI 탐지기도 아니라 교사의 판단 속도를 높이는 검증 도구입니다."
           actions={
             <div className="button-row">
-              <Link href="/teacher" className="button button--primary">
+              <Link href="/login?next=/teacher" className="button button--primary">
                 교사용 워크벤치
               </Link>
-              <Link href="/operator" className="button button--secondary">
+              <Link href="/login?next=/operator" className="button button--secondary">
                 운영 요약 보기
               </Link>
             </div>

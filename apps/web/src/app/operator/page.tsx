@@ -206,7 +206,12 @@ export default async function OperatorPage() {
                   {summary.recentVerifications.map((item) => (
                     <tr key={item.verificationId}>
                       <td>
-                        <div className="table-primary">{item.assignmentTitle}</div>
+                        <Link
+                          href={`/teacher/verifications/${item.verificationId}`}
+                          className="table-primary"
+                        >
+                          {item.assignmentTitle}
+                        </Link>
                       </td>
                       <td>
                         {item.classification ? (

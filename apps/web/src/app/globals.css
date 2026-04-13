@@ -611,6 +611,70 @@ textarea {
   background: var(--surface-accent);
 }
 
+.flow-guide {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-guide__step {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.flow-guide__step--current {
+  border-color: var(--accent-line);
+  background: var(--surface-accent);
+}
+
+.flow-guide__step--complete {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--line));
+}
+
+.flow-guide__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.flow-guide__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--surface-muted);
+}
+
+.flow-guide__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.flow-guide__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.flow-guide__description,
+.flow-guide__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
 .preview-panel__label,
 .summary-box__label,
 .detail-list__title,

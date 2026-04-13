@@ -16,6 +16,7 @@ import { QuestionSetPreview } from "@/components/question-set-preview";
 import { SessionTimeline } from "@/components/session-timeline";
 import { StatusBadge } from "@/components/status-badge";
 import { StudentAnswerReview } from "@/components/student-answer-review";
+import { TeacherFlowGuide } from "@/components/teacher-flow-guide";
 import { VerificationSessionBrowser } from "@/components/verification-session-browser";
 import {
   EmptyState,
@@ -666,6 +667,132 @@ export function TeacherWorkbench({
     });
   };
 
+  const focusDecisionSection = () => {
+    document.getElementById("teacher-decision")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const flowSteps = [
+    {
+      key: "setup",
+      title: "과제와 기준을 정리합니다",
+      description: "과제 설명, 핵심 개념, 위험 신호, 제출물을 먼저 정리합니다.",
+      status: questionSet ? "complete" : "current",
+      note:
+        verificationInput.assignmentTitle.trim().length > 0 &&
+        verificationInput.submissionText.trim().length > 0
+          ? "입력값이 준비되면 바로 질문 생성을 시작할 수 있습니다."
+          : "제목과 제출물 본문이 비어 있으면 질문 생성이 막힙니다.",
+      action: !questionSet ? (
+        <button
+          type="button"
+          onClick={generateQuestions}
+          disabled={isPending}
+          className="button button--primary"
+        >
+          {activeAction === "questions" ? "질문 생성 중.." : "질문 생성"}
+        </button>
+      ) : undefined,
+    },
+    {
+      key: "collect",
+      title: "학생 응답을 수집합니다",
+      description: "학생 링크를 열고, 필요하면 잠그거나 다시 열 수 있습니다.",
+      status: !questionSet
+        ? "pending"
+        : completionCount === 3
+          ? "complete"
+          : "current",
+      note: questionSet
+        ? `${completionCount}/3 문항 응답이 채워져 있습니다.`
+        : "질문 세트를 먼저 만들어야 학생 링크가 열립니다.",
+      action: questionSet ? (
+        <>
+          <button
+            type="button"
+            onClick={copyStudentLink}
+            className="button button--secondary"
+          >
+            링크 복사
+          </button>
+          <button
+            type="button"
+            onClick={toggleStudentAccess}
+            disabled={isPending}
+            className="button button--ghost"
+          >
+            {studentAccessState === "open" ? "링크 잠금" : "링크 다시 열기"}
+          </button>
+          <button
+            type="button"
+            onClick={syncLatestVerification}
+            disabled={isPending}
+            className="button button--ghost"
+          >
+            최신 결과 불러오기
+          </button>
+        </>
+      ) : undefined,
+    },
+    {
+      key: "analyze",
+      title: "분석 결과를 확인합니다",
+      description: "학생 답변 3개가 모이면 현재 답변 또는 샘플 답변으로 분석합니다.",
+      status: !questionSet
+        ? "pending"
+        : analysisReport
+          ? "complete"
+          : completionCount === 3
+            ? "current"
+            : "pending",
+      note: analysisReport
+        ? "분류, 누락 개념, 충돌 근거를 아래 근거 검토 영역에서 확인합니다."
+        : completionCount === 3
+          ? "현재 답변이 모두 채워졌습니다. 재분석을 실행할 수 있습니다."
+          : "세 문항 응답이 모두 있어야 분석을 실행할 수 있습니다.",
+      action:
+        questionSet && completionCount === 3 && !analysisReport ? (
+          <button
+            type="button"
+            onClick={rerunAnalysis}
+            disabled={isPending}
+            className="button button--primary"
+          >
+            {activeAction === "analysis" ? "재분석 중.." : "현재 답변 재분석"}
+          </button>
+        ) : undefined,
+    },
+    {
+      key: "decision",
+      title: "교사 최종 판단을 남깁니다",
+      description: "분석 근거를 본 뒤 교사 메모와 최종 결정을 저장합니다.",
+      status: !analysisReport
+        ? "pending"
+        : teacherDecision
+          ? "complete"
+          : "current",
+      note: teacherDecision
+        ? "최종 판단이 저장됐습니다. 필요하면 세션 상세와 export로 이어갑니다."
+        : "근거를 확인한 뒤 아래 교사 판단 섹션에서 결정을 저장합니다.",
+      action:
+        analysisReport && !teacherDecision ? (
+          <button
+            type="button"
+            onClick={focusDecisionSection}
+            className="button button--primary"
+          >
+            교사 판단으로 이동
+          </button>
+        ) : verificationId ? (
+          <Link href={currentExportHref} className="button button--ghost">
+            세션 JSON 내보내기
+          </Link>
+        ) : undefined,
+    },
+  ] as const;
+
   return (
     <main className="app-shell">
       <AppHeader
@@ -760,6 +887,8 @@ export function TeacherWorkbench({
             </div>
           }
         />
+
+        <TeacherFlowGuide steps={[...flowSteps]} />
 
         <div className="metric-grid">
           <MetricCard
@@ -1044,11 +1173,12 @@ export function TeacherWorkbench({
           </div>
 
           <div className="review-layout__side">
-            <SurfaceCard
-              eyebrow="7. Teacher Decision"
-              title="교사 최종 판단을 저장합니다."
-              description="AI 분석과 별도로 교사 판단을 남겨 최종 책임을 유지합니다."
-            >
+            <div id="teacher-decision">
+              <SurfaceCard
+                eyebrow="7. Teacher Decision"
+                title="교사 최종 판단을 저장합니다."
+                description="AI 분석과 별도로 교사 판단을 남겨 최종 책임을 유지합니다."
+              >
               <div className="decision-options">
                 {teacherDecisionOptions.map(([decision, meta]) => (
                   <button
@@ -1108,7 +1238,8 @@ export function TeacherWorkbench({
                   아직 저장된 교사 최종 판단이 없습니다.
                 </p>
               )}
-            </SurfaceCard>
+              </SurfaceCard>
+            </div>
 
             <SurfaceCard
               eyebrow="Session Record"
