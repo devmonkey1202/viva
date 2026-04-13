@@ -78,7 +78,7 @@ const rolePanels = [
     label: "학생",
     title: "학생은 부담 없이 짧고 분명하게 설명합니다.",
     body: "학생 화면은 로그인 없이 링크로 열리고, 질문 세 개만 답하면 흐름이 끝납니다.",
-    note: "모바일 우선, 음성 fallback 지원, 제출 완료 상태까지 한 화면에서 처리합니다.",
+    note: "모바일 우선, 음성 입력이 막혀도 텍스트로 바로 이어 답하고 제출 상태까지 확인합니다.",
     href: null,
     cta: "교사가 공유한 링크로 응답",
     tone: "student",
@@ -112,7 +112,7 @@ const previewPanels = [
   {
     label: "운영자 화면",
     title: "패턴과 반복을 읽는 운영 화면",
-    body: "수치 카드보다 분포, 누락 개념, 최근 세션을 먼저 보여주는 운영 surface입니다.",
+    body: "수치 카드보다 분포, 누락 개념, 최근 세션을 먼저 보여주는 운영 화면입니다.",
     lines: ["분류 분포", "교사 판단", "누락 개념", "최근 세션"],
     tone: "operator",
   },
@@ -142,8 +142,7 @@ export default function Home() {
               확인되지 않았습니다.
             </h1>
             <p className="landing-hero__description">
-              VIVA는 결과물을 의심하는 서비스가 아니라, 학생이 실제로 이해했는지를 다시 묻게 만드는
-              검증 제품입니다. 질문 생성, 근거 비교, 교사 판단이 하나의 흐름으로 이어집니다.
+              VIVA는 결과물 평가가 아니라 이해 검증에 집중합니다. 질문 생성, 근거 비교, 교사 판단을 한 흐름으로 제공합니다.
             </p>
             <div className="landing-hero__actions">
               <Link href="/login?next=/teacher" className="button button--primary">
@@ -166,7 +165,7 @@ export default function Home() {
             <div className="landing-stage__halo landing-stage__halo--peach" />
             <div className="landing-stage__plane landing-stage__plane--main">
               <span>검증 세션</span>
-              <strong>질문, 답변, 근거, 판단이 한 surface 안에 정렬됩니다.</strong>
+              <strong>질문, 답변, 근거, 판단이 한 화면 안에 정렬됩니다.</strong>
               <div className="landing-stage__line-grid">
                 <i />
                 <i />
@@ -263,7 +262,7 @@ export default function Home() {
         <section className="landing-preview">
           <div className="section-block__heading">
             <p className="eyebrow">화면 구조</p>
-            <h2 className="section-headline">같은 브랜드 안에서 목적이 다른 화면으로 나뉩니다.</h2>
+            <h2 className="section-headline">화면은 역할별 목적에 맞게 분리됩니다.</h2>
           </div>
           <div className="landing-preview__grid">
             {previewPanels.map((item) => (
@@ -299,9 +298,9 @@ export default function Home() {
           <div className="landing-cta__copy">
             <p className="eyebrow">Ready To Start</p>
             <h2 className="landing-cta__title">
-              교사는 기준을 잡고,
+              교사는 기준을 정하고,
               <br />
-              학생은 짧게 설명하고,
+              학생은 답하고,
               <br />
               운영자는 패턴을 읽습니다.
             </h2>

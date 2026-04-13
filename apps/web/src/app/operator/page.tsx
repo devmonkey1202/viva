@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AppHeader } from "@/components/app-header";
 import { AuthUtility } from "@/components/auth-utility";
-import { OnboardingGuide } from "@/components/onboarding-guide";
+import { CoachTour } from "@/components/coach-tour";
 import { StatusBadge } from "@/components/status-badge";
 import { MetricCard, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import {
@@ -39,53 +39,64 @@ export default async function OperatorPage() {
       />
 
       <div className="page-stack page-stack--operator">
-        <PageIntro
-          variant="operator"
-          eyebrow="운영 대시보드"
-          title="반복 오개념과 누락 지점을 먼저 봅니다"
-          description="개별 세션보다 패턴 해석에 집중하는 화면입니다."
-          actions={
-            <div className="button-row">
-              <Link href="/teacher" className="button button--primary">
-                교사 화면으로 이동
-              </Link>
-            </div>
-          }
-          meta={
-            <div className="badge-row">
-              <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
-                {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}
-              </StatusBadge>
-              <StatusBadge tone="neutral">
-                갱신 {formatDateTime(summary.generatedAt)}
-              </StatusBadge>
-            </div>
-          }
-        />
+        <div data-tour="operator-intro">
+          <PageIntro
+            variant="operator"
+            eyebrow="운영 대시보드"
+            title="반복 오개념과 누락 지점을 먼저 봅니다"
+            description="개별 세션보다 패턴 해석에 집중하는 화면입니다."
+            actions={
+              <div className="button-row">
+                <Link href="/teacher" className="button button--primary">
+                  교사 화면으로 이동
+                </Link>
+              </div>
+            }
+            meta={
+              <div className="badge-row">
+                <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
+                  {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}
+                </StatusBadge>
+                <StatusBadge tone="neutral">
+                  갱신 {formatDateTime(summary.generatedAt)}
+                </StatusBadge>
+              </div>
+            }
+          />
+        </div>
 
-        <OnboardingGuide
+        <CoachTour
           storageKey="viva:onboarding:operator"
           tone="operator"
-          eyebrow="운영 화면 가이드"
-          title="숫자보다 패턴을 먼저 읽으면 됩니다."
-          description="분류 분포 → 누락 개념 → 최근 세션 순서로 확인하세요."
           steps={[
             {
-              title: "분류 분포 먼저 확인",
-              description: "uncertain과 misconception이 많은 구간부터 먼저 봅니다.",
+              selector: '[data-tour="operator-intro"]',
+              title: "운영 화면은 패턴부터 읽습니다",
+              description: "개별 세션보다 분포와 변화가 먼저 보이도록 구성했습니다.",
+              placement: "bottom",
             },
             {
-              title: "누락 개념과 오개념 비교",
-              description: "같이 반복되는 개념 묶음을 보면 보완 포인트가 보입니다.",
+              selector: '[data-tour="operator-metrics"]',
+              title: "먼저 전체 규모를 확인합니다",
+              description: "총 세션 수, 분석 완료 수, 교사 판단 완료 수로 현재 진행량을 봅니다.",
+              placement: "bottom",
             },
             {
-              title: "최근 세션으로 내려가기",
-              description: "이상 징후가 보이면 최신 세션 상세로 내려가 근거를 확인합니다.",
+              selector: '[data-tour="operator-distribution"]',
+              title: "다음은 AI 분포를 읽습니다",
+              description: "uncertain과 misconception이 몰린 구간부터 먼저 해석하면 됩니다.",
+              placement: "right",
+            },
+            {
+              selector: '[data-tour="operator-recent"]',
+              title: "마지막으로 최근 세션을 확인합니다",
+              description: "이상 징후가 보이면 최신 세션 상세로 내려가 근거를 다시 확인합니다.",
+              placement: "top",
             },
           ]}
         />
 
-        <div className="metric-grid">
+        <div className="metric-grid" data-tour="operator-metrics">
           <MetricCard
             label="총 검증 세션"
             value={summary.totalVerifications}
@@ -109,30 +120,32 @@ export default async function OperatorPage() {
             title="AI 분류 분포"
             description="현재 세션의 이해 상태 분포입니다."
           >
-            {summary.classificationCounts.length > 0 ? (
-              <div className="stack-grid">
-                {summary.classificationCounts.map((item) => {
-                  const meta =
-                    analysisClassificationMeta[
-                      item.label as keyof typeof analysisClassificationMeta
-                    ];
+            <div data-tour="operator-distribution">
+              {summary.classificationCounts.length > 0 ? (
+                <div className="stack-grid">
+                  {summary.classificationCounts.map((item) => {
+                    const meta =
+                      analysisClassificationMeta[
+                        item.label as keyof typeof analysisClassificationMeta
+                      ];
 
-                  return (
-                    <div key={item.label} className="list-row">
-                      <div className="list-row__copy">
-                        <p className="list-row__title">{meta?.label ?? item.label}</p>
-                        <p className="list-row__body">
-                          {meta?.note ?? "분류 설명이 아직 없습니다."}
-                        </p>
+                    return (
+                      <div key={item.label} className="list-row">
+                        <div className="list-row__copy">
+                          <p className="list-row__title">{meta?.label ?? item.label}</p>
+                          <p className="list-row__body">
+                            {meta?.note ?? "분류 설명이 아직 없습니다."}
+                          </p>
+                        </div>
+                        <strong className="list-row__value">{item.count}</strong>
                       </div>
-                      <strong className="list-row__value">{item.count}</strong>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="table-empty">아직 분석 결과가 없습니다.</div>
-            )}
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="table-empty">아직 분석 결과가 없습니다.</div>
+              )}
+            </div>
           </SurfaceCard>
 
           <SurfaceCard
@@ -211,62 +224,64 @@ export default async function OperatorPage() {
           title="최신 검증 세션"
           description="최신 업데이트 순서로 확인합니다."
         >
-          {summary.recentVerifications.length > 0 ? (
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>과제</th>
-                    <th>AI 분류</th>
-                    <th>교사 판단</th>
-                    <th>업데이트</th>
-                    <th>세션 ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.recentVerifications.map((item) => (
-                    <tr key={item.verificationId}>
-                      <td>
-                        <Link
-                          href={`/teacher/verifications/${item.verificationId}`}
-                          className="table-primary"
-                        >
-                          {item.assignmentTitle}
-                        </Link>
-                      </td>
-                      <td>
-                        {item.classification ? (
-                          <StatusBadge
-                            tone={analysisClassificationMeta[item.classification].tone}
-                          >
-                            {analysisClassificationMeta[item.classification].label}
-                          </StatusBadge>
-                        ) : (
-                          <span className="table-muted">분석 전</span>
-                        )}
-                      </td>
-                      <td>
-                        {item.teacherDecision ? (
-                          <StatusBadge tone={teacherDecisionMeta[item.teacherDecision].tone}>
-                            {teacherDecisionMeta[item.teacherDecision].label}
-                          </StatusBadge>
-                        ) : (
-                          <span className="table-muted">판단 전</span>
-                        )}
-                      </td>
-                      <td>{formatDateTime(item.updatedAt)}</td>
-                      <td className="mono-text">{item.verificationId}</td>
+          <div data-tour="operator-recent">
+            {summary.recentVerifications.length > 0 ? (
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>과제</th>
+                      <th>AI 분류</th>
+                      <th>교사 판단</th>
+                      <th>업데이트</th>
+                      <th>세션 ID</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="table-empty">
-              아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면
-              여기로 이어집니다.
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {summary.recentVerifications.map((item) => (
+                      <tr key={item.verificationId}>
+                        <td>
+                          <Link
+                            href={`/teacher/verifications/${item.verificationId}`}
+                            className="table-primary"
+                          >
+                            {item.assignmentTitle}
+                          </Link>
+                        </td>
+                        <td>
+                          {item.classification ? (
+                            <StatusBadge
+                              tone={analysisClassificationMeta[item.classification].tone}
+                            >
+                              {analysisClassificationMeta[item.classification].label}
+                            </StatusBadge>
+                          ) : (
+                            <span className="table-muted">분석 전</span>
+                          )}
+                        </td>
+                        <td>
+                          {item.teacherDecision ? (
+                            <StatusBadge tone={teacherDecisionMeta[item.teacherDecision].tone}>
+                              {teacherDecisionMeta[item.teacherDecision].label}
+                            </StatusBadge>
+                          ) : (
+                            <span className="table-muted">판단 전</span>
+                          )}
+                        </td>
+                        <td>{formatDateTime(item.updatedAt)}</td>
+                        <td className="mono-text">{item.verificationId}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="table-empty">
+                아직 기록된 검증 세션이 없습니다. 교사 화면에서 질문을 생성하면
+                여기로 이어집니다.
+              </div>
+            )}
+          </div>
         </SurfaceCard>
       </div>
     </main>

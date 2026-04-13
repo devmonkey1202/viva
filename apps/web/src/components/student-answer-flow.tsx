@@ -321,7 +321,7 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
           variant="student"
           eyebrow="학생 응답"
           title="질문을 읽고 짧고 분명하게 답해 주세요"
-          description="정답을 길게 쓰는 것보다 왜 그렇게 이해했는지 드러나는 답변이 중요합니다. 학생 답변은 교사 검토 자료로만 사용됩니다."
+          description="길이보다 핵심이 중요합니다. 이해한 이유를 짧게 설명해 주세요."
           meta={
             <div className="student-progress">
               <div className="student-progress__count">
@@ -442,8 +442,8 @@ export function StudentAnswerFlow({ verification }: StudentAnswerFlowProps) {
         )}
 
         <EmptyState
-          title="이 화면은 학생 답변 수집 전용입니다"
-          description="학생은 여기서 질문에 답하고, 교사는 별도 검증 화면에서 분석 근거와 최종 판단을 확인합니다."
+          title="학생 답변 수집 전용 화면입니다"
+          description="학생은 여기서 답하고, 교사는 별도 화면에서 근거와 판단을 확인합니다."
           action={
             <Link href="/" className="button button--ghost">
               서비스 소개 보기

@@ -26,7 +26,7 @@ export default async function SettingsPage() {
           meta={
             <div className="badge-row">
               <StatusBadge tone={runtime.aiConfigured ? "success" : "warning"}>
-                {runtime.aiConfigured ? "AI 연결됨" : "AI fallback"}
+                {runtime.aiConfigured ? "AI 연결됨" : "대체 경로 사용"}
               </StatusBadge>
               <StatusBadge tone={runtime.managedDatabase ? "success" : "warning"}>
                 {runtime.managedDatabase ? "관리형 DB" : "로컬 저장소"}

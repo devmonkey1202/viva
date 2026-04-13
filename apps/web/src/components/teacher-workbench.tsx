@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { AnalysisEvidenceReview } from "@/components/analysis-evidence-review";
 import { AppHeader } from "@/components/app-header";
 import { AuthUtility } from "@/components/auth-utility";
-import { OnboardingGuide } from "@/components/onboarding-guide";
+import { CoachTour } from "@/components/coach-tour";
 import { QuestionSetPreview } from "@/components/question-set-preview";
 import { SessionTimeline } from "@/components/session-timeline";
 import { StatusBadge } from "@/components/status-badge";
@@ -719,80 +719,97 @@ export function TeacherWorkbench({
       />
 
       <div className="page-stack page-stack--teacher">
-        <PageIntro
-          variant="tool"
-          eyebrow="교사 워크벤치"
-          title="질문 생성부터 최종 판단까지 한 번에 처리합니다"
-          description="입력, 링크 공유, 분석 확인, 최종 판단을 한 화면에서 끝냅니다."
-          actions={
-            <div className="button-row">
-              <button
-                type="button"
-                onClick={handleGenerateQuestions}
-                disabled={isPending || !canGenerateQuestions}
-                className="button button--primary"
-              >
-                {activeAction === "questions" ? "질문 생성 중..." : "질문 생성"}
-              </button>
-              <button
-                type="button"
-                onClick={handleAnalyze}
-                disabled={isPending || !canAnalyze}
-                className="button button--secondary"
-              >
-                {activeAction === "analysis" ? "분석 중..." : "분석 실행"}
-              </button>
-              {verificationId ? (
-                <Link
-                  href={`/teacher/verifications/${verificationId}`}
-                  className="button button--ghost"
+        <div data-tour="teacher-intro">
+          <PageIntro
+            variant="tool"
+            eyebrow="교사 워크벤치"
+            title="질문 생성부터 최종 판단까지 한 번에 처리합니다"
+            description="입력, 링크 공유, 분석 확인, 최종 판단을 한 화면에서 끝냅니다."
+            actions={
+              <div className="button-row">
+                <button
+                  type="button"
+                  onClick={handleGenerateQuestions}
+                  disabled={isPending || !canGenerateQuestions}
+                  className="button button--primary"
                 >
-                  세션 상세
-                </Link>
-              ) : null}
-            </div>
-          }
-          meta={
-            <div className="badge-row">
-              <StatusBadge tone={aiConfigured ? "success" : "warning"}>
-                {aiConfigured ? "AI 연결됨" : "AI 키 없음"}
-              </StatusBadge>
-              <StatusBadge tone={managedDatabase ? "success" : "warning"}>
-                {managedDatabase ? "관리형 DB" : "로컬 저장소"}
-              </StatusBadge>
-              <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
-              {draftSavedAt ? (
-                <StatusBadge tone={hasUnsavedLocalChanges ? "warning" : "neutral"}>
-                  {hasUnsavedLocalChanges
-                    ? "저장 대기"
-                    : `임시 저장 ${formatDateTime(draftSavedAt)}`}
+                  {activeAction === "questions" ? "질문 생성 중..." : "질문 생성"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAnalyze}
+                  disabled={isPending || !canAnalyze}
+                  className="button button--secondary"
+                >
+                  {activeAction === "analysis" ? "분석 중..." : "분석 실행"}
+                </button>
+                {verificationId ? (
+                  <Link
+                    href={`/teacher/verifications/${verificationId}`}
+                    className="button button--ghost"
+                  >
+                    세션 상세
+                  </Link>
+                ) : null}
+              </div>
+            }
+            meta={
+              <div className="badge-row">
+                <StatusBadge tone={aiConfigured ? "success" : "warning"}>
+                  {aiConfigured ? "AI 연결됨" : "AI 키 없음"}
                 </StatusBadge>
-              ) : null}
-            </div>
-          }
-        />
+                <StatusBadge tone={managedDatabase ? "success" : "warning"}>
+                  {managedDatabase ? "관리형 DB" : "로컬 저장소"}
+                </StatusBadge>
+                <StatusBadge tone="neutral">{sessionStatus}</StatusBadge>
+                {draftSavedAt ? (
+                  <StatusBadge tone={hasUnsavedLocalChanges ? "warning" : "neutral"}>
+                    {hasUnsavedLocalChanges
+                      ? "저장 대기"
+                      : `임시 저장 ${formatDateTime(draftSavedAt)}`}
+                  </StatusBadge>
+                ) : null}
+              </div>
+            }
+          />
+        </div>
 
         {errorMessage ? <div className="inline-alert">{errorMessage}</div> : null}
         {noticeMessage ? <div className="inline-notice">{noticeMessage}</div> : null}
 
-        <OnboardingGuide
+        <CoachTour
           storageKey="viva:onboarding:teacher"
           tone="teacher"
-          eyebrow="첫 사용 안내"
-          title="5단계만 따라가면 바로 운영됩니다."
-          description="준비 → 질문 → 링크 공유 → 분석 확인 → 교사 판단 순서로 진행하세요."
           steps={[
             {
-              title: "기준 먼저 정리",
-              description: "과제 설명, 핵심 개념, 위험 신호를 먼저 적습니다.",
+              selector: '[data-tour="teacher-intro"]',
+              title: "먼저 현재 세션 상태를 봅니다",
+              description: "질문 생성, 분석, 세션 상세 이동은 여기서 시작합니다.",
+              placement: "bottom",
             },
             {
-              title: "학생 링크 발급",
-              description: "질문 생성 직후 링크를 복사해 학생에게 공유합니다.",
+              selector: '[data-tour="teacher-prep"]',
+              title: "과제 기준을 먼저 정리합니다",
+              description: "과제 설명, 핵심 개념, 위험 신호, 제출물을 먼저 맞춰야 질문 품질이 안정됩니다.",
+              placement: "right",
             },
             {
-              title: "근거 보고 판단",
-              description: "답변이 들어오면 분석 근거를 읽고 교사 판단을 저장합니다.",
+              selector: '[data-tour="teacher-student-link"]',
+              title: "질문 생성 후 학생 링크를 공유합니다",
+              description: "학생은 이 링크로만 들어와 답합니다. 여기서 복사, 잠금, 동기화를 처리합니다.",
+              placement: "left",
+            },
+            {
+              selector: '[data-tour="teacher-analysis"]',
+              title: "답변이 들어오면 근거를 먼저 봅니다",
+              description: "누락 개념, 논리 충돌, 재설명 포인트를 먼저 읽고 판단을 준비합니다.",
+              placement: "left",
+            },
+            {
+              selector: '[data-tour="teacher-decision"]',
+              title: "마지막으로 교사 판단을 저장합니다",
+              description: "AI 분류를 그대로 통과시키지 않고 교사 메모와 함께 최종 결정을 남깁니다.",
+              placement: "left",
             },
           ]}
         />
@@ -823,36 +840,37 @@ export function TeacherWorkbench({
           <MetricCard
             label="분석 모델"
             value={analysisReport?.modelVersion ?? "없음"}
-            note="실제 AI가 막히면 mock fallback 여부가 결과에 남습니다."
+            note="실제 AI가 막히면 대체 경로 사용 여부가 결과에 남습니다."
           />
         </div>
 
         <div className="teacher-layout">
           <div className="teacher-layout__main">
-            <SurfaceCard
-              eyebrow="1. 세션 준비"
-              title="과제 기준과 제출물을 먼저 정리합니다"
-              description="교사 기준이 정확해야 이후 질문과 분석도 일관됩니다."
-              action={
-                <div className="button-row">
-                  <button
-                    type="button"
-                    onClick={resetToDemo}
-                    className="button button--ghost button--compact"
-                  >
-                    데모 입력 복원
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearDraftAndReset}
-                    className="button button--ghost button--compact"
-                  >
-                    초안 비우기
-                  </button>
-                </div>
-              }
-            >
-              <div className="stack-grid">
+            <div data-tour="teacher-prep">
+              <SurfaceCard
+                eyebrow="1. 세션 준비"
+                title="과제 기준과 제출물을 먼저 정리합니다"
+                description="교사 기준이 정확해야 이후 질문과 분석도 일관됩니다."
+                action={
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      onClick={resetToDemo}
+                      className="button button--ghost button--compact"
+                    >
+                      데모 입력 복원
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearDraftAndReset}
+                      className="button button--ghost button--compact"
+                    >
+                      초안 비우기
+                    </button>
+                  </div>
+                }
+              >
+                <div className="stack-grid">
                 <Field label="과제명">
                   <input
                     value={assignmentTitle}
@@ -910,8 +928,9 @@ export function TeacherWorkbench({
                     placeholder="학생 제출물 내용을 붙여 넣어 주세요."
                   />
                 </Field>
-              </div>
-            </SurfaceCard>
+                </div>
+              </SurfaceCard>
+            </div>
 
             <SurfaceCard
               eyebrow="2. 질문 세트"
@@ -943,32 +962,35 @@ export function TeacherWorkbench({
               />
             </SurfaceCard>
 
-            <SurfaceCard
-              eyebrow="4. 분석 근거"
-              title="분석 근거"
-              description="누락 개념, 논리 충돌, 재설명 포인트를 먼저 확인합니다."
-            >
-              <AnalysisEvidenceReview analysisReport={analysisReport} />
-            </SurfaceCard>
+            <div data-tour="teacher-analysis">
+              <SurfaceCard
+                eyebrow="4. 분석 근거"
+                title="분석 근거"
+                description="누락 개념, 논리 충돌, 재설명 포인트를 먼저 확인합니다."
+              >
+                <AnalysisEvidenceReview analysisReport={analysisReport} />
+              </SurfaceCard>
+            </div>
 
-            <SurfaceCard
-              eyebrow="5. 교사 판단"
-              title="교사 최종 판단"
-              description="AI 결과를 그대로 통과시키지 말고, 교사 메모와 함께 최종 판단을 저장합니다."
-              action={
-                <button
-                  type="button"
-                  onClick={handleSaveTeacherDecision}
-                  disabled={isPending || !canSaveTeacherDecision}
-                  className="button button--primary button--compact"
-                >
-                  {activeAction === "decision"
-                    ? "판단 저장 중..."
-                    : "교사 판단 저장"}
-                </button>
-              }
-            >
-              <div className="stack-grid">
+            <div data-tour="teacher-decision">
+              <SurfaceCard
+                eyebrow="5. 교사 판단"
+                title="교사 최종 판단"
+                description="AI 결과를 그대로 통과시키지 말고, 교사 메모와 함께 최종 판단을 저장합니다."
+                action={
+                  <button
+                    type="button"
+                    onClick={handleSaveTeacherDecision}
+                    disabled={isPending || !canSaveTeacherDecision}
+                    className="button button--primary button--compact"
+                  >
+                    {activeAction === "decision"
+                      ? "판단 저장 중..."
+                      : "교사 판단 저장"}
+                  </button>
+                }
+              >
+                <div className="stack-grid">
                 <div className="button-row">
                   {teacherDecisionOptions.map(([value, meta]) => (
                     <button
@@ -1021,8 +1043,9 @@ export function TeacherWorkbench({
                     아직 저장된 교사 판단이 없습니다.
                   </p>
                 )}
-              </div>
-            </SurfaceCard>
+                </div>
+              </SurfaceCard>
+            </div>
           </div>
 
           <div className="teacher-layout__side">
@@ -1031,31 +1054,33 @@ export function TeacherWorkbench({
               workspaceSettingsSavedAt={workspaceSettingsSavedAt}
             />
 
-            <TeacherStudentLinkCard
-              verificationId={verificationId}
-              studentUrl={studentUrl}
-              studentPath={studentPath}
-              studentAccessOpen={accessOpen}
-              isPending={isPending}
-              activeAction={activeAction}
-              onCopyStudentLink={handleCopyStudentLink}
-              onSyncLatestVerification={handleSyncLatestVerification}
-            />
+            <div data-tour="teacher-student-link" className="section-stack">
+              <TeacherStudentLinkCard
+                verificationId={verificationId}
+                studentUrl={studentUrl}
+                studentPath={studentPath}
+                studentAccessOpen={accessOpen}
+                isPending={isPending}
+                activeAction={activeAction}
+                onCopyStudentLink={handleCopyStudentLink}
+                onSyncLatestVerification={handleSyncLatestVerification}
+              />
 
-            <TeacherSessionControls
-              verificationId={verificationId}
-              studentAccessOpen={accessOpen}
-              isPending={isPending}
-              activeAction={activeAction}
-              canAnalyze={canAnalyze}
-              currentExportHref={currentExportHref}
-              onToggleStudentAccess={handleToggleStudentAccess}
-              onSyncLatestVerification={handleSyncLatestVerification}
-              onRerunAnalysis={handleAnalyze}
-            />
+              <TeacherSessionControls
+                verificationId={verificationId}
+                studentAccessOpen={accessOpen}
+                isPending={isPending}
+                activeAction={activeAction}
+                canAnalyze={canAnalyze}
+                currentExportHref={currentExportHref}
+                onToggleStudentAccess={handleToggleStudentAccess}
+                onSyncLatestVerification={handleSyncLatestVerification}
+                onRerunAnalysis={handleAnalyze}
+              />
+            </div>
 
             <SurfaceCard
-              eyebrow="Recent Sessions"
+              eyebrow="최근 세션"
               title="최근 세션 다시 열기"
               description="워크벤치를 벗어나지 않고 최근 세션을 다시 엽니다."
             >
@@ -1066,7 +1091,7 @@ export function TeacherWorkbench({
             </SurfaceCard>
 
             <SurfaceCard
-              eyebrow="Activity"
+              eyebrow="세션 기록"
               title="세션 기록"
               description="질문 생성부터 최종 판단까지의 기록입니다."
             >

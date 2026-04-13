@@ -36,9 +36,9 @@ npm run dev
 
 ```bash
 AI_API_KEY=
-AI_FAST_MODEL=gpt-5.2
-AI_REASONING_MODEL=gpt-5.2
-AI_REQUEST_TIMEOUT_MS=20000
+AI_FAST_MODEL=gpt-5-nano
+AI_REASONING_MODEL=gpt-5-nano
+AI_REQUEST_TIMEOUT_MS=45000
 AI_MAX_RETRIES=1
 VIVA_SESSION_SECRET=
 VIVA_TEACHER_ACCESS_CODE=
@@ -55,6 +55,20 @@ VERIFICATION_STORE_PATH=
 - 현재 저장 어댑터는 Neon REST/Data API 주소가 아니라 Postgres 연결 문자열(`DATABASE_URL`)을 기대합니다.
 - `VERIFICATION_STORE_PATH`는 테스트나 로컬 검증에서 저장 파일 경로를 분리할 때만 사용합니다.
 - STT는 브라우저 Web Speech API를 사용합니다. 지원되지 않는 브라우저에서는 텍스트 입력 fallback이 기본 동작입니다.
+
+Vercel에 넣을 권장 환경변수:
+
+```bash
+AI_API_KEY=
+AI_FAST_MODEL=gpt-5-nano
+AI_REASONING_MODEL=gpt-5-nano
+AI_REQUEST_TIMEOUT_MS=45000
+AI_MAX_RETRIES=1
+DATABASE_URL=
+VIVA_SESSION_SECRET=
+VIVA_TEACHER_ACCESS_CODE=
+VIVA_OPERATOR_ACCESS_CODE=
+```
 
 ## 검증
 
@@ -81,8 +95,9 @@ npm run verify
 - `scripts`
   자동 검증 스크립트
 
-## 다음 작업
+## 현재 남은 작업
 
-- AI service adapter 고도화
-- Vercel 배포 설정 완료
-- 최종 AI 리포트 본문 보강
+- Vercel 최신 커밋 재배포
+- 프로덕션 실AI 재검증
+- AI 리포트 PDF 마감
+- 제출 서류 PDF 세트 정리

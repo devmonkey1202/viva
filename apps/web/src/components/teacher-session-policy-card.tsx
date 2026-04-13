@@ -39,7 +39,7 @@ export function TeacherSessionPolicyCard({
           tone={sessionPreferences.allowMockFallback ? "warning" : "danger"}
         >
           {sessionPreferences.allowMockFallback
-            ? "AI 실패 시 fallback 허용"
+            ? "AI 실패 시 대체 경로 허용"
             : "AI 실패 시 즉시 오류"}
         </StatusBadge>
       </div>

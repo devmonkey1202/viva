@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { OnboardingGuide } from "@/components/onboarding-guide";
+import { CoachTour } from "@/components/coach-tour";
 import { Field, SurfaceCard } from "@/components/ui-blocks";
 import {
   normalizeWorkspaceSettings,
@@ -59,33 +59,31 @@ export function SettingsPanel({
 
   return (
     <div className="section-stack">
-      <OnboardingGuide
+      <CoachTour
         storageKey="viva:onboarding:settings"
         tone="settings"
-        eyebrow="빠른 설정 안내"
-        title="세 가지 기본값만 먼저 맞추세요."
-        description="입력 방식, fallback, export 형식을 먼저 정하면 됩니다."
         steps={[
           {
-            title: "입력 방식 정하기",
-            description: "텍스트만 받을지, 음성 답변까지 허용할지 먼저 정합니다.",
+            selector: '[data-tour="settings-defaults"]',
+            title: "먼저 세션 기본값을 정합니다",
+            description: "응답 방식, 대체 경로, export 형식만 정해도 다음 세션 시작이 빨라집니다.",
+            placement: "bottom",
           },
           {
-            title: "fallback 정책 확인",
-            description: "실AI가 막힐 때 mock 경로를 허용할지 정합니다.",
-          },
-          {
-            title: "다운로드 형식 고정",
-            description: "교사용 export 형식을 CSV 또는 JSON 중 하나로 통일합니다.",
+            selector: '[data-tour="settings-runtime"]',
+            title: "현재 연결 상태를 확인합니다",
+            description: "AI와 저장소가 어떤 경로로 동작 중인지 여기서 바로 확인합니다.",
+            placement: "top",
           },
         ]}
       />
 
-      <SurfaceCard
-        eyebrow="작업 기본값"
-        title="다음 검증 세션의 기본값"
-        description="여기서 바꾼 값은 다음 세션 시작 시 기본값으로 반영됩니다."
-      >
+      <div data-tour="settings-defaults">
+        <SurfaceCard
+          eyebrow="작업 기본값"
+          title="다음 검증 세션의 기본값"
+          description="다음 세션 시작 시 기본값으로 반영됩니다."
+        >
         <div className="split-grid">
           <Field label="음성 답변 허용">
             <label className="toggle-row">
@@ -122,7 +120,7 @@ export function SettingsPanel({
         </div>
 
         <div className="split-grid">
-          <Field label="AI fallback 허용">
+          <Field label="AI 대체 경로 허용">
             <label className="toggle-row">
               <input
                 type="checkbox"
@@ -134,7 +132,7 @@ export function SettingsPanel({
                   }))
                 }
               />
-              <span>실제 AI 호출이 막히면 mock 경로로 흐름을 유지합니다.</span>
+              <span>실제 AI 호출이 막히면 대체 경로로 흐름을 유지합니다.</span>
             </label>
           </Field>
           <Field label="기본 export 형식">
@@ -158,7 +156,7 @@ export function SettingsPanel({
 
         <Field
           label="세션 보관 기준(일)"
-            helper="새 세션 시작 시 참고하는 기본값입니다."
+          helper="새 세션 시작 시 참고하는 기본값입니다."
         >
           <input
             type="number"
@@ -183,13 +181,15 @@ export function SettingsPanel({
               : "아직 저장 기록이 없습니다."}
           </p>
         </div>
-      </SurfaceCard>
+        </SurfaceCard>
+      </div>
 
-      <SurfaceCard
-        eyebrow="환경 상태"
-        title="현재 배포 환경 연결"
-        description="AI와 저장소 연결 상태 요약입니다."
-      >
+      <div data-tour="settings-runtime">
+        <SurfaceCard
+          eyebrow="환경 상태"
+          title="현재 배포 환경 연결"
+          description="AI와 저장소 연결 상태 요약입니다."
+        >
         <div className="metric-grid">
           <div className="metric-card">
             <p className="metric-card__label">AI 연결</p>
@@ -211,7 +211,8 @@ export function SettingsPanel({
             <p className="metric-card__note">{runtime.storeMode}</p>
           </div>
         </div>
-      </SurfaceCard>
+        </SurfaceCard>
+      </div>
     </div>
   );
 }

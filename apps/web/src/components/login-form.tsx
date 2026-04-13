@@ -67,7 +67,7 @@ export function LoginForm() {
           <p className="eyebrow">접속 코드</p>
           <h2 className="section-title">배포에 코드가 설정된 경우만 입력합니다.</h2>
           <p className="section-description">
-            접속 코드가 없는 배포는 데모 모드로 동작합니다. 코드가 설정된 배포에서는 역할별 코드가 필요합니다.
+            코드가 없으면 데모 모드, 있으면 역할별 코드를 입력합니다.
           </p>
         </div>
         <label className="field-shell">

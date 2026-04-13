@@ -48,12 +48,13 @@ VIVA는 AI 시대 교육 현장에서 `결과물 자체`가 아니라 `학생의
 - OpenAI 연동과 mock fallback 구현
 - Neon/Postgres 저장 경로와 로컬 파일 저장 경로 구현
 - Web Speech API 기반 STT + 텍스트 fallback 구현
+- 첫 진입 코치마크형 튜토리얼 구현
 - `lint + unit test + build + smoke test` 자동 검증 구현
 - Vercel 프로덕션 배포 URL 확보: `https://viva-rho-seven.vercel.app`
 
 ## 현재 남은 핵심
 
-1. OpenAI 크레딧 충전 후 프로덕션 실AI 재검증
-2. AI 리포트 본문 최종 작성과 PDF 변환
-3. 제출 서류 PDF 최종 정리
-4. 디자인 전면 재설계
+1. Vercel 최신 커밋 재배포
+2. 프로덕션 실AI 재검증
+3. AI 리포트 PDF 마감
+4. 제출 서류 PDF 최종 정리
