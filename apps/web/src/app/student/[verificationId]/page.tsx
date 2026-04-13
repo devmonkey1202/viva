@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { StudentAnswerFlow } from "@/components/student-answer-flow";
 import { getVerificationRecord } from "@/lib/verification-store";
@@ -16,9 +16,8 @@ export default async function StudentPage({ params }: StudentPageProps) {
   const verification = await getVerificationRecord(verificationId);
 
   if (!verification) {
-    notFound();
+    redirect("/session-expired");
   }
 
   return <StudentAnswerFlow verification={verification} />;
 }
-

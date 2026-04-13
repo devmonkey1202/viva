@@ -295,6 +295,23 @@ textarea {
   background: var(--surface-accent);
 }
 
+.role-choice {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--motion-fast) var(--easing),
+    box-shadow var(--motion-fast) var(--easing),
+    transform var(--motion-fast) var(--easing);
+}
+
+.role-choice:hover,
+.role-choice[data-active="true"] {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
 .surface-card__header {
   display: flex;
   flex-wrap: wrap;
@@ -510,6 +527,22 @@ textarea {
 .field-block {
   display: grid;
   gap: 8px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0 14px;
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.toggle-row input {
+  margin: 0;
 }
 
 .field-block__label {

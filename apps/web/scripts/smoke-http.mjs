@@ -82,6 +82,20 @@ const fetchJson = async (url, init) => {
   return { response, data, text };
 };
 
+const loginAsRole = async (role, nextPath) => {
+  const { response, text } = await fetchJson(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, nextPath }),
+  });
+
+  assert.equal(response.status, 200, text);
+  const cookieHeader = response.headers.get("set-cookie");
+  assert.match(cookieHeader ?? "", /viva_role=/);
+
+  return cookieHeader.split(";")[0];
+};
+
 const tempDir = await mkdtemp(path.join(os.tmpdir(), "viva-smoke-"));
 const storePath = path.join(tempDir, "verification-store.json");
 const envFileEntries = useRealAi || useManagedDb ? await readEnvFile(".env.local") : {};
@@ -132,12 +146,30 @@ try {
     assert.equal(health.data.runtime.storeMode, useManagedDb ? "managed" : "file");
   }
 
+  const teacherCookie = await loginAsRole("teacher", "/teacher");
+  const operatorCookie = await loginAsRole("operator", "/operator");
+
   const home = await fetchWithTimeout(`${baseUrl}/`);
-  const teacher = await fetchWithTimeout(`${baseUrl}/teacher`);
-  const operator = await fetchWithTimeout(`${baseUrl}/operator`);
+  const loginPage = await fetchWithTimeout(`${baseUrl}/login`);
+  const teacher = await fetchWithTimeout(`${baseUrl}/teacher`, {
+    headers: { Cookie: teacherCookie },
+  });
+  const settings = await fetchWithTimeout(`${baseUrl}/settings`, {
+    headers: { Cookie: teacherCookie },
+  });
+  const operator = await fetchWithTimeout(`${baseUrl}/operator`, {
+    headers: { Cookie: operatorCookie },
+  });
+  const unauthorizedOperator = await fetchWithTimeout(`${baseUrl}/operator`, {
+    headers: { Cookie: teacherCookie },
+    redirect: "manual",
+  });
   assert.equal(home.status, 200);
+  assert.equal(loginPage.status, 200);
   assert.equal(teacher.status, 200);
+  assert.equal(settings.status, 200);
   assert.equal(operator.status, 200);
+  assert.equal(unauthorizedOperator.status, 307);
 
   const questionBody = {
     assignmentTitle: "이진 탐색 알고리즘 설명",
@@ -168,7 +200,14 @@ try {
 
   const verificationId = questions.data.verificationId;
   const studentPage = await fetchWithTimeout(`${baseUrl}/student/${verificationId}`);
+  const teacherDetail = await fetchWithTimeout(
+    `${baseUrl}/teacher/verifications/${verificationId}`,
+    {
+      headers: { Cookie: teacherCookie },
+    },
+  );
   assert.equal(studentPage.status, 200);
+  assert.equal(teacherDetail.status, 200);
 
   const verification = await fetchJson(`${baseUrl}/api/verifications/${verificationId}`);
   assert.equal(verification.response.status, 200);

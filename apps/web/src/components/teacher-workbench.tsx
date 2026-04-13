@@ -11,6 +11,7 @@ import {
 
 import { AnalysisEvidenceReview } from "@/components/analysis-evidence-review";
 import { AppHeader } from "@/components/app-header";
+import { AuthUtility } from "@/components/auth-utility";
 import { QuestionSetPreview } from "@/components/question-set-preview";
 import { SessionTimeline } from "@/components/session-timeline";
 import { StatusBadge } from "@/components/status-badge";
@@ -59,10 +60,12 @@ import {
   initialAnswerState,
   initialDecisionState,
 } from "@/lib/teacher-workbench";
+import type { VivaRole } from "@/lib/auth";
 
 type TeacherWorkbenchProps = {
   aiConfigured: boolean;
   managedDatabase: boolean;
+  role: VivaRole | null;
 };
 
 const teacherDecisionOptions = Object.entries(teacherDecisionMeta) as Array<
@@ -77,6 +80,7 @@ const teacherDraftStorageKey = "viva:teacher-workbench-draft";
 export function TeacherWorkbench({
   aiConfigured,
   managedDatabase,
+  role,
 }: TeacherWorkbenchProps) {
   const [assignmentTitle, setAssignmentTitle] = useState(
     demoVerificationInput.assignmentTitle,
@@ -612,6 +616,15 @@ export function TeacherWorkbench({
             >
               운영 요약
             </Link>
+            {verificationId ? (
+              <Link
+                href={`/teacher/verifications/${verificationId}`}
+                className="button button--ghost button--compact"
+              >
+                세션 상세
+              </Link>
+            ) : null}
+            {role ? <AuthUtility role={role} /> : null}
           </div>
         }
       />

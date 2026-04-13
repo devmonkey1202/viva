@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 import { AppHeader } from "@/components/app-header";
+import { AuthUtility } from "@/components/auth-utility";
 import { StatusBadge } from "@/components/status-badge";
 import { MetricCard, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import {
@@ -8,6 +10,7 @@ import {
   formatDateTime,
   teacherDecisionMeta,
 } from "@/lib/presentation";
+import { readVivaRoleFromCookies } from "@/lib/auth";
 import { getRuntimeStatus } from "@/lib/runtime-config";
 import { getOperatorSummary } from "@/lib/verification-store";
 
@@ -16,6 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function OperatorPage() {
   const summary = await getOperatorSummary();
   const runtime = getRuntimeStatus();
+  const role = readVivaRoleFromCookies(await cookies());
 
   return (
     <main className="app-shell">
@@ -29,6 +33,7 @@ export default async function OperatorPage() {
             <Link href="/api/export?format=json" className="button button--ghost button--compact">
               JSON export
             </Link>
+            {role ? <AuthUtility role={role} /> : null}
           </div>
         }
       />

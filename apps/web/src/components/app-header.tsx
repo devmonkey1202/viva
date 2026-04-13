@@ -3,15 +3,16 @@ import Link from "next/link";
 import { cx } from "@/lib/cx";
 
 type AppHeaderProps = {
-  current?: "landing" | "teacher" | "operator" | "student";
+  current?: "landing" | "teacher" | "operator" | "student" | "settings";
   minimal?: boolean;
   utility?: React.ReactNode;
 };
 
 const navItems = [
   { href: "/", label: "소개", key: "landing" },
-  { href: "/teacher", label: "교사용", key: "teacher" },
+  { href: "/teacher", label: "교사", key: "teacher" },
   { href: "/operator", label: "운영 요약", key: "operator" },
+  { href: "/settings", label: "설정", key: "settings" },
 ] as const;
 
 export function AppHeader({
@@ -25,7 +26,7 @@ export function AppHeader({
         <Link href="/" className="brand-link" aria-label="VIVA 홈으로 이동">
           <div className="brand-link__copy">
             <strong>VIVA</strong>
-            <span>제출 이후 이해를 검증하는 레이어</span>
+            <span>제출 이후 이해를 검증하는 평가 레이어</span>
           </div>
         </Link>
 
@@ -51,3 +52,4 @@ export function AppHeader({
     </header>
   );
 }
+
